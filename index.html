@@ -285,6 +285,27 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
 }
 .ar-btns .go { background: var(--tape); color: var(--tape-ink); font-family: var(--f-display); font-size: 22px; font-weight: 700; }
 
+/* ---------- cámara e inclinación ---------- */
+.tilt { position: fixed; inset: 0; z-index: 60; background: #000; color: #fff; }
+.tilt video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tilt .steps { margin: 0; }
+.tilt .steps li.done { border-color: #4CC9F0; color: #F1F4F2; }
+.tilt-setup {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  background: var(--ed-panel); color: var(--ed-fg); border-top: 1px solid var(--ed-line);
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 12px;
+}
+.tilt-setup > b { font-family: var(--f-display); font-size: 22px; font-weight: 600; }
+.tilt-setup p { margin: 0; color: #D5DCD7; font-size: 15px; }
+.tilt-setup p b { color: var(--ed-fg); }
+.tilt-live {
+  position: absolute; left: 50%; top: calc(50% + 30px); transform: translateX(-50%);
+  background: rgba(11, 15, 13, .78); border-radius: 10px; padding: 4px 14px;
+  font-family: var(--f-display); font-size: 26px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.ar-cross.steady { border-color: #4CC9F0; }
+
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
 @media (min-width: 640px) { .modes { grid-template-columns: 1fr; } }
 </style>
@@ -354,6 +375,11 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
         <p class="diag"><a href="https://developers.google.com/ar/devices" target="_blank" rel="noopener">Ver teléfonos compatibles con AR</a></p>
         <p class="diag" id="arDiag"></p>
       </div>
+      <button type="button" class="mode" id="btnTilt">
+        <span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="13" cy="13" r="7"/><path d="M13 2v5M13 19v5M2 13h5M19 13h5"/><path d="M13 13l4.5 4.5"/></svg></span>
+        <span><b>Cámara e inclinación</b><span class="d">Sin AR: apuntas al suelo y a la rama más alta. Usa tu estatura</span></span>
+        <span class="badge" id="tiltBadge">Revisando…</span>
+      </button>
       <div>
         <label class="mode primary" for="photoCam" id="lblPhoto">
           <span class="ic"><svg viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h3l2-3h7l2 3h3A1.5 1.5 0 0 1 23 8.5v11a1.5 1.5 0 0 1-1.5 1.5h-17A1.5 1.5 0 0 1 3 19.5z"/><circle cx="13" cy="13.5" r="4"/></svg></span>
@@ -399,6 +425,7 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
     <span class="eyebrow">Cómo se calcula</span>
     <p><b>Volumen aparente:</b> el montón se encierra en una caja y se multiplica largo × ancho × alto. Incluye los huecos entre ramas, igual que una cubicación en terreno con huincha.</p>
     <p><b>Foto:</b> la vara o huincha de referencia debe estar junto al montón, a la misma distancia de la cámara. Saca la foto desde una esquina para ver el largo y el ancho a la vez.</p>
+    <p><b>Cámara e inclinación:</b> calcula distancias con tu estatura y el ángulo del teléfono. Sostenlo frente a los ojos y no te muevas mientras marcas los dos puntos de cada medida. Error típico: 5 a 10 %.</p>
   </section>
 </main>
 
@@ -462,6 +489,37 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
   </div>
 </div>
 
+<!-- Cámara e inclinación (sin ARCore) -->
+<div class="tilt" id="tilt" hidden>
+  <video id="tiltVideo" playsinline muted autoplay></video>
+  <div class="tilt-setup" id="tiltSetup">
+    <b>Antes de empezar</b>
+    <p>Sostén el teléfono <b>frente a tus ojos</b>, siempre a la misma altura. Párate a 2–4 m del montón y no te muevas mientras marcas los dos puntos de cada medida.</p>
+    <div class="refrow">
+      <label for="tiltEst">Tu estatura</label>
+      <input class="num" id="tiltEst" inputmode="decimal" autocomplete="off" value="1,70">
+      <span>m</span>
+    </div>
+    <div class="ed-row"><button type="button" class="btn" id="tiltCancel">Cancelar</button><button type="button" class="btn primary" id="tiltGo">Abrir cámara</button></div>
+  </div>
+  <div id="tiltRun" hidden>
+    <div class="ar-top">
+      <ol class="steps" id="tiltSteps"><li data-d="L">Largo</li><li data-d="A">Ancho</li><li data-d="H">Alto</li></ol>
+      <p class="ar-msg" id="tiltMsg"></p>
+    </div>
+    <div class="ar-cross"></div>
+    <div class="tilt-live" id="tiltLive">–</div>
+    <div class="ar-bottom">
+      <div class="ar-adjust"><button type="button" id="tiltSkip">Saltar esta medida</button></div>
+      <div class="ar-btns">
+        <button type="button" id="tiltUndo">Deshacer</button>
+        <button type="button" class="go" id="tiltMark">Marcar</button>
+        <button type="button" id="tiltExit">Salir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -478,7 +536,7 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
 const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
 const NAMES = { L: 'Largo', A: 'Ancho', H: 'Alto' };
-const SRC = { ejemplo: 'Ejemplo', manual: 'Huincha', foto: 'Desde foto', ar: 'Cámara AR', hist: 'Del historial' };
+const SRC = { ejemplo: 'Ejemplo', manual: 'Huincha', foto: 'Desde foto', ar: 'Cámara AR', incl: 'Cámara e inclinación', hist: 'Del historial' };
 const FONT = '"Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif';
 const PHOTO = { L: '#FFC83D', A: '#4CC9F0', H: '#FF5C93', ref: '#FFFFFF', halo: 'rgba(0,0,0,.72)' };
 const EXPORT = {
@@ -967,7 +1025,7 @@ function showArHelp(err) {
   else if (!isAndroid) why = 'La Cámara AR funciona solo en teléfonos Android con Chrome. Aquí usa Foto o Huincha.';
   else if (!isChrome) why = `La app se está abriendo con ${bn}, que no tiene cámara AR. Ábrela en Chrome para usarla.`;
   else if (!arInfo.xr) why = 'Este Chrome no tiene realidad aumentada (WebXR). Actualiza Chrome desde Play Store y vuelve a intentar.';
-  else why = 'Chrome dice que este teléfono no es compatible con AR (ARCore de Google). Si tu modelo no está en la lista de compatibles, usa Foto o Huincha.';
+  else why = 'Chrome dice que este teléfono no es compatible con AR (ARCore de Google). Si tu modelo no está en la lista de compatibles, usa Cámara e inclinación, Foto o Huincha.';
   $('#arWhy').textContent = why;
   const link = $('#arChrome');
   if (viewer) {
@@ -992,6 +1050,8 @@ async function checkAR() {
   const b = $('#arBadge');
   b.textContent = ok ? 'Disponible' : 'No disponible aquí';
   b.classList.toggle('ok', ok);
+  // sin AR, ese botón pasa al final para que primero aparezcan los modos que sí sirven
+  if (!ok) $('.modes').append($('#btnAR'), $('#arHelp'));
 }
 function mul4(a, b) {
   const o = new Float32Array(16);
@@ -1218,6 +1278,200 @@ $('#arHm').addEventListener('click', () => { ar.h = Math.max(0.05, ar.h - 0.05);
 $('#arHp').addEventListener('click', () => { ar.h = Math.min(6, ar.h + 0.05); });
 $('#ar').addEventListener('beforexrselect', e => e.preventDefault());
 
+/* ================= cámara e inclinación (sin ARCore) =================
+   La cámara queda a (estatura − 10 cm) del suelo. Con el ángulo del teléfono se
+   proyecta la cruz sobre el suelo: distancia = altura / tan(ángulo bajo la horizontal).
+   Largo y ancho = distancia entre dos puntos del suelo; alto = altura + D · tan(ángulo sobre la base). */
+const EKEY = 'cubicador.estatura';
+const TSTEPS = [
+  { d: 'L', msg: 'Largo: apunta la cruz al suelo en un extremo del montón y toca Marcar.' },
+  { d: 'L', msg: 'Sin moverte, apunta al suelo en el otro extremo del largo y toca Marcar.' },
+  { d: 'A', msg: 'Ancho: párate a un costado del montón. Apunta al suelo en la esquina de adelante.' },
+  { d: 'A', msg: 'Sin moverte, apunta al suelo en la esquina del fondo y toca Marcar.' },
+  { d: 'H', msg: 'Alto: apunta al suelo justo debajo de la rama más alta y toca Marcar.' },
+  { d: 'H', msg: 'Sin moverte, sube la cruz hasta la rama más alta y toca Marcar.' }
+];
+const tl = { stream: null, step: 0, marks: [], res: { L: null, A: null, H: null }, buf: [], raf: 0, h: 1.6, lastEvt: 0, noAlpha: false, wake: null, msg: '' };
+const viewerFrame = !!(window.claude && typeof window.claude.use === 'function');
+let tiltSensor = false;
+
+function camDir(a, b, g) {
+  // dirección de la cámara trasera (−z del teléfono) en ejes Este, Norte, Arriba
+  const r = Math.PI / 180;
+  const cA = Math.cos(a * r), sA = Math.sin(a * r), cB = Math.cos(b * r), sB = Math.sin(b * r), cG = Math.cos(g * r), sG = Math.sin(g * r);
+  return [-(cA * sG + cG * sA * sB), -(sA * sG - cA * cG * sB), -(cB * cG)];
+}
+function onOri(e) {
+  if (e.beta == null) return;
+  const now = performance.now();
+  tl.lastEvt = now;
+  if (e.alpha == null) tl.noAlpha = true;
+  tl.buf.push({ t: now, v: camDir(e.alpha || 0, e.beta, e.gamma || 0) });
+  while (tl.buf.length && now - tl.buf[0].t > 450) tl.buf.shift();
+}
+function avgDir() {
+  if (!tl.buf.length) return null;
+  const s = [0, 0, 0];
+  for (const { v } of tl.buf) { s[0] += v[0]; s[1] += v[1]; s[2] += v[2]; }
+  const n = Math.hypot(s[0], s[1], s[2]) || 1;
+  return [s[0] / n, s[1] / n, s[2] / n];
+}
+function wobble() {
+  const m = avgDir(); if (!m) return 99;
+  let worst = 0;
+  for (const { v } of tl.buf) worst = Math.max(worst, Math.acos(Math.min(1, v[0] * m[0] + v[1] * m[1] + v[2] * m[2])));
+  return worst * 180 / Math.PI;
+}
+function groundPt(v) {
+  if (!v || v[2] > -0.03) return null;
+  const t = tl.h / -v[2], p = [v[0] * t, v[1] * t];
+  return Math.hypot(p[0], p[1]) > 30 ? null : p;
+}
+function tiltLive() {
+  const s = TSTEPS[tl.step], v = avgDir();
+  if (!s) return { text: '', ok: false };
+  if (!v) return { text: 'Esperando el sensor…', ok: false };
+  const second = tl.step % 2 === 1, prev = tl.marks[tl.step - 1];
+  if (s.d === 'H' && second) {
+    const D = Math.hypot(prev.p[0], prev.p[1]), hz = Math.hypot(v[0], v[1]);
+    if (hz < 0.05) return { text: 'Baja un poco el teléfono', ok: false };
+    const H = tl.h + D * v[2] / hz;
+    return { text: H > 0.02 ? `Alto ${fmt(H)} m` : 'Sube la cruz hasta la rama más alta', val: H, ok: H > 0.02 };
+  }
+  const p = groundPt(v);
+  if (!p) return { text: 'Apunta más abajo, al suelo', ok: false };
+  if (second) {
+    const len = Math.hypot(p[0] - prev.p[0], p[1] - prev.p[1]);
+    return { text: `${NAMES[s.d]} ${fmt(len)} m`, val: len, p, ok: len > 0.05 };
+  }
+  return { text: `Punto a ${fmt(Math.hypot(p[0], p[1]), 1)} m de ti`, p, ok: true };
+}
+function tiltUI() {
+  const done = tl.step >= TSTEPS.length;
+  const m = done ? 'Listo. Revisa las medidas arriba y toca Usar medidas.' : TSTEPS[tl.step].msg;
+  if (m !== tl.msg) { tl.msg = m; $('#tiltMsg').textContent = m; }
+  $('#tiltMark').textContent = done ? 'Usar medidas' : 'Marcar';
+  $('#tiltSkip').hidden = done;
+  $('#tiltLive').hidden = done;
+  $('#tiltUndo').disabled = tl.step === 0;
+  const cur = done ? null : TSTEPS[tl.step].d;
+  document.querySelectorAll('#tiltSteps li').forEach(li => {
+    const k = li.dataset.d, v = tl.res[k], passed = TSTEPS.findIndex(s => s.d === k) + 2 <= tl.step;
+    li.classList.toggle('on', k === cur);
+    li.classList.toggle('done', v != null);
+    li.textContent = v != null ? `${NAMES[k]} ${fmt(v)}` : passed ? `${NAMES[k]} –` : NAMES[k];
+  });
+}
+function tiltLoop() {
+  if (!tl.stream) return;
+  tl.raf = requestAnimationFrame(tiltLoop);
+  if (tl.step >= TSTEPS.length) return;
+  const lv = tiltLive(), el = $('#tiltLive');
+  if (el.textContent !== lv.text) el.textContent = lv.text;
+  $('.tilt .ar-cross').classList.toggle('steady', lv.ok && wobble() <= 4);
+}
+function loadEst() { try { const v = parseFloat(localStorage.getItem(EKEY)); return v >= 1 && v <= 2.3 ? v : 1.7; } catch { return 1.7; } }
+function saveEst(v) { try { localStorage.setItem(EKEY, String(v)); } catch { /* sin almacenamiento */ } }
+
+async function openTilt() {
+  if (viewerFrame) { toast('Dentro de claude.ai la cámara está bloqueada. Usa alexqlom.github.io o la app instalada.'); return; }
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) || !('DeviceOrientationEvent' in window)) { toast('Este navegador no permite usar la cámara con el sensor de inclinación.'); return; }
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    // si lo niega, igual sigue: a los 1,5 s se avisa si no llegan datos del sensor
+    try { if (await DeviceOrientationEvent.requestPermission() !== 'granted') toast('El navegador no dio permiso al sensor de inclinación.'); } catch { /* sigue igual */ }
+  }
+  $('#tiltEst').value = fmt(loadEst());
+  $('#tiltSetup').hidden = false; $('#tiltRun').hidden = true;
+  $('#tilt').hidden = false;
+  document.body.style.overflow = 'hidden';
+  tl.buf = []; tl.lastEvt = 0; tl.noAlpha = false;
+  window.addEventListener('deviceorientation', onOri);
+}
+async function goTilt() {
+  const est = parseNum($('#tiltEst').value);
+  if (!(est >= 1 && est <= 2.3)) { toast('Escribe tu estatura en metros, por ejemplo 1,70.'); return; }
+  saveEst(est);
+  tl.h = est - 0.10;
+  try {
+    tl.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  } catch (e) {
+    toast(e && e.name === 'NotAllowedError' ? 'Permite el uso de la cámara para medir.' : 'No se pudo abrir la cámara.');
+    return;
+  }
+  const v = $('#tiltVideo'); v.srcObject = tl.stream;
+  try { await v.play(); } catch { /* autoplay silencioso */ }
+  Object.assign(tl, { step: 0, marks: [], res: { L: null, A: null, H: null }, msg: '' });
+  $('#tiltSetup').hidden = true; $('#tiltRun').hidden = false;
+  try { tl.wake = await navigator.wakeLock.request('screen'); } catch { tl.wake = null; }
+  tiltUI(); tiltLoop();
+  setTimeout(() => {
+    if (!tl.stream) return;
+    if (!tl.lastEvt) { toast('Este teléfono no entrega el sensor de inclinación. Usa Foto o Huincha.'); return; }
+    if (tl.noAlpha && tl.step < 4) { tl.step = 4; tl.marks = []; tiltUI(); toast('Tu teléfono no entrega el giro: aquí solo puedes medir el alto.'); }
+  }, 1500);
+}
+function stopTilt() {
+  cancelAnimationFrame(tl.raf);
+  window.removeEventListener('deviceorientation', onOri);
+  if (tl.stream) tl.stream.getTracks().forEach(t => t.stop());
+  tl.stream = null; $('#tiltVideo').srcObject = null;
+  try { tl.wake && tl.wake.release(); } catch { /* ya liberado */ }
+  tl.wake = null;
+  $('#tilt').hidden = true;
+  document.body.style.overflow = '';
+}
+function tiltMark() {
+  if (tl.step >= TSTEPS.length) { applyTilt(); return; }
+  const lv = tiltLive();
+  if (!lv.ok) { toast(lv.text || 'Apunta mejor y vuelve a marcar.'); return; }
+  if (wobble() > 4) { toast('Mantén el teléfono quieto un momento y vuelve a marcar.'); return; }
+  tl.marks[tl.step] = { p: lv.p, val: lv.val };
+  if (tl.step % 2 === 1) tl.res[TSTEPS[tl.step].d] = r2(lv.val);
+  tl.step++;
+  if (navigator.vibrate) navigator.vibrate(30);
+  tiltUI();
+}
+function tiltSkip() {
+  if (tl.step >= TSTEPS.length) return;
+  tl.res[TSTEPS[tl.step].d] = null;
+  tl.step = tl.step - (tl.step % 2) + 2;
+  tiltUI();
+}
+function tiltUndo() {
+  if (tl.step === 0) return;
+  tl.step--;
+  if (!tl.marks[tl.step] && tl.step % 2 === 1) tl.step--; // medida saltada: vuelve a su primer punto
+  tl.marks.length = tl.step;
+  tl.res[TSTEPS[tl.step].d] = null;
+  tiltUI();
+}
+function applyTilt() {
+  const got = ['L', 'A', 'H'].filter(k => tl.res[k] != null);
+  if (!got.length) { toast('No marcaste ninguna medida.'); return; }
+  const missing = ['L', 'A', 'H'].filter(k => tl.res[k] == null);
+  const d = { ...st.dims };
+  for (const k of got) d[k] = tl.res[k];
+  st.dims = d; st.src = 'incl'; st.photo = null; st.view = 'esquema'; st.edited = false;
+  stopTilt(); renderFicha();
+  $('#stage').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  toast(`Listo: ${fmt(vol(d))} m³${missing.length ? '. Revisa ' + missing.map(k => NAMES[k].toLowerCase()).join(' y ') + ': no lo mediste.' : ''}`);
+}
+function probeTilt() {
+  const b = $('#tiltBadge');
+  if (viewerFrame) { b.textContent = 'No disponible aquí'; return; }
+  const seen = e => { if (e.beta != null) { tiltSensor = true; b.textContent = 'Funciona aquí'; b.classList.add('ok'); window.removeEventListener('deviceorientation', seen); } };
+  window.addEventListener('deviceorientation', seen);
+  setTimeout(() => { if (!tiltSensor) { window.removeEventListener('deviceorientation', seen); b.textContent = 'Necesita sensor'; } }, 2000);
+}
+$('#btnTilt').addEventListener('click', openTilt);
+$('#tiltCancel').addEventListener('click', stopTilt);
+$('#tiltGo').addEventListener('click', goTilt);
+$('#tiltExit').addEventListener('click', stopTilt);
+$('#tiltMark').addEventListener('click', tiltMark);
+$('#tiltSkip').addEventListener('click', tiltSkip);
+$('#tiltUndo').addEventListener('click', tiltUndo);
+$('#tiltEst').addEventListener('focus', e => e.target.select());
+
 /* ================= ficha exportable ================= */
 async function fichaBlob() {
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch { /* sin fuentes web */ }
@@ -1395,6 +1649,7 @@ $('#btnCsv').addEventListener('click', () => {
 /* ================= arranque ================= */
 renderFicha();
 renderHist();
+probeTilt();
 checkAR().then(() => {
   // llegó desde "Abrir en Chrome": deja el botón AR a la vista
   if (!/[?&]ar=1\b/.test(location.search)) return;
