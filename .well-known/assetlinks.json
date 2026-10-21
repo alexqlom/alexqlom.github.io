@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.alexqlom.cubicador",
+        "sha256_cert_fingerprints": ["F7:EA:37:72:C1:DB:A6:F9:0D:B6:07:66:0D:78:82:D4:5B:DD:DA:C9:1E:91:CC:5D:4D:B7:1F:0D:73:9B:1F:90"]
+      }
+    }]

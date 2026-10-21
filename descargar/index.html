@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17211B">
+<title>Descargar Cubicador de Ramas</title>
+<link rel="icon" type="image/png" href="../icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #ECEFEA; --surface: #FAFBF9; --ink: #17211B; --muted: #59665E; --line: #CCD4CE;
+  --tape: #F2C200; --tape-ink: #211A00;
+  --f-display: "Barlow Condensed", "Roboto Condensed", "Arial Narrow", sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0F1512; --surface: #18201B; --ink: #E6ECE7; --muted: #9AA79F; --line: #2C3830; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); }
+.tape {
+  height: 14px; background-color: var(--tape);
+  background-image: repeating-linear-gradient(90deg, var(--tape-ink) 0 1.5px, transparent 1.5px 50px), repeating-linear-gradient(90deg, var(--tape-ink) 0 1px, transparent 1px 10px);
+  background-size: 100% 9px, 100% 5px; background-repeat: no-repeat;
+}
+main {
+  max-width: 520px; margin: 0 auto;
+  padding: 28px max(16px, env(safe-area-inset-right, 0px)) calc(40px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: grid; gap: 22px;
+}
+.app { display: flex; align-items: center; gap: 14px; }
+.app img { width: 72px; height: 72px; border-radius: 16px; }
+h1 { font-family: var(--f-display); font-size: 34px; line-height: 1; margin: 0; }
+.app p { margin: 4px 0 0; color: var(--muted); }
+.dl {
+  display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 60px; border-radius: 14px;
+  background: var(--tape); color: var(--tape-ink); text-decoration: none;
+  font-family: var(--f-display); font-size: 24px; font-weight: 700;
+}
+.dl small { font-family: var(--f-body); font-size: 15px; font-weight: 500; opacity: .8; }
+ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; counter-reset: paso; }
+ol li { counter-increment: paso; display: grid; grid-template-columns: 34px 1fr; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+ol li::before { content: counter(paso); font-family: var(--f-display); font-weight: 700; font-size: 20px; width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--surface); display: grid; place-items: center; }
+h2 { font-family: var(--f-display); font-size: 22px; margin: 0; }
+.note { color: var(--muted); font-size: 15px; margin: 0; }
+a { color: inherit; }
+</style>
+</head>
+<body>
+<div class="tape" aria-hidden="true"></div>
+<main>
+  <div class="app">
+    <img src="../icons/icon-192.png" alt="">
+    <div>
+      <h1>Cubicador de Ramas</h1>
+      <p>Metros cúbicos de un punto de ramas: largo × ancho × alto.</p>
+    </div>
+  </div>
+
+  <a class="dl" href="../cubicador-ramas.apk" download>Descargar app Android <small>APK · 1,2 MB</small></a>
+
+  <section aria-labelledby="pasos">
+    <h2 id="pasos">Cómo instalarla</h2>
+    <ol>
+      <li><span>Toca <b>Descargar app Android</b>. Si Chrome avisa que el archivo puede ser dañino, toca <b>Descargar de todas formas</b>.</span></li>
+      <li><span>Abre el archivo descargado y toca <b>Instalar</b>. Si el teléfono lo pide, activa <b>Permitir de esta fuente</b> para Chrome y vuelve atrás.</span></li>
+      <li><span>Abre <b>Cubicador</b> desde tus apps. La primera vez necesita señal; después funciona en terreno sin internet (Foto y Huincha).</span></li>
+    </ol>
+  </section>
+
+  <p class="note">La <b>Cámara AR</b> necesita un Android compatible con ARCore (Servicios de Google Play para RA). Si tu teléfono no lo es, usa Foto o Huincha.</p>
+  <p class="note">¿Prefieres no instalar nada? <a href="../">Úsala directo en el navegador</a>.</p>
+</main>
+</body>
+</html>
