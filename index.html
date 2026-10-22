@@ -212,6 +212,7 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
 .method { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 6px; }
 .method p { margin: 0; max-width: 62ch; }
 .method b { color: var(--ink); }
+.method .ver { font-size: 13px; font-variant-numeric: tabular-nums; }
 
 /* toast */
 .toast {
@@ -426,6 +427,7 @@ h1, h2 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
     <p><b>Volumen aparente:</b> el montón se encierra en una caja y se multiplica largo × ancho × alto. Incluye los huecos entre ramas, igual que una cubicación en terreno con huincha.</p>
     <p><b>Foto:</b> la vara o huincha de referencia debe estar junto al montón, a la misma distancia de la cámara. Saca la foto desde una esquina para ver el largo y el ancho a la vez.</p>
     <p><b>Cámara e inclinación:</b> calcula distancias con tu estatura y el ángulo del teléfono. Sostenlo frente a los ojos y no te muevas mientras marcas los dos puntos de cada medida. Error típico: 5 a 10 %.</p>
+    <p class="ver">Versión 1.4 · 21-10-2026</p>
   </section>
 </main>
 
@@ -552,6 +554,20 @@ function toast(msg) {
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
   clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200);
 }
+// errores inesperados a la vista, para poder reportarlos desde terreno
+window.addEventListener('error', e => { if (e.message) toast('Error: ' + e.message); });
+window.addEventListener('unhandledrejection', e => { const r = e.reason; toast('Error: ' + ((r && (r.message || r.name)) || r)); });
+
+/* El botón Atrás de Android cierra la pantalla abierta (foto o cámara) en vez de salir de la app */
+let ovClose = null;
+function ovOpen(fn) { ovClose = fn; try { history.pushState({ cubOv: 1 }, ''); } catch { /* sin historial */ } }
+function ovDone() {
+  if (!ovClose) return;
+  ovClose = null;
+  try { if (history.state && history.state.cubOv) history.back(); } catch { /* sin historial */ }
+}
+window.addEventListener('popstate', () => { if (ovClose) { const f = ovClose; ovClose = null; f(); } });
+
 function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function stamp(d = new Date()) {
   const p = n => String(n).padStart(2, '0');
@@ -876,11 +892,13 @@ function openEditor(ph, step) {
   document.body.style.overflow = 'hidden';
   setEdStep(step);
   requestAnimationFrame(sizeEditor);
+  ovOpen(closeEditor);
 }
 function closeEditor() {
   $('#editor').hidden = true;
   document.body.style.overflow = '';
   ed.ph = null; ed.drag = null;
+  ovDone();
 }
 function setEdStep(n) {
   ed.step = n;
@@ -977,13 +995,15 @@ function syncChips() {
 }
 $('#refLen').addEventListener('input', e => {
   const v = parseNum(e.target.value);
-  if (v > 0) { ed.ph.refLen = v; syncChips(); drawEditor(); updateLive(); }
+  if (v > 0 && ed.ph) { ed.ph.refLen = v; syncChips(); drawEditor(); updateLive(); }
 });
 $('#refLen').addEventListener('focus', e => e.target.select());
 document.querySelectorAll('.chip[data-ref]').forEach(c => c.addEventListener('click', () => {
+  if (!ed.ph) return;
   ed.ph.refLen = Number(c.dataset.ref); $('#refLen').value = fmt(ed.ph.refLen); syncChips(); drawEditor(); updateLive();
 }));
 $('#edNext').addEventListener('click', () => {
+  if (!ed.ph) return;
   if (!(ed.ph.refLen > 0)) { toast('Escribe cuánto mide la referencia, en metros.'); return; }
   if (dist(ed.ph.ref[0], ed.ph.ref[1]) < 10) { toast('Separa los dos puntos de la referencia.'); return; }
   setEdStep(2);
@@ -991,6 +1011,7 @@ $('#edNext').addEventListener('click', () => {
 $('#edBack').addEventListener('click', () => setEdStep(1));
 $('#edClose').addEventListener('click', closeEditor);
 $('#edDone').addEventListener('click', () => {
+  if (!ed.ph) return;
   const d = photoDims(ed.ph);
   if (!(vol(d) > 0)) { toast('La caja no tiene volumen. Separa los puntos de colores.'); return; }
   st.photo = ed.ph; st.dims = d; st.src = 'foto'; st.view = 'foto'; st.edited = false;
@@ -1085,7 +1106,7 @@ async function startAR(force) {
   $('#arHelp').hidden = true;
   Object.assign(ar, { session, step: 1, P: [], w: 0, h: 0, reticle: null, liveW: 0, liveH: 0, applied: false, msg: '' });
   session.addEventListener('end', onAREnd);
-  if (!session.domOverlayState) { toast('Este navegador no muestra controles sobre la cámara AR. Usa Foto.'); session.end(); return; }
+  if (!session.domOverlayState) { toast('Este navegador no muestra controles sobre la cámara AR. Usa Foto.'); session.end().catch(() => {}); return; }
   try {
     const glc = document.createElement('canvas');
     const gl = glc.getContext('webgl', { xrCompatible: true, alpha: true });
@@ -1095,7 +1116,7 @@ async function startAR(force) {
     const viewer = await session.requestReferenceSpace('viewer');
     ar.hit = await session.requestHitTestSource({ space: viewer });
   } catch {
-    toast('No se pudo iniciar la detección del suelo.'); session.end(); return;
+    toast('No se pudo iniciar la detección del suelo.'); session.end().catch(() => {}); return;
   }
   arUI();
   session.requestAnimationFrame(arFrame);
@@ -1251,7 +1272,7 @@ function arMark() {
     st.dims = { L: r2(g.L), A: r2(Math.abs(g.w)), H: r2(g.h) };
     st.src = 'ar'; st.photo = null; st.view = 'esquema'; st.edited = false;
     ar.applied = true;
-    ar.session.end();
+    ar.session.end().catch(() => { /* ya cerrada */ });
     return;
   }
   arUI();
@@ -1273,7 +1294,7 @@ $('#btnAR').addEventListener('click', () => startAR(false));
 $('#arTry').addEventListener('click', () => startAR(true));
 $('#arMark').addEventListener('click', arMark);
 $('#arUndo').addEventListener('click', arUndo);
-$('#arExit').addEventListener('click', () => { ar.applied = false; ar.session && ar.session.end(); });
+$('#arExit').addEventListener('click', () => { ar.applied = false; if (ar.session) ar.session.end().catch(() => { /* ya cerrada */ }); });
 $('#arHm').addEventListener('click', () => { ar.h = Math.max(0.05, ar.h - 0.05); });
 $('#arHp').addEventListener('click', () => { ar.h = Math.min(6, ar.h + 0.05); });
 $('#ar').addEventListener('beforexrselect', e => e.preventDefault());
@@ -1386,20 +1407,24 @@ async function openTilt() {
   document.body.style.overflow = 'hidden';
   tl.buf = []; tl.lastEvt = 0; tl.noAlpha = false;
   window.addEventListener('deviceorientation', onOri);
+  ovOpen(stopTilt);
 }
 async function goTilt() {
+  if (tl.stream) return;
   const est = parseNum($('#tiltEst').value);
   if (!(est >= 1 && est <= 2.3)) { toast('Escribe tu estatura en metros, por ejemplo 1,70.'); return; }
   saveEst(est);
   tl.h = est - 0.10;
+  const go = $('#tiltGo'); go.disabled = true;
   try {
     tl.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
   } catch (e) {
     toast(e && e.name === 'NotAllowedError' ? 'Permite el uso de la cámara para medir.' : 'No se pudo abrir la cámara.');
     return;
-  }
+  } finally { go.disabled = false; }
+  if ($('#tilt').hidden) { tl.stream.getTracks().forEach(t => t.stop()); tl.stream = null; return; } // cerró mientras pedía la cámara
   const v = $('#tiltVideo'); v.srcObject = tl.stream;
-  try { await v.play(); } catch { /* autoplay silencioso */ }
+  v.play().catch(() => { /* autoplay silencioso */ });
   Object.assign(tl, { step: 0, marks: [], res: { L: null, A: null, H: null }, msg: '' });
   $('#tiltSetup').hidden = true; $('#tiltRun').hidden = false;
   try { tl.wake = await navigator.wakeLock.request('screen'); } catch { tl.wake = null; }
@@ -1415,10 +1440,11 @@ function stopTilt() {
   window.removeEventListener('deviceorientation', onOri);
   if (tl.stream) tl.stream.getTracks().forEach(t => t.stop());
   tl.stream = null; $('#tiltVideo').srcObject = null;
-  try { tl.wake && tl.wake.release(); } catch { /* ya liberado */ }
+  if (tl.wake) tl.wake.release().catch(() => { /* ya liberado */ });
   tl.wake = null;
   $('#tilt').hidden = true;
   document.body.style.overflow = '';
+  ovDone();
 }
 function tiltMark() {
   if (tl.step >= TSTEPS.length) { applyTilt(); return; }
@@ -1461,7 +1487,7 @@ function probeTilt() {
   if (viewerFrame) { b.textContent = 'No disponible aquí'; return; }
   const seen = e => { if (e.beta != null) { tiltSensor = true; b.textContent = 'Funciona aquí'; b.classList.add('ok'); window.removeEventListener('deviceorientation', seen); } };
   window.addEventListener('deviceorientation', seen);
-  setTimeout(() => { if (!tiltSensor) { window.removeEventListener('deviceorientation', seen); b.textContent = 'Necesita sensor'; } }, 2000);
+  setTimeout(() => { if (!tiltSensor) { window.removeEventListener('deviceorientation', seen); b.textContent = 'Probar'; } }, 2000);
 }
 $('#btnTilt').addEventListener('click', openTilt);
 $('#tiltCancel').addEventListener('click', stopTilt);
