@@ -359,11 +359,13 @@
   const optBtn = (html, v, k) => `<button class="opt" data-v="${v}" type="button"><span class="k">${k}</span><span class="ot">${html}</span></button>`;
   const L = k => String.fromCharCode(65 + k);
   const plainT = s => String(s).replace(/\*\*|==/g, '');
-  const sayText = it => {
-    const pre = it.tx && RB.texts[it.tx] ? '' : '';
-    if (it.t === 'fill') return pre + it.s.replace('___', 'espacio en blanco') + '. Opciones: ' + it.o.join(', ');
-    if (it.t === 'tf') return pre + plainT(it.q) + '. ¿Verdadero o falso?';
-    if (it.t === 'mc' || it.t === 'multi') return pre + plainT(it.q) + '. ' + it.o.map((o, i) => `${L(i)}: ${plainT(o)}`).join('. ');
+  // Lee la pregunta tal como se ve: las opciones van en el orden barajado de la pantalla.
+  const sayText = (it, body) => {
+    const shown = sel => $$(sel, body).map(x => x.textContent.trim());
+    if (it.t === 'fill') return plainT(it.s).replace('___', 'espacio en blanco') + '. Opciones: ' + shown('.fill-bank .chipw').join(', ');
+    if (it.t === 'tf') return plainT(it.q) + '. ¿Verdadero o falso?';
+    if (it.t === 'mc') return plainT(it.q) + '. ' + shown('.opt .ot').map((o, k) => `${L(k)}: ${o}`).join('. ');
+    if (it.t === 'multi') return plainT(it.q) + '. ' + shown('.opt .ot').join('. ');
     return plainT(it.q || '');
   };
   function pickOne(body, onPick) {
@@ -634,7 +636,7 @@
     if (q.retry) body.insertAdjacentHTML('afterbegin', `<div class="retry">${I('replay')}Pregunta que fallaste antes</div>`);
     if (ses.cfg.tag && it._u && RB.units[it._u]) body.insertAdjacentHTML('afterbegin', `<div class="utag">${I(RB.units[it._u].ic)}${esc(RB.units[it._u].name)}</div>`);
     const sb = $('[data-say]', body);
-    if (sb) sb.onclick = () => RB.say(sayText(it));
+    if (sb) sb.onclick = () => RB.say(sayText(it, body));
   }
   function grade(ses, ok, right, extra = {}) {
     if (ses.state !== 'answer') return;
