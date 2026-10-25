@@ -44,11 +44,19 @@
 
   maps.road = o => {
     const L = o.L || 640;
-    let s = rect(0, 0, L, 360, C.bg);
-    for (let x = 12, i = 0; x < L; i++) { const w = 86 + (i * 37) % 64; s += blds([[x, 12, w, 70]]); x += w + 16 + (i % 3) * 9; }
-    for (let x = 40, i = 0; x < L; i++) { const w = 90 + (i * 53) % 58; s += blds([[x, 278, w, 70]]); x += w + 14 + (i % 2) * 12; }
-    s += rect(0, 92, L, 24, C.walk) + rect(0, 244, L, 24, C.walk);
-    s += rect(0, 116, L, 24, C.park) + rect(0, 220, L, 24, C.park);
+    let s = rect(0, 0, L, 360, o.rural ? '#090c09' : C.bg);
+    if (o.rural) {
+      s += rect(0, 92, L, 48, '#0e130e') + rect(0, 220, L, 48, '#0e130e');
+      for (let x = 20; x < L; x += 46) s += rect(x, 98, 3, 6, '#3a3a3a') + rect(x + 20, 256, 3, 6, '#3a3a3a');
+      s += rect(0, 100, L, 1, '#2c2c2c') + rect(0, 258, L, 1, '#2c2c2c');
+      for (let x = 60, i = 0; x < L; x += 110 + (i++ % 3) * 30) s += tree(x, 60 + (i % 2) * 14) + tree(x + 50, 300 - (i % 2) * 12);
+    } else {
+      for (let x = 12, i = 0; x < L; i++) { const w = 86 + (i * 37) % 64; s += blds([[x, 12, w, 70]]); x += w + 16 + (i % 3) * 9; }
+      for (let x = 40, i = 0; x < L; i++) { const w = 90 + (i * 53) % 58; s += blds([[x, 278, w, 70]]); x += w + 14 + (i % 2) * 12; }
+      s += rect(0, 92, L, 24, C.walk) + rect(0, 244, L, 24, C.walk);
+      s += rect(0, 116, L, 24, C.park) + rect(0, 220, L, 24, C.park);
+    }
+    (o.drive || []).forEach(x => { s += rect(x - 20, 244, 40, 24, '#222') + rect(x - 24, 276, 48, 8, '#2b2b2b', 'stroke="#444"'); });
     (o.side || []).forEach(sd => {
       s += rect(sd.x - 52, 0, 104, 360, C.walk) + rect(sd.x - 40, 0, 80, 360, C.asph);
       s += dashV(sd.x, 0, 104) + dashV(sd.x, 258, 360) + rect(sd.x + 2, 250, 36, 4, C.mark);
@@ -57,8 +65,12 @@
     s += rect(0, 140, L, 80, C.asph);
     s += rect(0, 139, L, 1.5, C.mark, 'opacity=".3"') + rect(0, 219.5, L, 1.5, C.mark, 'opacity=".3"');
     (o.center || [[0, L, 'dash']]).forEach(([a, b, t]) => { s += t === 'solid' ? rect(a, 179, b - a, 2, C.mark, 'opacity=".85"') : dashH(180, a, b); });
-    (o.cw || []).forEach(x => { for (let k = 0; k < 8; k++) s += rect(x - 20, 142 + k * 10, 40, 5, C.mark, 'opacity=".8"'); });
-    for (let x = 70; x < L; x += 140) s += tree(x, 104) + tree(x + 70, 256);
+    (o.cw || []).forEach(x => {
+      const y0 = o.cwFull ? 118 : 142, n = o.cwFull ? 13 : 8;
+      for (let k = 0; k < n; k++) s += rect(x - 20, y0 + k * 10, 40, 5, C.mark, 'opacity=".8"');
+    });
+    if (!o.rural) for (let x = 70; x < L; x += 140) s += tree(x, 104) + tree(x + 70, 256);
+    (o.hydrant || []).forEach(x => { s += `<circle cx="${x}" cy="250" r="6" fill="#c4161c" stroke="#ff7a70" stroke-width="1.5"/><circle cx="${x}" cy="250" r="2" fill="#7a0d10"/>`; });
     (o.posts || []).forEach(x => { s += `<circle cx="${x}" cy="252" r="5" fill="#fff" stroke="${EGO}" stroke-width="2"/>`; });
     (o.stop || []).forEach(x => { s += rect(x - 26, 252, 52, 12, '#1f1f1f', 'stroke="#3d3d3d" rx="2"') + RB.sign('paradero', 16, x + 38, 258); });
     (o.holes || []).forEach(([x, y]) => { s += `<ellipse cx="${x}" cy="${y}" rx="9" ry="5" fill="#070707" stroke="#3a3a3a"/>`; });
@@ -95,7 +107,12 @@
     s += rect(0, 30, L, 80, C.asph) + dashH(70, 0, L) + rect(0, 30, L, 1.5, C.mark, 'opacity=".5"') + rect(0, 108.5, L, 1.5, C.mark, 'opacity=".5"');
     s += rect(0, 110, L, 30, '#141414') + rect(0, 124, L, 2, '#5a5a5a');
     s += rect(0, 140, L, 80, C.asph) + rect(0, 220, L, 18, '#1d1d1d');
-    s += rect(0, 140, L, 2, C.mark, 'opacity=".8"') + dashH(180, 0, L) + rect(0, 219, L, 2, C.mark, 'opacity=".8"');
+    if (o.ramp) {
+      const e = o.ramp;
+      s += rect(0, 220, e, 38, C.asph) + `<path d="M${e} 220 L${e + 160} 220 L${e} 258Z" fill="${C.asph}"/>`;
+      s += `<path d="M0 257 H${e} L${e + 160} 221" fill="none" stroke="${C.mark}" stroke-width="2" opacity=".8"/>`;
+      s += rect(0, 140, L, 2, C.mark, 'opacity=".8"') + dashH(180, 0, L) + dashH(220, 0, e + 120) + rect(e + 120, 219, L - e - 120, 2, C.mark, 'opacity=".8"');
+    } else s += rect(0, 140, L, 2, C.mark, 'opacity=".8"') + dashH(180, 0, L) + rect(0, 219, L, 2, C.mark, 'opacity=".8"');
     for (let x = 60; x < L; x += 120) s += tree(x, 270) + `<rect x="${x + 50}" y="244" width="3" height="10" fill="#555"/>`;
     return s;
   };
@@ -121,6 +138,7 @@
       const c = a.c || WH;
       return `<rect x="-18" y="-9" width="36" height="18" rx="5" fill="${c}"/><rect x="3" y="-7.5" width="7" height="15" rx="2" fill="#000" opacity=".5"/><rect x="-14" y="-7" width="4.5" height="14" rx="1.5" fill="#000" opacity=".4"/>` +
         (a.occ ? `<circle cx="-1" cy="-4" r="3.2" fill="#d0d0d0"/>` : '') + lamps(18.4, -18, 8) + blink(16, 9) +
+        (a.rvl ? `<rect class="rvl" x="-19" y="-2.5" width="2.4" height="5" rx="1" fill="#fff" opacity="0"/>` : '') +
         (a.door ? `<rect class="door" x="-2" y="-10" width="12" height="2.6" rx="1" fill="${c}" stroke="#000" stroke-width=".6" opacity="0"/>` : '');
     },
     bus: a => {
@@ -133,6 +151,7 @@
     bike: a => `<rect x="-8" y="-1.5" width="16" height="3" rx="1.5" fill="#8a8a8a"/><path d="M5 -4.5 V4.5" stroke="#8a8a8a" stroke-width="1.6"/><ellipse cx="-1" cy="0" rx="3" ry="6" fill="${a.c || '#bdbdbd'}"/><circle cx="-1" cy="0" r="3.4" fill="#e0e0e0"/>`,
     ped: a => `<ellipse cx="0" cy="0" rx="3.6" ry="6.4" fill="${a.c || '#8f8f8f'}"/><circle cx=".5" cy="0" r="3.8" fill="#e6e6e6"/>`,
     child: a => `<g transform="scale(.72)">${DRAW.ped(a)}</g>`,
+    dog: a => `<ellipse cx="0" cy="0" rx="9" ry="4.2" fill="${a.c || '#8a7560'}"/><circle cx="9.6" cy="0" r="3.8" fill="${a.c || '#8a7560'}"/><path d="M-8.5 0 L-14 -2.5" stroke="${a.c || '#8a7560'}" stroke-width="2.2" stroke-linecap="round"/>`,
     ball: () => `<circle r="4.4" fill="#fff"/><path d="M-3 -3 Q0 0 -3 3 M3 -3 Q0 0 3 3" stroke="${EGO}" stroke-width="1.4" fill="none"/>`,
     train: () => `<rect x="41" y="-13" width="80" height="26" rx="8" fill="#d6d6d6"/><rect x="110" y="-10" width="7" height="20" rx="2" fill="#000" opacity=".5"/><rect x="-38" y="-13" width="76" height="26" rx="3" fill="#7a7a7a"/><rect x="-121" y="-13" width="80" height="26" rx="3" fill="#7a7a7a"/><rect x="-121" y="-2" width="242" height="4" fill="${EGO}" opacity=".75"/>`,
     amb: () => `<circle class="wave" r="20" fill="none" stroke="#ff2a1f" stroke-width="2" opacity="0"/><rect x="-22" y="-10" width="44" height="20" rx="4" fill="#f2f2f2"/><rect x="10" y="-8" width="6" height="16" rx="2" fill="#000" opacity=".5"/><rect x="-10" y="-2" width="12" height="4" fill="${EGO}"/><rect x="-6" y="-6" width="4" height="12" fill="${EGO}"/>` +
@@ -190,6 +209,7 @@
   }
   function pose(a, t) {
     const c = Object.assign({}, posAt(a, t));
+    if (a.fix != null) c.g = a.fix * Math.PI / 180;
     if (c.g != null) return c;
     const p1 = posAt(a, t - .12), p2 = posAt(a, t + .12), dx = p2.x - p1.x, dy = p2.y - p1.y;
     c.g = dx * dx + dy * dy > .36 ? Math.atan2(dy, dx) : (a.sa ? a.sa[c.i] : (a.ang || 0) * Math.PI / 180);
@@ -219,7 +239,7 @@
         g.innerHTML = DRAW[a.k](a);
         act.appendChild(g);
         const q = s => g.querySelectorAll(s);
-        return { a, g, brk: q('.brk'), bl: q('.bl'), br: q('.br'), door: g.querySelector('.door'), dr: q('.dr'), s1: g.querySelector('.sir1'), s2: g.querySelector('.sir2'), wave: g.querySelector('.wave'), bcn: g.querySelector('.bcn') };
+        return { a, g, brk: q('.brk'), bl: q('.bl'), br: q('.br'), door: g.querySelector('.door'), dr: q('.dr'), s1: g.querySelector('.sir1'), s2: g.querySelector('.sir2'), wave: g.querySelector('.wave'), bcn: g.querySelector('.bcn'), rvl: g.querySelector('.rvl') };
       });
       const mk = html => { const g = document.createElementNS(NS, 'g'); g.innerHTML = html; dyn.appendChild(g); return g; };
       this.lights = (sc.lights || []).map(L => {
@@ -260,6 +280,7 @@
           o.wave.setAttribute('opacity', on ? (.55 * (1 - w)).toFixed(2) : 0);
         }
         if (o.bcn) o.bcn.setAttribute('opacity', Math.floor(t * 3) % 2 ? 1 : .2);
+        if (o.rvl) o.rvl.setAttribute('opacity', inR(a.rvl, t) ? 1 : 0);
       }
       for (const { L, c } of this.lights) {
         let st = 'off';
@@ -284,7 +305,9 @@
       if (sc.cam) { const tg = P[sc.cam.f]; cx = clamp(tg.x - sc.cam.x, 0, sc.cam.L - 640); }
       this.cx = cx;
       this.w.setAttribute('transform', `translate(${(-cx).toFixed(1)} 0)`);
-      let ov = sc.ovw ? sc.ovw(t, P) : '';
+      let ov = sc.night ? night(t, P, sc, cx) : '';
+      ov += sc.ovw ? sc.ovw(t, P) : '';
+      if (this.extra) ov += this.extra;
       for (const id in this.marks) {
         const p = P[id], m = this.marks[id];
         if (!p) continue;
@@ -297,6 +320,20 @@
       return P;
     }
     caption(t) { const c = (this.sc.cap || []).find(c => t >= c[0] && t < c[1]); return c ? c[2] : ''; }
+  }
+  // De noche se oscurece la escena y se dibujan los haces de luz (altas largas, bajas cortas).
+  function night(t, P, sc, cx) {
+    let s = `<rect x="${cx - 10}" y="0" width="660" height="360" fill="#000" opacity=".74"/>`;
+    sc.actors.forEach(a => {
+      if (!a.beam) return;
+      const b = a.beam.find(([t0, t1]) => t >= t0 && t <= t1);
+      if (!b) return;
+      const p = P[a.id], hi = b[2] === 'high', dx = Math.cos(p.g), dy = Math.sin(p.g), px = -dy, py = dx;
+      const ox = p.x + dx * 18, oy = p.y + dy * 18, Lb = hi ? 330 : 130, Wb = hi ? 72 : 40;
+      const pt = (u, v) => `${(ox + dx * u + px * v).toFixed(1)},${(oy + dy * u + py * v).toFixed(1)}`;
+      s += `<polygon points="${pt(0, -7)} ${pt(0, 7)} ${pt(Lb, Wb)} ${pt(Lb, -Wb)}" fill="#fff4c4" opacity="${hi ? .2 : .26}"/>`;
+    });
+    return s;
   }
   function rain(t, k) {
     let s = '';
@@ -323,8 +360,11 @@
     voice = vs.find(v => /^es[-_]CL/i.test(v.lang)) || vs.find(v => /^es[-_](419|MX|US|AR|CO|PE)/i.test(v.lang)) || vs.find(v => /^es/i.test(v.lang)) || null;
   };
   if (RB.canSpeak) { try { pickVoice(); speechSynthesis.addEventListener('voiceschanged', pickVoice); } catch (e) { /* sin voces */ } }
+  // En la app Android la voz la entrega el sistema (RutaNative).
+  if (window.RutaNative) RB.canSpeak = true;
   RB.say = txt => {
     if (!RB.canSpeak || !txt) return;
+    if (window.RutaNative) { try { window.RutaNative.speak(txt); } catch (e) { /* sin voz */ } return; }
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(txt);
@@ -334,7 +374,9 @@
       speechSynthesis.speak(u);
     } catch (e) { /* sin voz */ }
   };
-  RB.hush = () => { if (RB.canSpeak) try { speechSynthesis.cancel(); } catch (e) { /* nada */ } };
+  RB.hush = () => {
+    try { if (window.RutaNative) window.RutaNative.stop(); else if (RB.canSpeak) speechSynthesis.cancel(); } catch (e) { /* nada */ }
+  };
 
   // ---------- Reproductor ----------
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
@@ -465,6 +507,16 @@
       });
     }
     mark(m) { this.stage.marks = m; this.render(); }
+    // Para preguntas "toca el lugar": entrega la coordenada tocada en el mundo de la escena.
+    pickSpot(onPick) {
+      const fr = this.root.querySelector('.vp-frame');
+      fr.classList.add('spot');
+      fr.addEventListener('click', e => {
+        const r = this.svg.getBoundingClientRect();
+        onPick((e.clientX - r.left) / r.width * 640 + (this.stage.cx || 0), (e.clientY - r.top) / r.height * 360);
+      });
+    }
+    setExtra(svg) { this.stage.extra = svg; this.render(); }
     destroy() { this.dead = true; this.playing = false; RB.hush(); }
   }
   RB.Player = Player;
@@ -781,6 +833,143 @@
       ...parked([500, 600, 900], 128, 180),
       { id: 'bike', k: 'bike', c: '#bdbdbd', path: [[0, 560, 214], [3.8, 788, 214], [4.4, 824, 198], [5.2, 872, 198], [5.8, 908, 212], [8, 1040, 212]] },
       { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 200], [4.1, 634, 200], [4.6, 690, 200], [5.1, 728, 200], [5.6, 760, 200], [8, 904, 200]], brake: [[4.1, 5.6]] },
+    ],
+  });
+  // ---------- Escenas agregadas ----------
+  const ring = (p, txt) => p ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="26" fill="none" stroke="${EGO}" stroke-width="3"/>` + (txt ? label(p.x, p.y - 32, txt, 12) : '') : '';
+  RB.scene('estacionar', {
+    title: 'Dónde no estacionar', cat: 'Normas y preferencias', dur: 14, map: 'road', thumb: 1,
+    mo: { cw: [440], cwFull: true, hydrant: [110], drive: [230], side: [{ x: 600 }], center: [[0, 550, 'dash']] },
+    desc: 'Grifos, garajes, doble fila, pasos peatonales, veredas y esquinas.',
+    actors: [
+      { id: 'A', k: 'car', c: '#4b4b4b', path: [[0, 110, 232]], ang: 0 },
+      { id: 'B', k: 'car', c: '#3a3a3a', path: [[0, 230, 232]], ang: 0 },
+      { id: 'C', k: 'car', c: '#575757', path: [[0, 330, 232]], ang: 0 },
+      { id: 'D', k: 'car', c: '#8f8f8f', path: [[0, 330, 200]], ang: 0 },
+      { id: 'E', k: 'car', c: '#4b4b4b', path: [[0, 440, 232]], ang: 0 },
+      { id: 'I', k: 'car', c: '#3a3a3a', path: [[0, 528, 232]], ang: 0 },
+      { id: 'G', k: 'car', c: '#575757', path: [[0, 200, 128]], ang: 180 },
+      { id: 'H', k: 'car', c: '#6a6a6a', path: [[0, 380, 104]], ang: 0 },
+    ],
+    cap: [[0, 2.5, '¿Dónde no se puede estacionar?'], [2.5, 4.5, 'A menos de 5 metros de un grifo.'], [4.5, 6.5, 'Frente a la entrada de un garaje.'], [6.5, 8.5, 'En doble fila.'], [8.5, 10.5, 'Sobre un paso peatonal o sobre la vereda.'], [10.5, 12.5, 'A menos de 10 metros de una esquina.'], [12.5, 14.1, 'Estaciona solo donde esté permitido.']],
+    ovw: (t, P) => t < 2.5 ? '' : t < 4.5 ? ring(P.A, 'grifo') : t < 6.5 ? ring(P.B, 'garaje') : t < 8.5 ? ring(P.D, 'doble fila') : t < 10.5 ? ring(P.E, 'paso peatonal') + ring(P.H, 'vereda') : t < 12.5 ? ring(P.I, 'esquina') : ring(P.C, 'bien') + ring(P.G, 'bien'),
+  });
+
+  RB.scene('giro', {
+    title: 'Virar a la izquierda', cat: 'Normas y preferencias', dur: 10, map: 'cross', thumb: 4.6,
+    desc: 'Con luz verde, cede el paso a quienes vienen de frente y a los peatones.',
+    lights: [{ x: 376, y: 262, seq: [[0, 'g']] }, { x: 264, y: 98, seq: [[0, 'g']] }, { x: 404, y: 122, seq: [[0, 'r']] }, { x: 236, y: 238, seq: [[0, 'r']] }],
+    actors: [
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 340, 430], [3.2, 340, 270], [4.2, 334, 206, 'o'], [6.6, 334, 206], ...arc(294, 206, 40, 0, -90, 6.6, 8, 10), [10, -60, 166]], bL: [[2.2, 8]], brake: [[3.4, 6.6]] },
+      { id: 'o', k: 'car', c: WH, path: [[0, 300, -60], [2.6, 300, -40], [6.2, 300, 420]] },
+      { id: 'ped', k: 'ped', path: [[0, 263, 240], [3, 263, 240], [8, 263, 122]] },
+    ],
+    cap: [[0, 3, 'Luz verde: quieres virar a la izquierda.'], [3, 5.6, 'Avanza al centro del cruce y espera: quienes vienen de frente tienen preferencia.'], [5.6, 7.8, 'Cede el paso también a los peatones que cruzan la calle a la que entras.'], [7.8, 10.1, 'Cuando esté despejado, completa el viraje.']],
+  });
+
+  RB.scene('noche', {
+    title: 'Luces de noche', cat: 'Adelantar y distancia', dur: 11, map: 'road', mo: { L: 1800, rural: true }, cam: { f: 'ego', x: 160, L: 1800 }, night: true, thumb: 3,
+    desc: 'Cuándo usar luces altas y cuándo cambiar a bajas.',
+    actors: [
+      { id: 'ego', k: 'car', c: EGO, fn: t => ({ x: 80 + 120 * t, y: 200 }), beam: [[0, 3.2, 'high'], [3.2, 6, 'low'], [6, 12, 'high']] },
+      { id: 'o', k: 'car', c: WH, fn: t => ({ x: 1500 - 140 * t, y: 160 }), beam: [[0, 3.4, 'high'], [3.4, 12, 'low']] },
+      { id: 'ped', k: 'ped', c: '#2a2a2a', path: [[0, 1300, 230]], ang: 0 },
+    ],
+    cap: [[0, 3, 'De noche en carretera puedes usar luces altas si no hay nadie adelante.'], [3, 5.8, 'Viene un vehículo de frente: cambia a luces bajas para no encandilarlo.'], [5.8, 8, 'Cuando se cruzan, puedes volver a las luces altas.'], [8, 11.1, 'Un peatón con ropa oscura casi no se ve: modera la velocidad.']],
+  });
+
+  RB.scene('autopista', {
+    title: 'Entrar a una autopista', cat: 'Adelantar y distancia', dur: 9, map: 'hwy', mo: { L: 2200, ramp: 1000 }, cam: { f: 'ego', x: 220, L: 2200 }, thumb: 3.6,
+    desc: 'Usa la vía de aceleración y busca un espacio seguro.',
+    actors: [
+      { id: 'A', k: 'car', c: WH, fn: t => ({ x: 520 + 150 * t, y: 200 }) },
+      { id: 'B', k: 'car', c: GR, fn: t => ({ x: -260 + 150 * t, y: 200 }) },
+      { id: 'C', k: 'car', c: DK, fn: t => ({ x: -100 + 190 * t, y: 160 }) },
+      { id: 'o1', k: 'car', c: GR, fn: t => ({ x: 2000 - 200 * t, y: 50 }) },
+      { id: 'o2', k: 'car', c: DK, fn: t => ({ x: 2600 - 210 * t, y: 90 }) },
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 240], [2, 240, 240], [3.6, 480, 240], [5, 720, 234], [6, 880, 214], [6.8, 1000, 201], [9, 1340, 200]], bL: [[2.4, 6.6]] },
+    ],
+    cap: [[0, 2.4, 'Usa la vía de aceleración para alcanzar la velocidad del tránsito.'], [2.4, 5, 'Mira el espejo y el punto ciego, y señaliza a la izquierda.'], [5, 7, 'Ingresa en un espacio seguro, cediendo el paso a quienes ya circulan.'], [7, 9.1, 'No te detengas al final de la vía de aceleración si no es necesario.']],
+  });
+
+  RB.scene('adelantado', {
+    title: 'Cuando te adelantan', cat: 'Adelantar y distancia', dur: 9, map: 'road', mo: { L: 1800 }, cam: { f: 'ego', x: 260, L: 1800 }, thumb: 3.6,
+    desc: 'No aceleres y facilita la maniobra del otro vehículo.',
+    actors: [
+      { id: 'ego', k: 'car', c: EGO, fn: t => ({ x: 200 + 120 * t, y: 204 }) },
+      { id: 'ov', k: 'car', c: WH, path: [[0, -200, 200], [2.2, 240, 200], [3, 400, 172], [5, 840, 168], [5.8, 1010, 196], [9, 1600, 200]], bL: [[1.8, 3.2]], bR: [[5.2, 6.2]] },
+      { id: 'o1', k: 'car', c: GR, fn: t => ({ x: 2400 - 200 * t, y: 160 }) },
+    ],
+    cap: [[0, 2.2, 'Un vehículo más rápido se acerca por detrás.'], [2.2, 5.2, 'Te está adelantando: no aumentes la velocidad y mantente a la derecha.'], [5.2, 7.4, 'Facilita que vuelva a su pista con seguridad.'], [7.4, 9.1, 'Si es necesario, reduce un poco la velocidad.']],
+  });
+
+  RB.scene('emergencia-cruce', {
+    title: 'Ambulancia en un cruce', cat: 'Vehículos grandes y especiales', dur: 10, map: 'cross', thumb: 3.4,
+    desc: 'Aunque tengas luz verde, cede el paso al vehículo de emergencia.',
+    lights: [{ x: 376, y: 262, seq: [[0, 'g']] }, { x: 264, y: 98, seq: [[0, 'g']] }, { x: 404, y: 122, seq: [[0, 'r']] }, { x: 236, y: 238, seq: [[0, 'r']] }],
+    actors: [
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 340, 440], [2.4, 340, 330], [3.6, 340, 284, 'o'], [6.4, 340, 284], [8.6, 340, 60, 'i'], [10, 340, -140]], brake: [[2.6, 6.4]] },
+      { id: 'n', k: 'car', c: GR, path: [[0, 300, -80], [2.4, 300, 40], [3.6, 300, 78, 'o'], [6.2, 300, 78], [8.4, 300, 420, 'i']], brake: [[2.6, 6.2]] },
+      { id: 'amb', k: 'amb', path: [[0, 760, 160], [2.6, 700, 160], [5.6, -120, 160]], siren: true },
+    ],
+    cap: [[0, 2.4, 'Tienes luz verde, pero se acerca una ambulancia con sirena.'], [2.4, 5, 'Los vehículos de emergencia tienen preferencia: detente y déjala pasar.'], [5, 7.4, 'Asegúrate de que no venga otro vehículo de emergencia.'], [7.4, 10.1, 'Luego continúa con precaución.']],
+  });
+
+  RB.scene('escolar', {
+    title: 'Zona escolar', cat: 'Normas y preferencias', dur: 16, map: 'road', mo: { L: 1600, cw: [760], signs: [['escolares', 300, 256, 22], ['vel30', 336, 256, 20]] }, cam: { f: 'ego', x: 220, L: 1600 }, thumb: 9.5,
+    desc: 'Velocidad máxima de 30 km/h en horario de entrada y salida de alumnos.',
+    actors: [
+      { id: 'c1', k: 'child', c: '#9a9a9a', path: [[0, 752, 262], [8, 752, 262], [12, 752, 100]] },
+      { id: 'c2', k: 'child', c: '#7a7a7a', path: [[0, 763, 264], [8.3, 763, 264], [12.3, 763, 100]] },
+      { id: 'g', k: 'ped', c: '#bdbdbd', path: [[0, 774, 262], [8, 774, 262], [12.4, 774, 100]] },
+      { id: 'w', k: 'car', c: WH, path: [[0, 1100, 160], [7, 860, 160], [8.6, 800, 160, 'o'], [12.6, 800, 160], [14.6, 400, 160, 'i'], [16, 100, 160]], brake: [[7.4, 12.6]] },
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 200], [2, 340, 200], [3.4, 460, 200], [6.4, 640, 200], [9, 718, 200, 'o'], [12.2, 718, 200], [14, 900, 200, 'i'], [16, 1200, 200]], brake: [[2, 3.4], [8, 12.2]] },
+    ],
+    cap: [[0, 2.2, 'Zona escolar: atento a la señal.'], [2.2, 6.4, 'En horario de entrada y salida de alumnos, la velocidad máxima es 30 km/h.'], [6.4, 10, 'Detente y deja cruzar a los niños.'], [10, 13, 'Los niños pueden correr o cambiar de dirección de improviso.'], [13, 16.1, 'Retoma la marcha con precaución.']],
+  });
+
+  // ---------- Percepción de riesgos agregada ----------
+  RB.scene('h-moto', {
+    title: 'Riesgo: moto en el punto ciego', cat: 'Percepción de riesgos', dur: 9, map: 'hwy', mo: { L: 2000 }, cam: { f: 'ego', x: 220, L: 2000 }, thumb: 2,
+    hz: { w: [2.8, 4.4], txt: 'Al empezar a cambiarte de pista, una moto se acercaba rápido por la izquierda. Antes de cambiarte, revisa el espejo y gira la cabeza para ver el punto ciego.' },
+    actors: (() => {
+      const yk = track([[0, 200], [2.6, 200], [3.5, 189], [4.4, 200], [5.8, 200], [7.2, 162], [9, 160]]);
+      return [
+        { id: 'trk', k: 'truck', fn: t => ({ x: 560 + 90 * t, y: 200 }) },
+        { id: 'moto', k: 'moto', c: WH, fn: t => ({ x: -400 + 260 * t, y: 160 }) },
+        { id: 'o1', k: 'car', c: GR, fn: t => ({ x: 2000 - 200 * t, y: 50 }) },
+        { id: 'ego', k: 'car', c: EGO, fn: t => ({ x: 200 + 130 * t, y: yk(t)[0] }), bL: [[2.2, 3.6], [5.4, 7.2]] },
+      ];
+    })(),
+  });
+
+  RB.scene('h-giro', {
+    title: 'Riesgo: auto que vira delante', cat: 'Percepción de riesgos', dur: 8, map: 'road', mo: { L: 1800, side: [{ x: 930 }] }, cam: { f: 'ego', x: 200, L: 1800 }, thumb: 2,
+    hz: { w: [2.6, 4.2], txt: 'El auto que venía de frente puso el intermitente y empezó a virar a la izquierda, cruzando tu camino. Al ver su señal debías soltar el acelerador y prepararte para frenar.' },
+    actors: [
+      ...parked([420, 480, 1100], 232, 0),
+      { id: 'oc', k: 'car', c: WH, path: [[0, 1500, 160], [2.6, 1100, 160], [3.6, 960, 160], ...arc(960, 200, 40, -90, -180, 3.6, 4.4, 8), [6, 920, 440]], bL: [[1.8, 4.4]], brake: [[2.8, 3.6]] },
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 200], [3.9, 606, 200], [5.1, 690, 200, 'o'], [6.4, 690, 200], [8, 900, 200, 'i']], brake: [[3.9, 6.4]] },
+    ],
+  });
+
+  RB.scene('h-retroceso', {
+    title: 'Riesgo: auto saliendo de reversa', cat: 'Percepción de riesgos', dur: 8, map: 'road', mo: { L: 1800, drive: [820] }, cam: { f: 'ego', x: 200, L: 1800 }, thumb: 2,
+    hz: { w: [2.4, 4.2], txt: 'Las luces de freno y de retroceso del auto en el garaje anunciaban que iba a salir de reversa. Debías reducir la velocidad y prepararte para detenerte.' },
+    actors: [
+      ...parked([400, 470, 1000, 1070], 232, 0),
+      { id: 'R', k: 'car', c: '#5a5a5a', path: [[0, 820, 298], [3, 820, 298], [4.6, 820, 242, 'io'], [8, 820, 242]], fix: 90, brake: [[2.4, 3], [4.6, 5.2]], rvl: [[2.6, 4.8]] },
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 200], [3.7, 578, 200], [4.9, 662, 200, 'o'], [6.6, 662, 200], [8, 860, 200, 'i']], brake: [[3.7, 6.6]] },
+    ],
+  });
+
+  RB.scene('h-perro', {
+    title: 'Riesgo: animal en el camino', cat: 'Percepción de riesgos', dur: 8, map: 'road', mo: { L: 1800, rural: true }, cam: { f: 'ego', x: 200, L: 1800 }, thumb: 2,
+    hz: { w: [2.6, 4.4], txt: 'Un animal junto a la vía puede cruzar en cualquier momento. Apenas lo viste, debías reducir la velocidad.' },
+    actors: [
+      { id: 'dog', k: 'dog', path: [[0, 900, 262], [3.2, 900, 262], [4.6, 900, 150, 'io'], [9, 900, 118]] },
+      { id: 'o1', k: 'car', c: GR, fn: t => ({ x: 1700 - 120 * t, y: 160 }) },
+      { id: 'ego', k: 'car', c: EGO, path: [[0, 60, 200], [3.8, 592, 200], [5, 676, 200, 'o'], [6.6, 676, 200], [8, 860, 200, 'i']], brake: [[3.8, 6.6]] },
     ],
   });
 })();

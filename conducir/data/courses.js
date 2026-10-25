@@ -14,12 +14,12 @@
     { id: 'F', course: 'F', t: 'FF.AA., Carabineros, PDI y Gendarmería' },
   ];
   RB.courses = {
-    B: { name: 'Clase B', sub: 'Autos y camionetas', units: ['sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'seg', 'def', 'emer', 'mec', 'doc', 'haz'] },
-    C: { name: 'Clase C', sub: 'Motocicletas', units: ['motoA', 'sen', 'sem', 'nor', 'pre', 'motoB', 'motoC', 'rie', 'emer', 'doc', 'haz'] },
-    AP: { name: 'Profesional de pasajeros', sub: 'Clases A1, A2 y A3', units: ['profA', 'pas', 'pesado', 'jor', 'sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'def', 'emer', 'doc'] },
-    AC: { name: 'Profesional de carga', sub: 'Clases A4 y A5', units: ['profA', 'carga', 'art', 'pesado', 'peligrosas', 'jor', 'sen', 'nor', 'pre', 'vul', 'rie', 'emer', 'doc'] },
-    D: { name: 'Clase D', sub: 'Maquinaria automotriz', units: ['maq1', 'maq2', 'sen', 'nor', 'pre', 'rie', 'emer', 'doc'] },
-    E: { name: 'Clase E', sub: 'Tracción animal', units: ['tra1', 'tra2', 'sen', 'pre', 'emer'] },
-    F: { name: 'Clase F', sub: 'Institucional', units: ['emerv', 'sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'def', 'emer', 'doc'] },
+    B: { name: 'Clase B', sub: 'Autos y camionetas', units: ['sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'seg', 'def', 'emer', 'mec', 'eco', 'doc', 'haz'] },
+    C: { name: 'Clase C', sub: 'Motocicletas', units: ['motoA', 'sen', 'sem', 'nor', 'pre', 'motoB', 'motoC', 'rie', 'emer', 'eco', 'doc', 'haz'] },
+    AP: { name: 'Profesional de pasajeros', sub: 'Clases A1, A2 y A3', units: ['profA', 'pas', 'pesado', 'jor', 'sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'seg', 'def', 'emer', 'eco', 'doc', 'haz'] },
+    AC: { name: 'Profesional de carga', sub: 'Clases A4 y A5', units: ['profA', 'carga', 'art', 'pesado', 'peligrosas', 'jor', 'sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'def', 'emer', 'eco', 'doc', 'haz'] },
+    D: { name: 'Clase D', sub: 'Maquinaria automotriz', units: ['maq1', 'maq2', 'sen', 'sem', 'nor', 'pre', 'rie', 'emer', 'doc'] },
+    E: { name: 'Clase E', sub: 'Tracción animal', units: ['tra1', 'tra2', 'sen', 'sem', 'pre', 'emer'] },
+    F: { name: 'Clase F', sub: 'Institucional', units: ['emerv', 'sen', 'sem', 'nor', 'pre', 'vul', 'rie', 'def', 'emer', 'eco', 'doc', 'haz'] },
   };
 })();

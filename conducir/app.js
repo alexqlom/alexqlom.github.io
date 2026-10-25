@@ -22,7 +22,7 @@
   const DEF = () => ({
     v: 1, lic: null, goal: 20, xp: 0, days: {}, streak: 0, best: 0, last: null, hearts: 5, hAt: Date.now(),
     done: {}, stars: {}, q: {}, exams: [], ach: {}, seen: {}, lics: {}, cards: 0, revs: 0, perf: 0, goals: 0, goalDay: null,
-    haz: {}, hazBest: 0, set: { sound: true, vib: true, voice: false, inf: false, theme: 'dark' },
+    haz: {}, hazBest: 0, blitz: 0, set: { sound: true, vib: true, voice: false, inf: false, theme: 'dark' },
   });
   let S = DEF();
   const load = raw => { const o = JSON.parse(raw); return Object.assign(DEF(), o, { set: Object.assign(DEF().set, o.set || {}) }); };
@@ -61,7 +61,7 @@
     RB.units[uid].lessons.forEach((l, li) => {
       l.id = uid + '.' + (li + 1); l.u = uid; LESSONS[l.id] = l;
       l.items.forEach(it => {
-        it.id = 'q' + hash(it.t + '|' + (it.q || it.s || it.title || '') + '|' + (it.scene || '') + '|' + JSON.stringify(it.o || it.p || it.k || it.a || ''));
+        it.id = 'q' + hash(it.t + '|' + (it.q || it.s || it.title || '') + '|' + (it.scene || '') + '|' + JSON.stringify(it.o || it.p || it.k || it.a || it.w || ''));
         if (!ITEMS[it.id]) { ITEMS[it.id] = it; it._u = uid; }
       });
     });
@@ -112,7 +112,10 @@
     done() { [523, 659, 784, 1047].forEach((f, i) => tone(f, .2, 'triangle', .07, i * .11)); },
     tap() { tone(1200, .03, 'sine', .02); },
   };
-  const buzz = ms => { if (S.set.vib && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) { /* nada */ } };
+  const buzz = ms => {
+    if (!S.set.vib) return;
+    try { if (window.RutaNative) window.RutaNative.vibrate(ms); else if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* nada */ }
+  };
 
   // ---------- Capas: el botón Atrás del teléfono cierra la capa superior ----------
   const OV = [];
@@ -181,6 +184,7 @@
     { id: 'cards', n: 'Señalero', d: 'Completa una ronda de tarjetas de señales', ic: 'sign', ok: () => S.cards >= 1 },
     { id: 'review', n: 'Repaso al día', d: 'Completa un repaso inteligente', ic: 'replay', ok: () => S.revs >= 1 },
     { id: 'multi', n: 'Todo terreno', d: 'Practica con 3 clases de licencia', ic: 'truck', ok: () => Object.keys(S.lics).length >= 3 },
+    { id: 'blitz', n: 'Rayo', d: 'Responde 15 bien en un contrarreloj', ic: 'bolt', ok: () => S.blitz >= 15 },
   ];
   function checkAch() {
     let i = 0;
@@ -299,6 +303,7 @@
     mc: 'Elige la respuesta correcta', tf: '¿Verdadero o falso?', img: 'Elige la señal correcta', multi: 'Selecciona todas las correctas',
     fill: 'Completa la frase', order: 'Ordena los pasos', match: 'Une las parejas', sort: 'Clasifica', num: 'Indica el valor',
     video: 'Video · responde', tap: 'Toca en la imagen', hazard: 'Percepción de riesgos', clip: 'Video', info: 'Antes de empezar',
+    spot: 'Toca el lugar', build: 'Arma la frase',
   };
   const qHead = (it, text) => `<div class="qk">${KIND[it.t]}</div><div class="qt"><span class="qtx">${esc(text != null ? text : it.q)}</span>${RB.canSpeak ? `<button class="ib say" data-say type="button" aria-label="Leer en voz alta">${I('vol')}</button>` : ''}</div>`;
   const optBtn = (html, v, k) => `<button class="opt" data-v="${v}" type="button"><span class="k">${k}</span><span class="ot">${html}</span></button>`;
@@ -485,14 +490,24 @@
     draw();
     return { check: () => ({ ok: wrong.length === 0 }) };
   };
+  // Velocímetro: arco de 240° que se llena según el valor elegido.
+  function gauge(v, min, max) {
+    const pt = (deg, r) => { const a = deg * Math.PI / 180; return `${(100 + r * Math.cos(a)).toFixed(1)} ${(100 + r * Math.sin(a)).toFixed(1)}`; };
+    const f = clamp((v - min) / (max - min), 0, 1), a = 150 + 240 * f;
+    let ticks = '';
+    for (let k = 0; k <= 12; k++) { const d = 150 + 20 * k; ticks += `<path d="M${pt(d, 66)} L${pt(d, k % 2 ? 72 : 76)}" stroke="var(--line2)" stroke-width="${k % 2 ? 1.5 : 2.5}"/>`; }
+    return `<svg class="gauge" viewBox="0 0 200 128" aria-hidden="true"><path d="M${pt(150, 84)} A84 84 0 1 1 ${pt(390, 84)}" fill="none" stroke="var(--s3)" stroke-width="10" stroke-linecap="round"/>` +
+      (f > 0 ? `<path d="M${pt(150, 84)} A84 84 0 ${a - 150 > 180 ? 1 : 0} 1 ${pt(a, 84)}" fill="none" stroke="var(--red)" stroke-width="10" stroke-linecap="round"/>` : '') +
+      ticks + `<path d="M100 100 L${pt(a, 60)}" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="100" r="7" fill="var(--ink)"/></svg>`;
+  }
   R.num = (it, body, api) => {
-    const { min, max, step, a } = it, n = Math.round((max - min) / step);
+    const { min, max, step, a } = it, n = Math.round((max - min) / step), speed = it.u === 'km/h';
     let v;
     do { v = +(min + step * Math.floor(Math.random() * (n + 1))).toFixed(4); } while (Math.abs(v - a) < step / 2 && n > 1);
-    body.innerHTML = qHead(it) + `<div class="num"><button class="ib nb" type="button" data-d="-1" aria-label="Menos">−</button><output class="nv"><b>${fmtNum(v, step)}</b> <span>${esc(it.u)}</span></output><button class="ib nb" type="button" data-d="1" aria-label="Más">+</button></div>` +
+    body.innerHTML = qHead(it) + (speed ? `<div class="gw">${gauge(v, min, max)}</div>` : '') + `<div class="num"><button class="ib nb" type="button" data-d="-1" aria-label="Menos">−</button><output class="nv"><b>${fmtNum(v, step)}</b> <span>${esc(it.u)}</span></output><button class="ib nb" type="button" data-d="1" aria-label="Más">+</button></div>` +
       `<input class="nr" type="range" min="${min}" max="${max}" step="${step}" value="${v}" aria-label="Valor en ${esc(it.u)}"><div class="nscale"><span>${fmtNum(min, step)}</span><span>${fmtNum(max, step)}</span></div>`;
     const rng = $('.nr', body), out = $('.nv b', body);
-    const set = nv => { v = clamp(+(+nv).toFixed(4), min, max); rng.value = v; out.textContent = fmtNum(v, step); api.ready(true); };
+    const set = nv => { v = clamp(+(+nv).toFixed(4), min, max); rng.value = v; out.textContent = fmtNum(v, step); if (speed) $('.gw', body).innerHTML = gauge(v, min, max); api.ready(true); };
     rng.addEventListener('input', () => set(rng.value));
     body.addEventListener('click', e => { const b = e.target.closest('.nb'); if (b && !body.dataset.locked) { set(v + step * +b.dataset.d); SFX.tap(); } });
     return {
@@ -526,19 +541,70 @@
     };
   };
   R.tap = (it, body, api, ses) => {
-    let sel = null;
-    body.innerHTML = qHead(it) + `<div class="qvid"></div><p class="hint muted">Toca directamente sobre la imagen.</p>`;
+    const multi = Array.isArray(it.a), A = multi ? it.a : [it.a], sel = new Set();
+    body.innerHTML = qHead(it) + `<div class="qvid"></div><p class="hint muted">${multi ? 'Toca todos los que correspondan y luego comprueba.' : 'Toca directamente sobre la imagen.'}</p>`;
     const p = ses.player = new RB.Player($('.qvid', body), it.scene, { captions: false, noBig: true });
     p.seek(it.at);
-    p.pickable(it.ids, id => { if (body.dataset.locked) return; sel = id; p.mark({ [id]: 'sel' }); SFX.tap(); api.ready(true); });
+    p.pickable(it.ids, id => {
+      if (body.dataset.locked) return;
+      if (!multi) sel.clear();
+      if (sel.has(id)) sel.delete(id); else sel.add(id);
+      const m = {};
+      sel.forEach(x => { m[x] = 'sel'; });
+      p.mark(m); SFX.tap(); api.ready(sel.size > 0);
+    });
     return {
       check: () => {
         body.dataset.locked = '1';
-        const m = { [it.a]: 'ok' };
-        if (sel !== it.a) m[sel] = 'bad';
+        const m = {}, ok = A.length === sel.size && A.every(x => sel.has(x));
+        A.forEach(x => { m[x] = 'ok'; });
+        sel.forEach(x => { if (!A.includes(x)) m[x] = 'bad'; });
         p.mark(m);
-        setTimeout(() => { if (!ses.dead) { p.mark({}); p.showCaptions(true); p.play(); } }, 1500);
-        return { ok: sel === it.a, right: esc(it.r || 'Mira el vehículo marcado en la imagen.') };
+        if (!it.still) setTimeout(() => { if (!ses.dead) { p.mark({}); p.showCaptions(true); p.play(); } }, 1600);
+        return { ok, right: esc(it.r || (multi ? 'Los marcados con el visto bueno en la imagen.' : 'Mira el vehículo marcado en la imagen.')) };
+      },
+    };
+  };
+  // Tocar un lugar de la imagen (una o varias zonas correctas, en coordenadas de la escena).
+  R.spot = (it, body, api, ses) => {
+    let pt = null;
+    body.innerHTML = qHead(it) + `<div class="qvid"></div><p class="hint muted">Toca el lugar en la imagen y luego comprueba.</p>`;
+    const p = ses.player = new RB.Player($('.qvid', body), it.scene, { captions: false, noBig: true });
+    p.seek(it.at || 0);
+    const dot = (x, y, col) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8" fill="${col}" stroke="#000" stroke-width="2"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="17" fill="none" stroke="${col}" stroke-width="2.5"/>`;
+    p.pickSpot((x, y) => { if (body.dataset.locked) return; pt = [x, y]; p.setExtra(dot(x, y, '#fff')); SFX.tap(); api.ready(true); });
+    return {
+      check: () => {
+        body.dataset.locked = '1';
+        const Z = Array.isArray(it.z[0]) ? it.z : [it.z];
+        const ok = Z.some(([zx, zy, zw, zh]) => pt[0] >= zx && pt[0] <= zx + zw && pt[1] >= zy && pt[1] <= zy + zh);
+        p.setExtra(Z.map(([zx, zy, zw, zh]) => `<rect x="${zx}" y="${zy}" width="${zw}" height="${zh}" rx="6" fill="#fff" fill-opacity=".16" stroke="#fff" stroke-width="2.5" stroke-dasharray="7 5"/>`).join('') + dot(pt[0], pt[1], ok ? '#fff' : '#E10600'));
+        return { ok, right: esc(it.r || 'La zona marcada en la imagen.') };
+      },
+    };
+  };
+  // Armar una frase con fichas de palabras, con algunas palabras de más.
+  const norm = t => t.toLowerCase().replace(/[.,;:¿?¡!]/g, '').replace(/\s+/g, ' ').trim();
+  R.build = (it, body, api) => {
+    const words = it.w.split(' '), tiles = shuffle(words.map(w => ({ w })).concat((it.x || []).map(w => ({ w })))), ans = [];
+    body.innerHTML = qHead(it) + `<div class="bld-a" aria-live="polite"></div><div class="bld-b"></div>`;
+    const draw = () => {
+      $('.bld-a', body).innerHTML = ans.length ? ans.map((t, k) => `<button class="chipw on" type="button" data-k="${k}">${esc(t.w)}</button>`).join('') : `<span class="muted">Toca las palabras en orden</span>`;
+      $('.bld-b', body).innerHTML = tiles.map((t, j) => `<button class="chipw${ans.includes(t) ? ' used' : ''}" type="button" data-j="${j}"${ans.includes(t) ? ' disabled' : ''}>${esc(t.w)}</button>`).join('');
+      api.ready(ans.length === words.length);
+    };
+    body.addEventListener('click', e => {
+      if (body.dataset.locked) return;
+      const b = e.target.closest('[data-j]'), a = e.target.closest('[data-k]');
+      if (b && !b.disabled && ans.length < words.length) { ans.push(tiles[+b.dataset.j]); SFX.tap(); draw(); } else if (a) { ans.splice(+a.dataset.k, 1); draw(); }
+    });
+    draw();
+    return {
+      check: () => {
+        body.dataset.locked = '1';
+        const ok = norm(ans.map(t => t.w).join(' ')) === norm(it.w);
+        $('.bld-a', body).classList.add(ok ? 'ok' : 'bad');
+        return { ok, right: esc(it.w) };
       },
     };
   };
@@ -740,8 +806,9 @@
     const items = shuffle(unitItems(RB.units[uid]).filter(GRADED)).slice(0, 10);
     startSession({ kind: 'practice', uid, items });
   }
+  const hazIds = () => Object.keys(RB.scenes).filter(id => RB.scenes[id].hz);
   function startHazards() {
-    const ids = Object.keys(RB.scenes).filter(id => RB.scenes[id].hz);
+    const ids = hazIds();
     startSession({ kind: 'hazard', full: true, items: [{ t: 'info', ic: 'target', title: 'Percepción de riesgos', txt: `Verás ${ids.length} videos desde tu auto. Toca la pantalla apenas veas un peligro que podría obligarte a frenar o a esquivar. Mientras antes lo detectes, más puntos.` }].concat(ids.map(id => ({ t: 'hazard', scene: id, id: 'qh' + id }))) });
   }
   function noHearts() {
@@ -880,7 +947,9 @@
       <button class="pcard big" type="button" data-act="exam">${I('exam')}<div><b>Simulacro de examen</b><span>35 preguntas · 3 de doble puntaje · 45 minutos · apruebas con 33 de 38</span>${last ? `<em>Último: ${last.score}/${last.max} · ${last.pass ? 'Aprobado' : 'Reprobado'}${passed ? ` · ${plural(passed, 'aprobado', 'aprobados')}` : ''}</em>` : ''}</div></button>
       <div class="pgrid">
         <button class="pcard" type="button" data-act="review">${I('replay')}<b>Repaso inteligente</b><span>${due ? plural(due, 'pregunta pendiente', 'preguntas pendientes') : 'Estás al día'}</span></button>
-        <button class="pcard" type="button" data-act="hazard">${I('eye')}<b>Percepción de riesgos</b><span>Mejor puntaje: ${S.hazBest}/30</span></button>
+        <button class="pcard" type="button" data-act="blitz">${I('bolt')}<b>Contrarreloj</b><span>60 segundos · récord ${S.blitz}</span></button>
+        <button class="pcard" type="button" data-act="hazard">${I('eye')}<b>Percepción de riesgos</b><span>${hazIds().length} clips · mejor ${S.hazBest}/${hazIds().length * 5}</span></button>
+        <button class="pcard" type="button" data-act="guide">${I('doc')}<b>Guía de estudio</b><span>${cItems().filter(GRADED).length} preguntas con respuesta</span></button>
         <button class="pcard" type="button" data-act="lab">${I('flask')}<b>Laboratorio de frenado</b><span>Velocidad, reacción y distancia</span></button>
         <button class="pcard" type="button" data-act="cards">${I('cards')}<b>Tarjetas de señales</b><span>${Object.keys(RB.signs).length} señales</span></button>
       </div>
@@ -891,9 +960,111 @@
       const b = e.target.closest('[data-act],[data-u]');
       if (!b) return;
       if (b.dataset.u) return startTopic(b.dataset.u);
-      ({ exam: startExam, review: startReview, hazard: startHazards, lab: openLab, cards: startCards })[b.dataset.act]();
+      ({ exam: startExam, review: startReview, hazard: startHazards, lab: openLab, cards: startCards, blitz: startBlitz, guide: openGuide })[b.dataset.act]();
     };
   };
+
+  // ---------- Contrarreloj: todas las que puedas en 60 segundos ----------
+  function startBlitz() {
+    const pool = shuffle(cItems().filter(it => it.t === 'tf' || it.t === 'mc'));
+    const st = { i: 0, score: 0, miss: 0, t0: Date.now(), dur: 60, done: false, lock: false };
+    const ent = openLayer('ses blitz', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="pbar tbar" role="timer" aria-label="Tiempo restante"><i style="width:100%"></i></div><span class="ses-hp" title="Correctas">${I('bolt')}<b>0</b></span></header>` +
+      `<main class="ses-b"></main><footer class="ses-f"><p class="muted center">Responde todas las que puedas en 60 segundos.</p></footer>`, () => { st.done = true; cancelAnimationFrame(st.raf); });
+    ent.guard = () => st.done || confirm('¿Salir del contrarreloj?');
+    const el = ent.el;
+    $('[data-x]', el).onclick = () => history.back();
+    const draw = () => {
+      const it = pool[st.i % pool.length];
+      const opts = it.t === 'tf' ? `<div class="opts tf">${optBtn('Verdadero', it.a ? 'ok' : 'no', 1)}${optBtn('Falso', it.a ? 'no' : 'ok', 2)}</div>`
+        : `<div class="opts">${shuffle(it.o.map((t, j) => ({ t, j }))).map((o, k) => optBtn(esc(o.t), o.j === 0 ? 'ok' : 'no', k + 1)).join('')}</div>`;
+      $('.ses-b', el).innerHTML = `<div class="qk">${it.t === 'tf' ? '¿Verdadero o falso?' : 'Elige la correcta'}</div><div class="qt"><span class="qtx">${esc(it.q)}</span></div>${it.sign ? `<div class="qsign">${RB.sign(it.sign, 104)}</div>` : ''}${opts}`;
+    };
+    $('.ses-b', el).addEventListener('click', e => {
+      const b = e.target.closest('.opt');
+      if (!b || st.lock || st.done) return;
+      st.lock = true;
+      const it = pool[st.i % pool.length], ok = b.dataset.v === 'ok';
+      record(it, ok);
+      b.classList.add(ok ? 'ok' : 'bad');
+      if (ok) { st.score++; SFX.ok(); } else { st.miss++; SFX.bad(); buzz(60); const r = $('.opt[data-v="ok"]', el); if (r) r.classList.add('ok'); }
+      $('.ses-hp b', el).textContent = st.score;
+      setTimeout(() => { st.lock = false; st.i++; if (!st.done) draw(); }, ok ? 280 : 1000);
+    });
+    const finish = () => {
+      st.done = true;
+      const rec = st.score > S.blitz;
+      S.blitz = Math.max(S.blitz, st.score);
+      const xp = Math.min(20, 3 + st.score), streakUp = bumpStreak(), goalHit = addXP(xp);
+      S.lics[S.lic] = 1;
+      save();
+      SFX.done();
+      $('.ses-b', el).innerHTML = `<div class="res"><div class="res-ic">${I('bolt')}</div><h2>¡Tiempo!</h2><div class="score"><b>${st.score}</b><span>correctas</span></div>` +
+        `<p class="muted">${plural(st.miss, 'incorrecta', 'incorrectas')} · récord ${S.blitz}${rec && st.score ? ' · ¡nuevo récord!' : ''}</p>` +
+        `<p class="note">${I('bolt')}+${xp} XP${streakUp ? ` · ${I('flame', 'on')}¡Racha extendida!` : ''}${goalHit ? ` · ${I('target')}¡Meta cumplida!` : ''}</p></div>`;
+      $('.ses-f', el).innerHTML = `<div class="two"><button class="btn ghost" type="button" data-again>${I('replay')}Otra vez</button><button class="btn" type="button" data-close>Listo</button></div>`;
+      $('[data-again]', el).onclick = () => closeLayer(startBlitz);
+      $('[data-close]', el).onclick = () => closeLayer(refresh);
+      checkAch();
+    };
+    const tick = () => {
+      if (st.done) return;
+      const left = st.dur - (Date.now() - st.t0) / 1000;
+      $('.tbar i', el).style.width = Math.max(0, 100 * left / st.dur) + '%';
+      if (left <= 0) return finish();
+      st.raf = requestAnimationFrame(tick);
+    };
+    draw();
+    st.raf = requestAnimationFrame(tick);
+  }
+
+  // ---------- Guía de estudio: todas las preguntas con su respuesta ----------
+  const plain = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const guideQ = it => it.t === 'fill' ? it.s.replace('___', '____') : it.t === 'hazard' ? RB.scenes[it.scene].title : (it.q || '');
+  function guideAnswer(it) {
+    const ok = txt => `<p class="ga">${I('check')}<span>${txt}</span></p>`;
+    switch (it.t) {
+      case 'mc': case 'video': return ok(esc(it.o[0]));
+      case 'fill': { const [a, b] = it.s.split('___'); return ok(`${esc(a)}<b>${esc(it.o[0])}</b>${esc(b || '')}`); }
+      case 'tf': return ok(it.a ? 'Verdadero' : 'Falso');
+      case 'img': return `<p class="ga">${RB.sign(it.o[0], 40)}<span>${esc(RB.signName(it.o[0]))}</span></p>`;
+      case 'multi': return `<ul class="gal">${it.a.map(i => `<li>${esc(it.o[i])}</li>`).join('')}</ul>`;
+      case 'order': return `<ol class="gal">${it.o.map(t => `<li>${esc(t)}</li>`).join('')}</ol>`;
+      case 'match': return `<ul class="gal">${it.p.map(p => `<li>${esc(cellText(p[0]))} → ${esc(cellText(p[1]))}</li>`).join('')}</ul>`;
+      case 'sort': return `<ul class="gal">${it.k.map(([x, c]) => `<li>${esc(cellText(x))} → ${esc(it.c[c])}</li>`).join('')}</ul>`;
+      case 'num': return ok(`${fmtNum(it.a, it.step)} ${esc(it.u)}`);
+      case 'build': return ok(esc(it.w));
+      case 'tap': case 'spot': return ok(esc(it.r || ''));
+      case 'hazard': return `<p class="ga">${I('eye')}<span>${esc(RB.scenes[it.scene].hz.txt)}</span></p>`;
+      default: return '';
+    }
+  }
+  function openGuide() {
+    const all = cItems().filter(GRADED);
+    const ent = openLayer('guide', `<header class="lh"><button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button><b>Guía de estudio</b></header>` +
+      `<div class="lbody"><input class="search" type="search" placeholder="Buscar entre ${all.length} preguntas…" aria-label="Buscar en la guía"><div class="gl"></div></div>`);
+    const el = ent.el, box = $('.gl', el), inp = $('.search', el);
+    $('[data-x]', el).onclick = () => closeLayer();
+    const item = it => `<div class="gq"><p class="gqq">${esc(guideQ(it))}</p>${it.sign ? `<div class="gqs">${RB.sign(it.sign, 52)}</div>` : ''}${guideAnswer(it)}${it.e ? `<p class="gqe">${esc(it.e)}</p>` : ''}</div>`;
+    const list = () => {
+      const q = plain(inp.value.trim());
+      if (q.length >= 2) {
+        const hits = all.filter(it => plain(guideQ(it) + ' ' + JSON.stringify(it.o || it.p || it.k || it.w || '') + ' ' + (it.e || '') + ' ' + (it.r || '')).includes(q));
+        box.innerHTML = `<p class="muted">${plural(hits.length, 'resultado', 'resultados')}${hits.length > 120 ? ' · se muestran los primeros 120' : ''}</p>` + hits.slice(0, 120).map(item).join('');
+        return;
+      }
+      box.innerHTML = cUnits().map(u => {
+        const n = unitItems(u).filter(GRADED).length;
+        return `<details class="gu"><summary>${I(u.ic)}<span><b>${esc(u.name)}</b><small>${plural(n, 'pregunta', 'preguntas')}</small></span></summary><div class="gus" data-u="${u.id}"></div></details>`;
+      }).join('');
+      $$('details.gu', box).forEach(d => d.addEventListener('toggle', () => {
+        const c = $('.gus', d);
+        if (d.open && !c.innerHTML) c.innerHTML = unitItems(RB.units[c.dataset.u]).filter(GRADED).map(item).join('');
+      }));
+    };
+    let tmr;
+    inp.addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(list, 160); });
+    list();
+  }
 
   // ---------- Laboratorio de frenado ----------
   function openLab() {
@@ -1096,6 +1267,7 @@
     });
   };
   function exportData() {
+    if (window.RutaNative) { window.RutaNative.share(`ruta-progreso-${today()}.json`, JSON.stringify(S)); return; }
     const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
     const a = D.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1144,7 +1316,7 @@
       const b = $('[data-go]', ses.el);
       if (b && !b.disabled) { e.preventDefault(); b.click(); }
     } else if (/^[1-9]$/.test(e.key) && ses.state === 'answer') {
-      const list = $$('.ses-b .opt:not(:disabled), .ses-b .ord-bank .chipw, .ses-b .fill-bank .chipw', ses.el);
+      const list = $$('.ses-b .opt:not(:disabled), .ses-b .ord-bank .chipw, .ses-b .fill-bank .chipw, .ses-b .bld-b .chipw:not(:disabled)', ses.el);
       const b = list[+e.key - 1];
       if (b) { e.preventDefault(); b.click(); }
     }
@@ -1159,7 +1331,7 @@
   D.addEventListener('visibilitychange', () => { if (!D.hidden) header(); });
   go((location.hash || '').slice(1) || 'aprender');
   if (!S.lic) onboarding();
-  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.RutaNative) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
   }
   RB.app = { state: () => S, session: () => curSes };

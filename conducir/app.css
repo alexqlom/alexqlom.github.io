@@ -458,3 +458,34 @@ body.noscroll #toasts { top: calc(6px + env(safe-area-inset-top)); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* Tipos interactivos nuevos */
+.vp-frame.spot { cursor: crosshair; }
+.gw { display: flex; justify-content: center; margin: -6px 0 -10px; }
+.gauge { width: 220px; height: auto; }
+.bld-a { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 8px; min-height: 104px; padding: 10px 0 14px; border-bottom: 2px solid var(--line2); }
+.bld-a.ok { border-bottom-color: var(--ink); }
+.bld-a.bad { border-bottom-color: var(--red); }
+.bld-a .muted { align-self: center; font-size: 14px; }
+.bld-b { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chipw.on { border-color: var(--line2); }
+.center { text-align: center; margin: 0; }
+/* Guía de estudio */
+.search { width: 100%; margin: 4px 0 14px; padding: 13px 14px; border: 1.5px solid var(--line2); border-radius: 12px; background: var(--s1); color: var(--ink); font: inherit; font-size: 16px; }
+.search:focus { outline: none; border-color: var(--red); }
+.gu { margin-bottom: 8px; border: 1px solid var(--line); border-radius: 14px; background: var(--s1); }
+.gu > summary { display: flex; align-items: center; gap: 12px; padding: 13px 14px; cursor: pointer; list-style: none; }
+.gu > summary::-webkit-details-marker { display: none; }
+.gu > summary .ic { color: var(--red); }
+.gu > summary b { display: block; font-size: 15px; }
+.gu > summary small { color: var(--mute); font-size: 12.5px; }
+.gus { padding: 0 14px 6px; }
+.gq { padding: 12px 0; border-top: 1px solid var(--line); }
+.gl > .gq:first-of-type { border-top: 0; }
+.gqq { margin: 0 0 6px; font-weight: 700; line-height: 1.35; }
+.gqs { margin: 2px 0 6px; }
+.ga { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--ink2); line-height: 1.4; }
+.ga .ic { width: 18px; height: 18px; margin-top: 2px; color: var(--red); }
+.ga svg:not(.ic) { flex: none; }
+.gal { margin: 4px 0 0; padding-left: 20px; color: var(--ink2); line-height: 1.45; }
+.gqe { margin: 6px 0 0; color: var(--mute); font-size: 13.5px; }

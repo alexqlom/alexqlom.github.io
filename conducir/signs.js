@@ -23,6 +23,9 @@
     `<g fill="none" stroke="${K}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="36" cy="61" r="9"/><circle cx="64" cy="61" r="9"/>` +
     `<path d="M36 61 L45 47 H59 L64 61 M45 47 L50 61 L59 47 M42 43 H49 M59 47 L57 41 H62"/>` +
     (rider ? `<path d="M51 37 L47 47 M50 40 L58 44"/>` : '') + `</g>` + (rider ? `<circle cx="53" cy="31" r="4.5" fill="${K}"/>` : '');
+  const bikeW = `<g fill="none" stroke="${W}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="34" cy="60" r="11"/><circle cx="66" cy="60" r="11"/>` +
+    `<path d="M34 60 L45 44 H60 L66 60 M45 44 L50 60 L60 44 M41 39 H49 M60 44 L58 37 H64"/></g>`;
+  const moto = `<g fill="none" stroke="${K}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="31" cy="62" r="9"/><circle cx="69" cy="62" r="9"/><path d="M31 62 H50 L60 46 H67 L69 62 M60 46 L57 39 H64"/></g><path d="M38 48 H56 L50 58 H42Z" fill="${K}"/>`;
   const leftArrow = `<path d="M60 74 V50 Q60 38 48 38 H38" fill="none" stroke="${K}" stroke-width="8"/><path d="M40 27 L25 38 L40 49Z" fill="${K}"/>`;
   const curve = `<path d="M42 72 V56 Q42 42 56 40" fill="none" stroke="${K}" stroke-width="7"/><path d="M53 31 L67 40 L53 49Z" fill="${K}"/>`;
   const truck = `<rect x="22" y="36" width="34" height="22" rx="2" fill="${K}"/><path d="M57 42 H68 L76 50 V58 H57Z" fill="${K}"/><circle cx="32" cy="61" r="5" fill="${K}"/><circle cx="68" cy="61" r="5" fill="${K}"/>`;
@@ -60,6 +63,9 @@
     noPeatones: () => reg(ped(6), true),
     pesoMax: () => reg(T(50, 61, 30, '10t')),
     alturaMax: () => reg(T(50, 59, 22, '4,2m') + `<path d="M50 16 L43 25 H57Z M50 84 L43 75 H57Z" fill="${K}"/>`),
+    anchoMax: () => reg(T(50, 59, 22, '2,5m') + `<path d="M14 50 L23 43 V57Z M86 50 L77 43 V57Z" fill="${K}"/>`),
+    noMotos: () => reg(moto, true),
+    soloBus: () => `<rect x="5" y="10" width="90" height="80" rx="9" fill="${BL}" stroke="${W}" stroke-width="3"/><rect x="33" y="19" width="34" height="30" rx="5" fill="${W}"/><rect x="37" y="23" width="26" height="12" rx="2" fill="${BL}"/><rect x="36" y="48" width="7" height="5" fill="${W}"/><rect x="57" y="48" width="7" height="5" fill="${W}"/>` + T(50, 76, 15, 'SOLO BUS', W),
     cruzSanAndres: () => [45, -45].map(d => `<g transform="rotate(${d} 50 50)"><rect x="41" y="2" width="18" height="96" fill="${R}"/><rect x="44" y="5" width="12" height="90" fill="${W}"/></g>`).join(''),
 
     curvaDer: () => rombo(curve),
@@ -77,9 +83,16 @@
     resbaladizo: () => rombo(`<rect x="40" y="30" width="20" height="12" rx="3" fill="${K}"/><path d="M43 30 L45 23 H55 L57 30Z" fill="${K}"/><path d="M42 48 q-6 6 0 12 t0 12 M58 48 q6 6 0 12 t0 12" fill="none" stroke="${K}" stroke-width="3.5"/>`),
     animales: () => rombo(`<g fill="${K}"><ellipse cx="47" cy="50" rx="17" ry="9"/><circle cx="66" cy="45" r="6"/><rect x="33" y="56" width="4" height="13"/><rect x="40" y="56" width="4" height="13"/><rect x="52" y="56" width="4" height="13"/><rect x="58" y="56" width="4" height="13"/></g><path d="M63 39 l-3 -5 M69 39 l3 -5 M30 47 q-4 6 -2 12" stroke="${K}" stroke-width="2.5" fill="none"/>`),
     ciclistas: () => rombo(`<g transform="translate(50 50) scale(.82) translate(-50 -50)">${bike(true)}</g>`),
+    tunel: () => rombo(`<path d="M28 72 V54 A22 22 0 0 1 72 54 V72 H62 V56 A12 12 0 0 0 38 56 V72Z" fill="${K}"/>`),
+    viento: () => rombo(`<path d="M34 74 V30" stroke="${K}" stroke-width="4" stroke-linecap="round"/><path d="M36 32 L70 37 V48 L36 53Z" fill="${K}"/><path d="M47 33.6 L58 35.2 V49.6 L47 51.2Z" fill="${Y}"/>`),
+    derrumbes: () => rombo(`<path d="M27 74 V38 L63 74Z" fill="${K}"/><circle cx="58" cy="43" r="6" fill="${K}"/><circle cx="68" cy="55" r="5" fill="${K}"/><circle cx="53" cy="57" r="4" fill="${K}"/>`),
     dobleSentido: () => rombo(`<path d="M42 72 V34 M58 28 V66" stroke="${K}" stroke-width="6"/><path d="M34 38 L42 25 L50 38Z M50 62 L58 75 L66 62Z" fill="${K}"/>`),
 
     estacionamiento: () => info(T(50, 71, 60, 'E', W)),
+    ciclovia: () => info(bikeW),
+    calleSinSalida: () => info(`<rect x="44" y="40" width="12" height="44" fill="${W}"/><rect x="22" y="20" width="56" height="15" fill="${R}"/>`),
+    pasoPeatonal: () => info(`<path d="M50 13 L87 84 H13Z" fill="${W}"/><g transform="translate(50 58) scale(.6) translate(-50 -50)">${ped(6)}</g><path d="M30 76h8v4h-8zM42 76h8v4h-8zM54 76h8v4h-8zM66 76h6v4h-6z" fill="${K}"/>`),
+    discapacidad: () => info(`<circle cx="45" cy="25" r="6" fill="${W}"/><g fill="none" stroke="${W}" stroke-linecap="round" stroke-linejoin="round"><path d="M45 34 V54 H62 L68 70" stroke-width="6"/><path d="M45 44 H58" stroke-width="5"/><path d="M37 49 A16 16 0 1 0 60 71" stroke-width="5"/></g>`),
     hospital: () => info(T(50, 71, 60, 'H', W)),
     paradero: () => info(`<rect x="31" y="22" width="38" height="48" rx="7" fill="${W}"/><rect x="36" y="28" width="28" height="18" rx="2" fill="${BL}"/><circle cx="39" cy="58" r="3" fill="${BL}"/><circle cx="61" cy="58" r="3" fill="${BL}"/><rect x="34" y="70" width="8" height="7" rx="1.5" fill="${W}"/><rect x="58" y="70" width="8" height="7" rx="1.5" fill="${W}"/>`),
     servicentro: () => info(`<rect x="32" y="26" width="24" height="44" rx="3" fill="${W}"/><rect x="36" y="31" width="16" height="11" fill="${BL}"/><path d="M56 36 H62 Q66 36 66 40 V60 Q66 66 61 64" fill="none" stroke="${W}" stroke-width="4"/><rect x="28" y="70" width="32" height="5" fill="${W}"/>`),
@@ -108,6 +121,11 @@
     vel50: ['Velocidad máxima 50 km/h', 'reg', 'No puedes superar la velocidad indicada. Es un máximo, no una meta: adapta tu velocidad a las condiciones.'],
     vel100: ['Velocidad máxima 100 km/h', 'reg', 'Velocidad máxima permitida en ese tramo. Con lluvia, neblina o tránsito denso, ve más lento.'],
     vel120: ['Velocidad máxima 120 km/h', 'reg', 'Velocidad máxima habitual en autopistas para vehículos livianos, salvo señal distinta.'],
+    vel30: ['Velocidad máxima 30 km/h', 'reg', 'Es el límite en zonas escolares en el horario de entrada y salida de alumnos. También se usa en otras calles con mucha presencia de peatones.'],
+    vel90: ['Velocidad máxima 90 km/h', 'reg', 'Velocidad máxima en ese tramo. En zonas rurales, es además el tope para camiones de 3.860 kg o más, transporte escolar y la mayoría de los buses.'],
+    anchoMax: ['Ancho máximo', 'reg', 'Prohíbe el paso de vehículos más anchos que lo indicado (en este ejemplo, 2,5 metros).'],
+    noMotos: ['Prohibido el tránsito de motocicletas', 'reg', 'Las motocicletas no pueden circular por esa vía.'],
+    soloBus: ['Pista solo bus', 'reg', 'Indica una pista o vía exclusiva para buses de transporte público. Los demás vehículos no pueden circular por ella en el horario indicado.'],
     pesoMax: ['Peso máximo', 'reg', 'Prohíbe el paso de vehículos cuyo peso supere el indicado (en este ejemplo, 10 toneladas).'],
     alturaMax: ['Altura máxima', 'reg', 'Prohíbe el paso de vehículos más altos que lo indicado (en este ejemplo, 4,2 metros).'],
     cruzSanAndres: ['Cruz de San Andrés', 'reg', 'Marca un cruce ferroviario a nivel. El tren siempre tiene preferencia: detente si se acerca uno.'],
@@ -126,7 +144,14 @@
     resbaladizo: ['Pavimento resbaladizo', 'adv', 'El pavimento puede ser resbaladizo, sobre todo con lluvia o hielo.'],
     animales: ['Animales en la vía', 'adv', 'Pueden cruzar animales. Reduce la velocidad y mantente atento.'],
     ciclistas: ['Ciclistas', 'adv', 'Advierte la presencia de ciclistas en la vía.'],
+    tunel: ['Túnel', 'adv', 'Advierte un túnel más adelante: enciende las luces, no adelantes, no te detengas y no uses la bocina dentro.'],
+    viento: ['Viento lateral', 'adv', 'Advierte una zona con viento lateral fuerte: sujeta firme el volante y reduce la velocidad.'],
+    derrumbes: ['Zona de derrumbes', 'adv', 'Advierte una posible caída de piedras o derrumbes en la vía.'],
     dobleSentido: ['Tránsito en ambos sentidos', 'adv', 'Advierte que la vía pasa a tener tránsito en ambos sentidos.'],
+    ciclovia: ['Ciclovía', 'inf', 'Indica una vía para ciclos, como bicicletas. Los vehículos motorizados no pueden circular ni estacionar en ella.'],
+    calleSinSalida: ['Calle sin salida', 'inf', 'Indica que la calle no tiene salida para vehículos.'],
+    pasoPeatonal: ['Paso peatonal', 'inf', 'Indica la ubicación de un paso para peatones, donde ellos tienen preferencia.'],
+    discapacidad: ['Estacionamiento para personas con discapacidad', 'inf', 'Lugar reservado para vehículos de personas con discapacidad. Ocuparlo sin derecho es una infracción.'],
     estacionamiento: ['Estacionamiento', 'inf', 'Indica un lugar donde se permite estacionar.'],
     hospital: ['Hospital', 'inf', 'Indica la cercanía de un hospital: evita ruidos innecesarios.'],
     paradero: ['Paradero de buses', 'inf', 'Indica un paradero de transporte público.'],
