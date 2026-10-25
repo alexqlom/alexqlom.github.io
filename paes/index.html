@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Prepara la PAES con lecciones cortas, videos narrados y ensayos: Competencia Lectora, Matemática M1 y M2, Ciencias e Historia.">
+<title>PAES · Prepara la prueba</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header class="top">
+  <button class="brand" type="button" aria-label="PAES, ir al inicio"><b>PAES</b><i></i></button>
+  <button class="lic" id="hTest" type="button" aria-label="Cambiar prueba">M1</button>
+  <div class="sp"></div>
+  <div class="stat" id="hStreak" title="Racha"></div>
+  <div class="stat" id="hXp" title="Puntos de experiencia"></div>
+  <div class="stat" id="hHearts" title="Vidas"></div>
+</header>
+<main id="view"></main>
+<nav class="tabs" aria-label="Secciones">
+  <button type="button" data-tab="aprender"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21a2 2 0 0 1 2-2h13v2H6M9 7h6"/></svg>Aprender</button>
+  <button type="button" data-tab="videos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Videos</button>
+  <button type="button" data-tab="practicar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>Practicar</button>
+  <button type="button" data-tab="perfil"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Perfil</button>
+</nav>
+<div id="layer"></div>
+<div id="toasts" aria-live="polite"></div>
+<noscript><p style="padding:24px;color:#fff;background:#000">Esta app necesita JavaScript activado para funcionar.</p></noscript>
+<script src="icons.js" defer></script>
+<script src="video.js" defer></script>
+<script src="data/tests.js" defer></script>
+<!-- DATA:start -->
+<script src="data/lec-1.js" defer></script>
+<script src="data/lec-2.js" defer></script>
+<script src="data/m1-1.js" defer></script>
+<script src="data/m1-2.js" defer></script>
+<script src="data/m1-3.js" defer></script>
+<!-- DATA:end -->
+<script src="app.js" defer></script>
+</body>
+</html>
