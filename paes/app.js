@@ -362,10 +362,11 @@
   // Lee la pregunta tal como se ve: las opciones van en el orden barajado de la pantalla.
   const sayText = (it, body) => {
     const shown = sel => $$(sel, body).map(x => x.textContent.trim());
+    const end = s => /[.:?!]$/.test(s) ? s + ' ' : s + '. ';
     if (it.t === 'fill') return plainT(it.s).replace('___', 'espacio en blanco') + '. Opciones: ' + shown('.fill-bank .chipw').join(', ');
     if (it.t === 'tf') return plainT(it.q) + '. ¿Verdadero o falso?';
-    if (it.t === 'mc') return plainT(it.q) + '. ' + shown('.opt .ot').map((o, k) => `${L(k)}: ${o}`).join('. ');
-    if (it.t === 'multi') return plainT(it.q) + '. ' + shown('.opt .ot').join('. ');
+    if (it.t === 'mc') return end(plainT(it.q)) + shown('.opt .ot').map((o, k) => `${L(k)}: ${o}`).join('. ');
+    if (it.t === 'multi') return end(plainT(it.q)) + shown('.opt .ot').join('. ');
     return plainT(it.q || '');
   };
   function pickOne(body, onPick) {
