@@ -1,286 +1,41 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-CL" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1F7A3A">
-<meta name="description" content="Aprende para el examen teórico de conducir (licencia clase B, Chile) con lecciones cortas, vidas, XP y rachas.">
-<title>Ruta B</title>
-<style>
-:root{
-  --bg:#F4F7F2; --card:#FFFFFF; --ink:#1B2A20; --muted:#5E6E63; --line:#D9E2DA;
-  --green:#2E9E4F; --green-d:#1F7A3A; --red:#D9433B; --red-l:#FDE8E6; --green-l:#E3F5E8;
-  --gold:#F2B705; --blue:#2F6FD1; --locked:#C9D2CB;
-}
-@media (prefers-color-scheme:dark){
-  :root{--bg:#111813;--card:#1A231D;--ink:#E7EFE9;--muted:#9AABA0;--line:#2C3A30;
-    --green-l:#173322;--red-l:#3A1C1A;--locked:#34423A}
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-[hidden]{display:none!important}
-button{font:inherit;cursor:pointer}
-.wrap{max-width:560px;margin:0 auto;padding:0 16px 32px}
-header.top{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:14px;
-  padding:12px 16px;max-width:560px;margin:0 auto;border-bottom:1px solid var(--line)}
-.brand{font-weight:800;font-size:20px;color:var(--green-d);margin-right:auto}
-@media (prefers-color-scheme:dark){.brand{color:var(--green)}}
-.stat{font-weight:700;display:flex;align-items:center;gap:4px}
-.unit{margin-top:22px;border-radius:16px;padding:14px 16px;color:#fff}
-.unit h2{margin:0;font-size:18px}.unit p{margin:2px 0 0;opacity:.9;font-size:14px}
-.path{display:flex;flex-direction:column;align-items:center;gap:14px;padding:18px 0 4px}
-.node{width:72px;height:72px;border-radius:50%;border:0;font-size:28px;color:#fff;
-  box-shadow:0 6px 0 rgba(0,0,0,.18);transition:transform .1s}
-.node:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
-.node.locked{background:var(--locked)!important;cursor:not-allowed}
-.node.done{outline:4px solid var(--gold);outline-offset:3px}
-.nodelabel{font-size:13px;color:var(--muted);margin-top:-8px;text-align:center}
-.btn{display:block;width:100%;border:0;border-radius:14px;padding:14px;font-weight:800;letter-spacing:.3px;
-  text-transform:uppercase;background:var(--green);color:#fff;box-shadow:0 4px 0 var(--green-d)}
-.btn:disabled{background:var(--locked);box-shadow:none;cursor:not-allowed}
-.btn.red{background:var(--red);box-shadow:0 4px 0 #A8302A}
-.btn.ghost{background:transparent;color:var(--muted);box-shadow:none;text-transform:none}
-/* Lección */
-#lesson{position:fixed;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column}
-.lhead{display:flex;align-items:center;gap:12px;padding:14px 16px;max-width:560px;width:100%;margin:0 auto}
-.x{border:0;background:none;font-size:24px;color:var(--muted);padding:0 4px}
-.bar{flex:1;height:14px;background:var(--line);border-radius:8px;overflow:hidden}
-.bar>i{display:block;height:100%;background:var(--green);width:0;transition:width .3s}
-.lbody{flex:1;overflow:auto;max-width:560px;width:100%;margin:0 auto;padding:8px 16px 16px}
-.qtype{font-size:13px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px}
-.q{font-size:21px;font-weight:700;margin:6px 0 16px}
-.sign{display:flex;justify-content:center;margin:4px 0 16px}
-.opts{display:flex;flex-direction:column;gap:10px}
-.opt{text-align:left;background:var(--card);color:var(--ink);border:2px solid var(--line);border-radius:14px;
-  padding:13px 14px;box-shadow:0 3px 0 var(--line)}
-.opt.sel{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,var(--card))}
-.opt.ok{border-color:var(--green);background:var(--green-l)}
-.opt.bad{border-color:var(--red);background:var(--red-l)}
-.opts.tf{flex-direction:row}.opts.tf .opt{flex:1;text-align:center;font-weight:700}
-.lfoot{border-top:1px solid var(--line);padding:14px 16px 18px}
-.lfoot.ok{background:var(--green-l)}.lfoot.bad{background:var(--red-l)}
-.lfoot .in{max-width:560px;margin:0 auto}
-.fb{margin:0 0 12px}.fb b{font-size:18px;display:block}
-.lfoot.ok .fb b{color:var(--green-d)}.lfoot.bad .fb b{color:var(--red)}
-@media (prefers-color-scheme:dark){.lfoot.ok .fb b{color:var(--green)}}
-.center{text-align:center;padding-top:40px}
-.big{font-size:64px}
-.cards{display:flex;gap:10px;margin:22px 0}
-.cards div{flex:1;border:2px solid var(--line);border-radius:14px;padding:10px;background:var(--card)}
-.cards small{display:block;color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase}
-.cards strong{font-size:22px}
-.note{font-size:13px;color:var(--muted);margin-top:28px;text-align:center}
-</style>
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Aprende para el examen teórico de conducir en Chile con lecciones cortas, videos animados, percepción de riesgos y simulacros. Para todas las clases de licencia.">
+<title>Ruta · Aprende a conducir</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
 <header class="top">
-  <div class="brand">🚗 Ruta B</div>
-  <div class="stat" title="Racha de días">🔥 <span id="streak">0</span></div>
-  <div class="stat" title="Experiencia">⭐ <span id="xp">0</span></div>
-  <div class="stat" title="Vidas">❤️ <span id="hearts">5</span></div>
+  <button class="brand" type="button" aria-label="Ruta, ir al inicio"><b>RUTA</b><i></i></button>
+  <button class="lic" id="hLic" type="button" aria-label="Cambiar licencia">B</button>
+  <div class="sp"></div>
+  <div class="stat" id="hStreak"></div>
+  <div class="stat" id="hXp" title="Puntos de experiencia"></div>
+  <div class="stat" id="hHearts"></div>
 </header>
-<main class="wrap" id="home"></main>
-
-<section id="lesson" hidden>
-  <div class="lhead"><button class="x" id="quit" aria-label="Salir">✕</button><div class="bar"><i id="prog"></i></div>
-    <div class="stat">❤️ <span id="lhearts">5</span></div></div>
-  <div class="lbody" id="lbody"></div>
-  <div class="lfoot" id="lfoot"><div class="in"><div class="fb" id="fb"></div><button class="btn" id="check" disabled>Comprobar</button></div></div>
-</section>
-
-<script>
-// Señales dibujadas en SVG para no depender de imágenes.
-const SIGN = {
-  pare:`<svg width="120" height="120" viewBox="0 0 100 100"><polygon points="30,2 70,2 98,30 98,70 70,98 30,98 2,70 2,30" fill="#C8102E" stroke="#fff" stroke-width="4"/><text x="50" y="60" font-size="26" font-weight="800" fill="#fff" text-anchor="middle" font-family="Arial">PARE</text></svg>`,
-  ceda:`<svg width="130" height="115" viewBox="0 0 100 88"><polygon points="2,2 98,2 50,86" fill="#fff" stroke="#C8102E" stroke-width="9" stroke-linejoin="round"/></svg>`,
-  noEntrar:`<svg width="120" height="120" viewBox="0 0 100 100"><circle cx="50" cy="50" r="47" fill="#C8102E"/><rect x="18" y="42" width="64" height="16" fill="#fff"/></svg>`,
-  vel50:`<svg width="120" height="120" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#C8102E" stroke-width="9"/><text x="50" y="62" font-size="34" font-weight="800" text-anchor="middle" font-family="Arial">50</text></svg>`,
-  noAdelantar:`<svg width="120" height="120" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#C8102E" stroke-width="9"/><rect x="24" y="40" width="20" height="26" rx="4" fill="#C8102E"/><rect x="56" y="40" width="20" height="26" rx="4" fill="#222"/></svg>`,
-  noEstacionar:`<svg width="120" height="120" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#C8102E" stroke-width="9"/><text x="50" y="66" font-size="44" font-weight="800" text-anchor="middle" font-family="Arial">E</text><line x1="18" y1="18" x2="82" y2="82" stroke="#C8102E" stroke-width="9"/></svg>`,
-  curva:`<svg width="120" height="120" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" rx="6" transform="rotate(45 50 50)" fill="#F7C600" stroke="#222" stroke-width="4"/><path d="M42 72 V52 Q42 38 58 36" fill="none" stroke="#222" stroke-width="8"/><polygon points="56,26 70,36 56,46" fill="#222"/></svg>`,
-  escolares:`<svg width="120" height="120" viewBox="0 0 100 100"><rect x="15" y="15" width="70" height="70" rx="6" transform="rotate(45 50 50)" fill="#F7C600" stroke="#222" stroke-width="4"/><circle cx="40" cy="36" r="6" fill="#222"/><circle cx="60" cy="40" r="5" fill="#222"/><path d="M40 44 L36 62 M40 44 L44 62 M60 47 L57 62 M60 47 L63 62" stroke="#222" stroke-width="5"/></svg>`,
-  peatonal:`<svg width="120" height="120" viewBox="0 0 100 100"><rect x="6" y="6" width="88" height="88" rx="8" fill="#1E5BB8"/><polygon points="50,14 86,82 14,82" fill="#fff"/><circle cx="50" cy="40" r="6" fill="#222"/><path d="M50 47 L44 70 M50 47 L56 70" stroke="#222" stroke-width="5"/></svg>`
-};
-
-// Contenido basado en la Ley de Tránsito 18.290 y el Libro del Nuevo Conductor (CONASET).
-const UNITS = [
- {name:"Señales de tránsito", desc:"Reglamentarias, de advertencia e informativas", color:"#2E9E4F", lessons:[
-  {name:"Reglamentarias", icon:"🛑", qs:[
-   {t:"mc", sign:"pare", q:"¿Qué debes hacer ante esta señal?", o:["Detenerte completamente y continuar cuando sea seguro","Reducir la velocidad sin detenerte","Tocar la bocina y avanzar","Detenerte solo si viene otro vehículo"], a:0, e:"PARE obliga a detenerse siempre por completo, aunque no venga nadie."},
-   {t:"mc", sign:"ceda", q:"Esta señal significa:", o:["Ceda el paso","Prohibido virar","Peligro","Fin de la vía"], a:0, e:"Debes ceder el paso a quienes circulan por la vía a la que te incorporas; te detienes solo si es necesario."},
-   {t:"mc", sign:"noEntrar", q:"¿Qué indica esta señal?", o:["No entrar","Calle de doble sentido","Estacionamiento","Fin de prohibición"], a:0},
-   {t:"mc", sign:"vel50", q:"Esta señal indica:", o:["Velocidad máxima de 50 km/h","Velocidad mínima de 50 km/h","Distancia de 50 m","Ruta número 50"], a:0},
-   {t:"tf", sign:"noEstacionar", q:"Esta señal prohíbe estacionar, pero permite detenerse brevemente para subir o bajar pasajeros.", a:true, e:"Detenerse momentáneamente no es estacionar. La prohibición de detenerse se señaliza distinto."}
-  ]},
-  {name:"Advertencia", icon:"⚠️", qs:[
-   {t:"mc", q:"¿De qué color y forma son, en general, las señales de advertencia de peligro?", o:["Amarillas con forma de rombo","Rojas y circulares","Azules y cuadradas","Verdes y rectangulares"], a:0},
-   {t:"mc", sign:"curva", q:"¿Qué te advierte esta señal?", o:["Curva a la derecha más adelante","Desvío obligatorio","Fin de la carretera","Prohibido virar a la izquierda"], a:0},
-   {t:"mc", sign:"escolares", q:"Al ver esta señal debes:", o:["Reducir la velocidad y extremar la precaución por niños","Tocar la bocina para avisar","Acelerar para pasar rápido","Detenerte siempre"], a:0},
-   {t:"tf", q:"Una señal de advertencia te obliga a detenerte.", a:false, e:"Las de advertencia informan de un peligro; las que obligan son las reglamentarias."}
-  ]},
-  {name:"Semáforos y marcas", icon:"🚦", qs:[
-   {t:"mc", q:"La luz amarilla del semáforo significa:", o:["Detente, salvo que estés tan cerca que no puedas hacerlo con seguridad","Acelera para alcanzar a pasar","Puedes pasar con precaución siempre","Solo aplica a peatones"], a:0},
-   {t:"mc", q:"Un semáforo con luz roja intermitente equivale a:", o:["Una señal PARE","Una señal Ceda el paso","Paso libre","Semáforo apagado sin regla"], a:0},
-   {t:"mc", q:"Una línea continua en el centro de la calzada indica que:", o:["Está prohibido cruzarla para adelantar","Puedes adelantar con precaución","Es una ciclovía","Es zona de estacionamiento"], a:0},
-   {t:"tf", q:"Las indicaciones de un carabinero dirigiendo el tránsito prevalecen sobre el semáforo.", a:true},
-   {t:"mc", sign:"peatonal", q:"Esta señal informa de:", o:["Un paso peatonal","Una zona de juegos","Un paradero","Una calle peatonal sin autos"], a:0}
-  ]}
- ]},
- {name:"Normas de circulación", desc:"Velocidad, preferencia y adelantamiento", color:"#2F6FD1", lessons:[
-  {name:"Velocidades", icon:"⏱️", qs:[
-   {t:"mc", q:"Salvo otra señalización, la velocidad máxima en zona urbana para un auto es:", o:["50 km/h","60 km/h","40 km/h","70 km/h"], a:0, e:"Desde 2018 la máxima urbana general es 50 km/h."},
-   {t:"mc", q:"En una carretera interurbana de calzada simple, sin otra señal, la máxima para un auto es:", o:["100 km/h","120 km/h","80 km/h","90 km/h"], a:0},
-   {t:"mc", q:"En autopistas, la máxima general para automóviles es:", o:["120 km/h","100 km/h","130 km/h","140 km/h"], a:0},
-   {t:"tf", q:"Con lluvia o neblina debes reducir la velocidad aunque estés bajo el límite.", a:true, e:"Siempre debes conducir a una velocidad razonable según las condiciones."}
-  ]},
-  {name:"Preferencias", icon:"↔️", qs:[
-   {t:"mc", q:"En una rotonda, ¿quién tiene preferencia?", o:["Los vehículos que ya circulan dentro de la rotonda","Los que van a entrar","El vehículo más grande","El que toque la bocina primero"], a:0},
-   {t:"mc", q:"En un paso de cebra sin semáforo, un peatón empieza a cruzar. Tú:", o:["Te detienes y le cedes el paso","Pasas si vas rápido","Tocas la bocina","Lo esquivas"], a:0},
-   {t:"tf", q:"Un vehículo de emergencia con balizas y sirena encendidas tiene preferencia; debes facilitarle el paso.", a:true},
-   {t:"mc", q:"Al virar a la izquierda en un cruce con semáforo verde, debes ceder el paso a:", o:["Los vehículos que vienen de frente y a los peatones","Nadie, el verde te da preferencia","Solo a los buses","Solo a las bicicletas"], a:0}
-  ]},
-  {name:"Adelantar y distancia", icon:"🛣️", qs:[
-   {t:"mc", q:"Normalmente debes adelantar por:", o:["La izquierda","La derecha","Cualquier lado","La berma"], a:0},
-   {t:"mc", sign:"noAdelantar", q:"Esta señal indica:", o:["Prohibido adelantar","Doble sentido de tránsito","Prohibido estacionar","Fin de autopista"], a:0},
-   {t:"mc", q:"Una forma práctica de mantener una distancia segura con el auto de adelante es:", o:["Dejar al menos 2 segundos de separación (más con lluvia)","Mantener un metro","Ir pegado para que no se cuelen","Calcular un auto de largo a cualquier velocidad"], a:0},
-   {t:"tf", q:"Está permitido adelantar en una curva sin visibilidad si no ves a nadie venir.", a:false, e:"Está prohibido adelantar en curvas, cuestas y cruces sin visibilidad suficiente."}
-  ]}
- ]},
- {name:"Seguridad y responsabilidad", desc:"Alcohol, celular, cinturón y niños", color:"#C2571A", lessons:[
-  {name:"Alcohol y drogas", icon:"🍺", qs:[
-   {t:"mc", q:"Conducir 'bajo la influencia del alcohol' es tener una concentración desde:", o:["0,3 hasta menos de 0,8 g/l","0,5 hasta 1,0 g/l","0,1 g/l","1,0 g/l o más"], a:0, e:"Ley Tolerancia Cero: 0,3 a <0,8 g/l es bajo la influencia; 0,8 g/l o más es estado de ebriedad."},
-   {t:"mc", q:"El estado de ebriedad se considera desde:", o:["0,8 g/l de alcohol en la sangre","0,3 g/l","1,5 g/l","2,0 g/l"], a:0},
-   {t:"tf", q:"Tomar café o ducharse con agua fría elimina el alcohol de la sangre más rápido.", a:false, e:"Solo el tiempo reduce la alcoholemia."},
-   {t:"tf", q:"Negarse injustificadamente al control de alcoholemia tiene sanciones.", a:true}
-  ]},
-  {name:"Cinturón y niños", icon:"👶", qs:[
-   {t:"tf", q:"El cinturón de seguridad es obligatorio para todos los ocupantes, también en los asientos traseros.", a:true},
-   {t:"mc", q:"Los menores de 12 años deben viajar:", o:["En el asiento trasero","Adelante, si llevan cinturón","En brazos de un adulto","Donde quieran"], a:0},
-   {t:"mc", q:"Los niños deben usar un sistema de retención infantil (silla o alzador) hasta cumplir:", o:["9 años, o medir 1,35 m, o pesar 33 kg","3 años","5 años","16 años"], a:0},
-   {t:"tf", q:"Una silla de bebé mirando hacia atrás puede ir adelante con el airbag activado.", a:false, e:"El airbag puede golpear la silla y causar lesiones graves."}
-  ]},
-  {name:"Celular y fatiga", icon:"📱", qs:[
-   {t:"tf", q:"Puedes manipular el celular con la mano mientras conduces si vas despacio.", a:false, e:"Solo se permite con sistemas manos libres que no requieran manipularlo."},
-   {t:"mc", q:"Si sientes sueño en un viaje largo, lo más seguro es:", o:["Detenerte en un lugar seguro y descansar","Bajar la ventana y seguir","Subir el volumen de la radio","Acelerar para llegar antes"], a:0},
-   {t:"mc", q:"Para conducir un automóvil particular necesitas una licencia clase:", o:["B","A1","C","D"], a:0},
-   {t:"tf", q:"Debes portar la licencia, el permiso de circulación, la revisión técnica y el SOAP vigentes.", a:true}
-  ]}
- ]}
-];
-
-// Estado del jugador (solo en este navegador).
-const KEY="rutab-v1";
-let S={xp:0,hearts:5,done:{},streak:0,last:null,heartsAt:Date.now()};
-try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const today=()=>new Date().toISOString().slice(0,10);
-
-// Recupera una vida cada 30 minutos.
-function regen(){
-  const step=30*60*1000, n=Math.floor((Date.now()-S.heartsAt)/step);
-  if(S.hearts>=5){S.heartsAt=Date.now();return}
-  if(n>0){S.hearts=Math.min(5,S.hearts+n);S.heartsAt+=n*step;save()}
-}
-const $=id=>document.getElementById(id);
-function stats(){regen();$("xp").textContent=S.xp;$("hearts").textContent=S.hearts;
-  const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
-  $("streak").textContent=(S.last===today()||S.last===y)?S.streak:0}
-
-function home(){
-  stats();
-  let h="", prevDone=true;
-  UNITS.forEach((u,ui)=>{
-    h+=`<div class="unit" style="background:${u.color}"><h2>Unidad ${ui+1}: ${u.name}</h2><p>${u.desc}</p></div><div class="path">`;
-    u.lessons.forEach((l,li)=>{
-      const id=ui+"-"+li, done=!!S.done[id], open=prevDone;
-      const off=[0,60,-60][li%3];
-      h+=`<button class="node ${done?"done":""} ${open?"":"locked"}" style="background:${u.color};transform:translateX(${off}px)" data-id="${id}" ${open?"":"disabled"} aria-label="${l.name}">${open?l.icon:"🔒"}</button>
-          <div class="nodelabel" style="transform:translateX(${off}px)">${l.name}</div>`;
-      prevDone=done;
-    });
-    h+="</div>";
-  });
-  h+=`<p class="note">Preguntas de práctica basadas en la Ley de Tránsito y el Libro del Nuevo Conductor de CONASET. Repasa siempre el material oficial antes del examen.</p>`;
-  $("home").innerHTML=h;
-  $("home").querySelectorAll(".node:not(.locked)").forEach(b=>b.onclick=()=>start(b.dataset.id));
-}
-
-let L=null;
-function start(id){
-  regen();
-  if(S.hearts<=0){alert("Te quedaste sin vidas ❤️. Se recupera una cada 30 minutos.");return}
-  const [ui,li]=id.split("-").map(Number);
-  const qs=UNITS[ui].lessons[li].qs.map(q=>({...q})).sort(()=>Math.random()-.5);
-  L={id,qs,i:0,wrong:[],sel:null,checked:false,mistakes:0,total:qs.length};
-  $("lesson").hidden=false;document.body.style.overflow="hidden";show();
-}
-function show(){
-  const q=L.qs[L.i];L.sel=null;L.checked=false;
-  $("prog").style.width=(100*(L.total-L.qs.length+L.i)/L.total)+"%";
-  $("lhearts").textContent=S.hearts;
-  $("lfoot").className="lfoot";$("fb").innerHTML="";
-  $("check").textContent="Comprobar";$("check").disabled=true;$("check").className="btn";
-  let opts;
-  if(q.t==="tf") opts=[["Verdadero",true],["Falso",false]];
-  else{ opts=q.o.map((t,k)=>[t,k]).sort(()=>Math.random()-.5) }
-  $("lbody").innerHTML=`<div class="qtype">${q.t==="tf"?"¿Verdadero o falso?":"Elige la respuesta correcta"}</div>
-    <div class="q">${q.q}</div>${q.sign?`<div class="sign">${SIGN[q.sign]}</div>`:""}
-    <div class="opts ${q.t==="tf"?"tf":""}">${opts.map(([t,v])=>`<button class="opt" data-v="${v}">${t}</button>`).join("")}</div>`;
-  $("lbody").querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
-    if(L.checked)return;
-    $("lbody").querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
-    b.classList.add("sel");L.sel=b.dataset.v;$("check").disabled=false;
-  });
-}
-$("check").onclick=()=>{
-  const q=L.qs[L.i];
-  if(!L.checked){
-    L.checked=true;
-    const right=String(q.a);
-    const ok=L.sel===right;
-    $("lbody").querySelectorAll(".opt").forEach(b=>{
-      if(b.dataset.v===right)b.classList.add("ok");else if(b.dataset.v===L.sel)b.classList.add("bad")});
-    const correct=q.t==="tf"?(q.a?"Verdadero":"Falso"):q.o[q.a];
-    if(ok){$("lfoot").className="lfoot ok";$("fb").innerHTML=`<b>¡Excelente! ✅</b>${q.e||""}`;}
-    else{
-      S.hearts=Math.max(0,S.hearts-1);if(S.hearts<5&&S.hearts===4)S.heartsAt=Date.now();save();
-      L.mistakes++;L.qs.push(q); // la pregunta fallada vuelve al final
-      $("lhearts").textContent=S.hearts;
-      $("lfoot").className="lfoot bad";$("fb").innerHTML=`<b>Respuesta correcta:</b>${correct}${q.e?"<br><small>"+q.e+"</small>":""}`;
-      $("check").className="btn red";
-    }
-    $("check").textContent="Continuar";$("check").disabled=false;
-    return;
-  }
-  if(S.hearts<=0){finish(false);return}
-  L.i++; L.i<L.qs.length?show():finish(true);
-};
-$("quit").onclick=()=>{if(confirm("¿Salir de la lección? Perderás el progreso."))close()};
-function close(){$("lesson").hidden=true;document.body.style.overflow="";L=null;home()}
-
-function finish(won){
-  $("prog").style.width="100%";
-  if(!won){
-    $("lbody").innerHTML=`<div class="center"><div class="big">💔</div><h2>Sin vidas</h2><p>Se recupera una vida cada 30 minutos. ¡Vuelve pronto!</p></div>`;
-  }else{
-    const gained=10+(L.mistakes===0?5:0);
-    S.xp+=gained;S.done[L.id]=true;
-    const t=today(), y=new Date(Date.now()-864e5).toISOString().slice(0,10);
-    if(S.last!==t){S.streak=(S.last===y?S.streak:0)+1;S.last=t}
-    save();
-    const acc=Math.round(100*L.total/(L.total+L.mistakes));
-    $("lbody").innerHTML=`<div class="center"><div class="big">🏁</div><h2>¡Lección completada!</h2>
-      <div class="cards"><div><small>XP</small><strong>+${gained}</strong></div><div><small>Precisión</small><strong>${acc}%</strong></div><div><small>Racha</small><strong>🔥 ${S.streak}</strong></div></div>
-      ${L.mistakes===0?"<p>¡Perfecta, sin errores! +5 XP extra</p>":""}</div>`;
-  }
-  $("lfoot").className="lfoot";$("fb").innerHTML="";
-  $("check").className="btn";$("check").textContent="Continuar";
-  $("check").onclick=()=>{$("check").onclick=checkHandler;close()};
-}
-const checkHandler=$("check").onclick;
-home();
-setInterval(stats,60000);
-</script>
+<main id="view"></main>
+<nav class="tabs" aria-label="Secciones">
+  <button type="button" data-tab="aprender"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 21 10 3M17 21 14 3M12 6v2M12 11v2M12 16v2"/></svg>Aprender</button>
+  <button type="button" data-tab="videos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>Videos</button>
+  <button type="button" data-tab="practicar"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></svg>Practicar</button>
+  <button type="button" data-tab="senales"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 22 20H2ZM12 9v5M12 17v.5"/></svg>Señales</button>
+  <button type="button" data-tab="perfil"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Perfil</button>
+</nav>
+<div id="layer"></div>
+<div id="toasts" aria-live="polite"></div>
+<noscript><p style="padding:24px;color:#fff;background:#000">Ruta necesita JavaScript activado para funcionar.</p></noscript>
+<script src="signs.js" defer></script>
+<script src="scenes.js" defer></script>
+<script src="data/comun.js" defer></script>
+<script src="data/especificas.js" defer></script>
+<script src="data/courses.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>
