@@ -1,7 +1,7 @@
 // Cache propio de la app PAES (alcance /paes/): abre sin conexión y no toca el cache de otras apps del sitio.
 // La lista y la versión las actualiza tools/sync.js.
-const CACHE = 'paes-831cf474';
-const SHELL = ["./","./index.html","./app.css","./app.js","./icons.js","./video.js","./data/tests.js","./data/bio-1.js","./data/bio-2.js","./data/bio-3.js","./data/bio-4.js","./data/bio-5.js","./data/bio-6.js","./data/fis-1.js","./data/fis-2.js","./data/fis-3.js","./data/fis-4.js","./data/his-1.js","./data/his-2.js","./data/his-3.js","./data/his-4.js","./data/lec-1.js","./data/lec-2.js","./data/m1-1.js","./data/m1-2.js","./data/m1-3.js","./data/m1-4.js","./data/m1-5.js","./data/m1-6.js","./data/m2-1.js","./data/m2-2.js","./data/m2-3.js","./data/qui-1.js","./data/qui-2.js","./data/qui-3.js","./manifest.webmanifest","./icons/icon-192.png","./icons/icon-512.png"];
+const CACHE = 'paes-b6905005';
+const SHELL = ["./","./index.html","./app.css","./app.js","./icons.js","./video.js","./data/tests.js","./data/bio-1.js","./data/bio-2.js","./data/bio-3.js","./data/bio-4.js","./data/bio-5.js","./data/bio-6.js","./data/fis-1.js","./data/fis-2.js","./data/fis-3.js","./data/fis-4.js","./data/his-1.js","./data/his-2.js","./data/his-3.js","./data/his-4.js","./data/his-5.js","./data/his-6.js","./data/lec-1.js","./data/lec-2.js","./data/m1-1.js","./data/m1-2.js","./data/m1-3.js","./data/m1-4.js","./data/m1-5.js","./data/m1-6.js","./data/m2-1.js","./data/m2-2.js","./data/m2-3.js","./data/qui-1.js","./data/qui-2.js","./data/qui-3.js","./manifest.webmanifest","./icons/icon-192.png","./icons/icon-512.png"];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
