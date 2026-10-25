@@ -8,7 +8,7 @@
     { id: 'fis', s: 'FIS', n: 'Ciencias · Física', ic: 'magnet', ex: { n: 80, min: 160 }, units: ['fa', 'fb', 'fc', 'fd', 'fe', 'ff', 'fg', 'fh'] },
     { id: 'qui', s: 'QUI', n: 'Ciencias · Química', ic: 'flask', ex: { n: 80, min: 160 }, units: ['qa', 'qb', 'qc', 'qd', 'qe', 'qf', 'qg'] },
     { id: 'bio', s: 'BIO', n: 'Ciencias · Biología', ic: 'dna', ex: { n: 80, min: 160 }, units: ['ba', 'bb', 'bc', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bk'] },
-    { id: 'his', s: 'HIS', n: 'Historia y Cs. Sociales', ic: 'landmark', ex: { n: 65, min: 120 }, units: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12', 'h13', 'h14', 'h15', 'h16'] },
+    { id: 'his', s: 'HIS', n: 'Historia y Cs. Sociales', ic: 'landmark', ex: { n: 65, min: 120 }, units: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'h11', 'h12', 'h13', 'h14', 'h15', 'h16', 'h17', 'h18'] },
   ];
   RB.units = RB.units || {};
   RB.texts = RB.texts || {};
