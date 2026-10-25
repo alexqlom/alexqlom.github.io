@@ -1240,8 +1240,10 @@
       const b = e.target.closest('[data-act],[data-ach],.seg button');
       if (!b) return;
       if (b.dataset.ach) { const a = ACH.find(x => x.id === b.dataset.ach); toast(`${I(a.ic)}<span><small>${S.ach[a.id] ? 'Logro desbloqueado' : 'Logro bloqueado'}</small><b>${esc(a.n)}</b> · ${esc(a.d)}</span>`, 2600); return; }
-      if (b.closest('[data-goal]')) { S.goal = +b.dataset.v; save(); refresh(); return; }
-      if (b.closest('[data-theme]')) { S.set.theme = b.dataset.v; save(); applyTheme(); refresh(); return; }
+      // <html> también tiene data-theme: se busca solo dentro del selector .seg
+      const seg = b.closest('.seg');
+      if (seg && seg.hasAttribute('data-goal')) { S.goal = +b.dataset.v; save(); refresh(); return; }
+      if (seg && seg.hasAttribute('data-theme')) { S.set.theme = b.dataset.v; save(); applyTheme(); refresh(); return; }
       const a = b.dataset.act;
       if (a === 'lic') licenseSheet();
       else if (a === 'export') exportData();
@@ -1277,6 +1279,7 @@
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function applyTheme() {
+    if (S.set.theme !== 'light') S.set.theme = 'dark';
     D.documentElement.dataset.theme = S.set.theme;
     const m = $('meta[name="theme-color"]');
     if (m) m.content = S.set.theme === 'light' ? '#ffffff' : '#000000';
