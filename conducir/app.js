@@ -141,7 +141,14 @@
   window.addEventListener('popstate', () => {
     const ent = OV[OV.length - 1];
     if (!ent) return;
-    if (ent.guard && !ent.guard()) { history.pushState({ ov: OV.length }, ''); return; }
+    if (ent.guard && !ent.guard()) {
+      history.pushState({ ov: OV.length }, '');
+      if (ent.ask && !ent.asking) {
+        ent.asking = true;
+        ask(ent.ask).then(ok => { ent.asking = false; if (ok) { ent.guard = null; closeLayer(); } });
+      }
+      return;
+    }
     OV.pop();
     if (ent.onClose) ent.onClose();
     ent.el.remove();
@@ -156,6 +163,28 @@
     if (f) f.focus({ preventScroll: true });
     return ent;
   }
+  // Ventana de confirmación con el estilo de la app (los avisos del navegador en Android se ven como página web).
+  function ask({ title, text, ok, cancel = 'Cancelar', danger = true }) {
+    return new Promise(res => {
+      let yes = false;
+      const ent = sheet(`<div class="ask"><h3>${esc(title)}</h3>${text ? `<p class="muted">${esc(text)}</p>` : ''}` +
+        `<div class="ask-b"><button class="btn" type="button" data-no>${esc(cancel)}</button><button class="btn ghost${danger ? ' danger' : ''}" type="button" data-yes>${esc(ok)}</button></div></div>`);
+      ent.onClose = () => res(yes);
+      $('[data-no]', ent.el).onclick = () => closeLayer();
+      $('[data-yes]', ent.el).onclick = () => { yes = true; closeLayer(); };
+    });
+  }
+  // Botón Atrás de Android (lo llama la app nativa): cierra la capa de arriba o vuelve a Aprender.
+  window.RutaBack = () => {
+    const top = OV[OV.length - 1];
+    if (top) {
+      if (top.guard && !top.guard() && !top.ask) return 'exit';
+      history.back();
+      return 'handled';
+    }
+    if (tab !== 'aprender') { go('aprender'); return 'handled'; }
+    return 'exit';
+  };
   function toast(html, ms = 2600) {
     const t = D.createElement('div');
     t.className = 'toast';
@@ -219,6 +248,7 @@
     v.onclick = null;
     v.innerHTML = '';
     VIEWS[t](v);
+    v.classList.remove('vin'); void v.offsetWidth; v.classList.add('vin');
   }
   const refresh = () => go(tab);
 
@@ -236,14 +266,13 @@
     </section>`;
     let idx = 0;
     cUnits().forEach((u, ui) => {
-      const first = idx, uDone = u.lessons.filter(l => S.done[l.id]).length, locked = first > cur;
-      h += `<section class="unit${locked ? ' locked' : ''}"><div class="unit-h"><small>Unidad ${ui + 1}</small><h2>${esc(u.name)}</h2><p>${esc(u.desc)}</p><span class="unit-n">${uDone}/${u.lessons.length}</span>` +
-        (locked ? `<button class="chip" data-act="jump" data-u="${u.id}">${I('bolt')}Saltar aquí</button>` : '') + `</div><div class="path">`;
+      const uDone = u.lessons.filter(l => S.done[l.id]).length;
+      h += `<section class="unit"><div class="unit-h"><small>Unidad ${ui + 1}</small><h2>${esc(u.name)}</h2><p>${esc(u.desc)}</p><span class="unit-n">${uDone}/${u.lessons.length}</span></div><div class="path">`;
       u.lessons.forEach((l, li) => {
         const gi = idx++, done = !!S.done[l.id], isCur = gi === cur;
         const off = [0, 54, 0, -54][li % 4];
         h += `<div class="node-w${isCur ? ' has-b' : ''}" style="--x:${off}px">${isCur ? `<span class="bubble">${doneN ? 'Siguiente' : 'Empieza aquí'}</span>` : ''}` +
-          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'lock'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : isCur ? '' : ', bloqueada'}">${I(done || isCur ? l.ic : 'lock')}</button>` +
+          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'open'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : ''}">${I(l.ic)}</button>` +
           (done ? `<div class="stars" aria-label="${S.stars[l.id] || 1} de 3 estrellas">${[1, 2, 3].map(k => I('star', k <= (S.stars[l.id] || 1) ? 'on' : '')).join('')}</div>` : '') +
           `<div class="nl">${esc(l.n)}</div></div>`;
       });
@@ -259,7 +288,6 @@
       if (a === 'cont') { const st = lessonState(); if (st.cur < st.ls.length) startLesson(st.ls[st.cur].id); }
       else if (a === 'lic') licenseSheet();
       else if (a === 'exam') startExam();
-      else if (a === 'jump') jumpSheet(b.dataset.u);
     };
     const curNode = $('.node.cur', v);
     if (curNode && !go.scrolled) {
@@ -269,21 +297,12 @@
   };
 
   function lessonSheet(lid) {
-    const l = LESSONS[lid], u = RB.units[l.u], { ls, cur } = lessonState();
-    const gi = ls.findIndex(x => x.id === lid), done = !!S.done[lid];
-    if (!done && gi !== cur) { toast(`${I('lock')}<span>Completa primero las lecciones anteriores o usa <b>Saltar aquí</b>.</span>`); return; }
+    const l = LESSONS[lid], u = RB.units[l.u], done = !!S.done[lid];
     const n = l.items.filter(GRADED).length, vids = l.items.filter(it => ['clip', 'video', 'hazard', 'tap'].includes(it.t)).length;
     sheet(`<small class="kick">${esc(u.name)}</small><h3>${esc(l.n)}</h3>
       <p class="muted">${plural(n, 'ejercicio', 'ejercicios')}${vids ? ` · ${plural(vids, 'video', 'videos')}` : ''}${done ? ` · ${[1, 2, 3].map(k => k <= (S.stars[lid] || 1) ? '★' : '☆').join('')}` : ''}</p>
       <button class="btn" data-go>${I('play')}${done ? 'Repasar · +5 XP' : 'Empezar · +10 XP'}</button>`,
       el => { $('[data-go]', el).onclick = () => closeLayer(() => startLesson(lid)); });
-  }
-  function jumpSheet(uid) {
-    const u = RB.units[uid];
-    sheet(`<small class="kick">Prueba para saltar</small><h3>${esc(u.name)}</h3>
-      <p class="muted">Responde 10 preguntas de esta unidad. Si te equivocas menos de 3 veces, desbloqueas la unidad y todo lo anterior.</p>
-      <button class="btn" data-go>${I('bolt')}Hacer la prueba</button>`,
-      el => { $('[data-go]', el).onclick = () => closeLayer(() => startJump(uid)); });
   }
   function licenseSheet() {
     sheet(`<small class="kick">Licencia</small><h3>¿Qué licencia quieres obtener?</h3><p class="muted">Tu progreso en las unidades comunes se mantiene al cambiar.</p>${licGrid()}`, el => {
@@ -651,13 +670,14 @@
     if (useHearts && S.hearts <= 0) return noHearts();
     const ses = {
       cfg, useHearts, queue: cfg.items.map(it => ({ it, retry: false })), i: 0, total: cfg.items.length, resolved: 0,
-      firstOk: 0, graded: 0, combo: 0, t0: Date.now(), hazScore: 0, hazMax: 0, jumpFail: 0, finished: false, dead: false,
+      firstOk: 0, graded: 0, combo: 0, t0: Date.now(), hazScore: 0, hazMax: 0, finished: false, dead: false,
     };
-    const lives = useHearts ? `<span class="ses-hp" title="Vidas">${I('heart')}<b>${S.hearts}</b></span>` : cfg.kind === 'jump' ? `<span class="ses-hp" title="Errores permitidos">${I('heart')}<b>3</b></span>` : '';
+    const lives = useHearts ? `<span class="ses-hp" title="Vidas">${I('heart')}<b>${S.hearts}</b></span>` : '';
     const ent = openLayer('ses', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="pbar" role="progressbar" aria-label="Progreso" aria-valuemin="0" aria-valuemax="100"><i></i></div>${lives}</header>` +
       `<main class="ses-b"></main><footer class="ses-f"><div class="fb" aria-live="polite"></div><button class="btn" type="button" data-go disabled>Comprobar</button></footer>`,
       () => { ses.dead = true; if (ses.player) ses.player.destroy(); RB.hush(); if (curSes === ses) curSes = null; });
-    ent.guard = () => ses.finished || confirm('¿Seguro que quieres salir? Perderás el progreso de esta sesión.');
+    ent.guard = () => ses.finished;
+    ent.ask = { title: '¡Espera, no te vayas!', text: 'Si sales ahora, perderás el progreso de esta sesión.', ok: 'Salir', cancel: 'Seguir aprendiendo' };
     ses.el = ent.el;
     curSes = ses;
     $('[data-x]', ent.el).onclick = () => history.back();
@@ -702,7 +722,6 @@
       ses.combo = 0; SFX.bad(); buzz(140);
       if (!soft) {
         if (ses.useHearts) { loseHeart(); const hp = $('.ses-hp b', ses.el); if (hp) hp.textContent = S.hearts; }
-        if (kind === 'jump') { ses.jumpFail++; const hp = $('.ses-hp b', ses.el); if (hp) hp.textContent = Math.max(0, 3 - ses.jumpFail); }
         if (!q.retry && (kind === 'lesson' || kind === 'practice' || kind === 'review')) { ses.queue.push({ it, retry: true }); requeued = true; }
       }
     }
@@ -723,7 +742,6 @@
   }
   function next(ses) {
     if (ses.useHearts && S.hearts <= 0) return endSession(ses, 'hearts');
-    if (ses.cfg.kind === 'jump' && ses.jumpFail >= 3) return endSession(ses, 'jumpfail');
     if (++ses.i >= ses.queue.length) return endSession(ses, 'done');
     showItem(ses);
   }
@@ -745,10 +763,6 @@
       save();
       return;
     }
-    if (why === 'jumpfail') {
-      body.innerHTML = `<div class="res"><div class="res-ic">${I('x')}</div><h2>Casi lo logras</h2><p class="muted">Para saltar esta unidad necesitas equivocarte menos de 3 veces. Puedes intentarlo de nuevo cuando quieras o seguir el camino lección a lección.</p></div>`;
-      return;
-    }
     let xp = 0, title = '¡Sesión completada!', ic = 'trophy', extra = '';
     if (cfg.kind === 'lesson') {
       const first = !S.done[cfg.lid];
@@ -763,10 +777,6 @@
     } else if (cfg.kind === 'practice') { xp = 5 + (perfect ? 3 : 0); title = '¡Práctica completada!'; ic = 'target'; } else if (cfg.kind === 'review') {
       xp = 5 + (perfect ? 3 : 0); S.revs++; title = '¡Repaso completado!'; ic = 'replay';
       if (!S.set.inf && S.hearts < MAXH) { S.hearts++; if (S.hearts >= MAXH) S.hAt = Date.now(); extra += `<p class="note">${I('heart')}Ganaste una vida</p>`; }
-    } else if (cfg.kind === 'jump') {
-      xp = 15; title = '¡Unidad desbloqueada!'; ic = 'bolt';
-      const ls = cLessons(), stop = ls.findIndex(l => l.u === cfg.uid);
-      ls.slice(0, stop).forEach(l => { if (!S.done[l.id]) { S.done[l.id] = today(); S.stars[l.id] = S.stars[l.id] || 1; } });
     } else if (cfg.kind === 'hazard') {
       xp = Math.max(2, Math.round(ses.hazScore / 2)); title = 'Percepción de riesgos'; ic = 'eye';
       if (cfg.full) S.hazBest = Math.max(S.hazBest, ses.hazScore);
@@ -788,10 +798,6 @@
   function startLesson(lid) {
     const l = LESSONS[lid];
     startSession({ kind: 'lesson', lid, items: l.items.slice() });
-  }
-  function startJump(uid) {
-    const items = shuffle(unitItems(RB.units[uid]).filter(it => ['mc', 'tf', 'img', 'fill', 'multi'].includes(it.t))).slice(0, 10);
-    startSession({ kind: 'jump', uid, items });
   }
   function startReview() {
     let items = dueItems().slice(0, 10);
@@ -830,7 +836,8 @@
     ex.pass = Math.round(ex.max * 33 / 38);
     const ent = openLayer('ses exam', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="ex-n"></div><span class="ex-t" aria-label="Tiempo restante">${I('clock')}<b>45:00</b></span><button class="ib" type="button" data-grid aria-label="Ver todas las preguntas">${I('grid')}</button></header>` +
       `<main class="ses-b"></main><footer class="ses-f ex-f"><button class="btn ghost" type="button" data-prev>Anterior</button><button class="btn" type="button" data-next>Siguiente</button></footer>`, () => clearInterval(ex.timer));
-    ent.guard = () => ex.done || confirm('¿Salir del simulacro? Se perderán tus respuestas.');
+    ent.guard = () => ex.done;
+    ent.ask = { title: '¿Salir del simulacro?', text: 'Se perderán tus respuestas.', ok: 'Salir', cancel: 'Seguir con el simulacro' };
     const el = ent.el;
     const answered = q => q.it.t === 'multi' ? (q.ans || []).length > 0 : q.ans != null;
     const draw = () => {
@@ -862,7 +869,11 @@
     $('[data-next]', el).onclick = () => {
       if (ex.i < ex.Q.length - 1) { ex.i++; draw(); return; }
       const left = ex.Q.filter(q => !answered(q)).length;
-      if (left && !confirm(`Tienes ${plural(left, 'pregunta', 'preguntas')} sin responder. ¿Terminar igual?`)) return;
+      if (left) {
+        ask({ title: `Tienes ${plural(left, 'pregunta', 'preguntas')} sin responder`, text: 'Las preguntas sin responder cuentan como incorrectas.', ok: 'Terminar igual', cancel: 'Seguir respondiendo', danger: false })
+          .then(ok => { if (ok) finish(); });
+        return;
+      }
       finish();
     };
     $('[data-grid]', el).onclick = () => sheet(`<small class="kick">Simulacro</small><h3>Ir a una pregunta</h3><p class="muted">En negro, las respondidas.</p><div class="grid35">${ex.Q.map((q, k) => `<button type="button" class="${answered(q) ? 'a' : ''}${k === ex.i ? ' cur' : ''}" data-k="${k}">${k + 1}</button>`).join('')}</div>`, s => {
@@ -970,7 +981,8 @@
     const st = { i: 0, score: 0, miss: 0, t0: Date.now(), dur: 60, done: false, lock: false };
     const ent = openLayer('ses blitz', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="pbar tbar" role="timer" aria-label="Tiempo restante"><i style="width:100%"></i></div><span class="ses-hp" title="Correctas">${I('bolt')}<b>0</b></span></header>` +
       `<main class="ses-b"></main><footer class="ses-f"><p class="muted center">Responde todas las que puedas en 60 segundos.</p></footer>`, () => { st.done = true; cancelAnimationFrame(st.raf); });
-    ent.guard = () => st.done || confirm('¿Salir del contrarreloj?');
+    ent.guard = () => st.done;
+    ent.ask = { title: '¿Salir del contrarreloj?', text: 'El puntaje de esta partida no se guardará.', ok: 'Salir', cancel: 'Seguir jugando' };
     const el = ent.el;
     $('[data-x]', el).onclick = () => history.back();
     const draw = () => {
@@ -1248,8 +1260,10 @@
       if (a === 'lic') licenseSheet();
       else if (a === 'export') exportData();
       else if (a === 'reset') {
-        if (!confirm('¿Borrar todo tu progreso? No se puede deshacer.')) return;
-        S = DEF(); save(); go.scrolled = false; applyTheme(); go('aprender'); onboarding();
+        ask({ title: '¿Borrar todo tu progreso?', text: 'Perderás tus lecciones, XP, rachas y logros. No se puede deshacer.', ok: 'Borrar todo', cancel: 'Cancelar' }).then(ok => {
+          if (!ok) return;
+          S = DEF(); save(); go.scrolled = false; applyTheme(); go('aprender'); onboarding();
+        });
       }
     };
     $$('[data-set]', v).forEach(inp => inp.addEventListener('change', () => { S.set[inp.dataset.set] = inp.checked; save(); header(); }));
@@ -1281,6 +1295,7 @@
   function applyTheme() {
     if (S.set.theme !== 'light') S.set.theme = 'dark';
     D.documentElement.dataset.theme = S.set.theme;
+    try { if (window.RutaNative && window.RutaNative.theme) window.RutaNative.theme(S.set.theme); } catch (e) { /* app antigua */ }
     const m = $('meta[name="theme-color"]');
     if (m) m.content = S.set.theme === 'light' ? '#ffffff' : '#000000';
   }
@@ -1334,6 +1349,11 @@
   D.addEventListener('visibilitychange', () => { if (!D.hidden) header(); });
   go((location.hash || '').slice(1) || 'aprender');
   if (!S.lic) onboarding();
+  // Dentro de la app Android: sin barras de desplazamiento ni menú contextual del navegador.
+  if (window.RutaNative) {
+    D.documentElement.classList.add('app');
+    D.addEventListener('contextmenu', e => { if (!e.target.closest('input, textarea')) e.preventDefault(); });
+  }
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.RutaNative) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
   }

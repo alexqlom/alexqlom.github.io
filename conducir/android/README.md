@@ -7,7 +7,8 @@ empaquetada dentro del APK, así que funciona sin conexión. Además le entrega 
 - **Vibración** al responder.
 - **Compartir** para exportar el progreso.
 - **Selector de archivos** para importar el progreso.
-- **Botón Atrás** que cierra primero las pantallas abiertas dentro de la app.
+- **Botón Atrás** manejado por la app: cierra la pantalla abierta (pidiendo confirmación si hay una lección en curso), vuelve a Aprender desde las otras pestañas y, desde Aprender, sale.
+- **Comportamiento de app**: sin zoom, sin selección de texto, sin rebote de página, orientación vertical y barras del sistema del color del tema.
 
 Paquete `io.github.alexqlom.ruta`, Android 7.0 o superior (API 24), objetivo API 34.
 

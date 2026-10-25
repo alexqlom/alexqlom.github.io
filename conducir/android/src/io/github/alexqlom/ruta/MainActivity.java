@@ -1,7 +1,9 @@
 package io.github.alexqlom.ruta;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -10,8 +12,11 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
+import android.view.View;
 import android.view.Window;
+import android.view.WindowInsetsController;
 import android.webkit.JavascriptInterface;
+import android.webkit.JsResult;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -23,7 +28,7 @@ import java.util.Locale;
 
 /**
  * Ruta: muestra la app web empaquetada en assets/www (funciona sin conexión) y le entrega
- * voz, vibración, compartir y selector de archivos nativos a través de window.RutaNative.
+ * voz, vibración, compartir, selector de archivos y colores de sistema a través de window.RutaNative.
  */
 public class MainActivity extends Activity {
     private static final String HOME = "file:///android_asset/www/index.html";
@@ -37,16 +42,21 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
-        Window w = getWindow();
-        w.setStatusBarColor(Color.BLACK);
-        w.setNavigationBarColor(Color.BLACK);
 
         web = new WebView(this);
-        web.setBackgroundColor(Color.BLACK);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
+        // Como app: sin zoom, sin rebote al llegar al borde y sin barras de desplazamiento.
+        s.setSupportZoom(false);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        int zoom = Math.round(getResources().getConfiguration().fontScale * 100);
+        s.setTextZoom(Math.max(100, Math.min(zoom, 115)));
+        web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        web.setVerticalScrollBarEnabled(false);
+        web.setHorizontalScrollBarEnabled(false);
         web.addJavascriptInterface(new Bridge(), "RutaNative");
 
         web.setWebViewClient(new WebViewClient() {
@@ -80,9 +90,47 @@ public class MainActivity extends Activity {
                     return false;
                 }
             }
+
+            // Respaldo: si la página usa un aviso del navegador, se muestra sin la dirección de la página.
+            @Override
+            public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                    .setMessage(message)
+                    .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface d, int which) { result.confirm(); }
+                    })
+                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface d) { result.cancel(); }
+                    })
+                    .show();
+                return true;
+            }
+
+            @Override
+            public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
+                new AlertDialog.Builder(MainActivity.this)
+                    .setMessage(message)
+                    .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface d, int which) { result.confirm(); }
+                    })
+                    .setNegativeButton("Cancelar", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface d, int which) { result.cancel(); }
+                    })
+                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface d) { result.cancel(); }
+                    })
+                    .show();
+                return true;
+            }
         });
 
         setContentView(web);
+        applyBars(false);
         web.loadUrl(HOME);
 
         tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
@@ -94,6 +142,26 @@ public class MainActivity extends Activity {
                 ttsReady = true;
             }
         });
+    }
+
+    /** Pinta la barra de estado y la de navegación del color del tema de la app. */
+    private void applyBars(boolean light) {
+        Window w = getWindow();
+        int bg = light ? Color.WHITE : Color.BLACK;
+        w.setStatusBarColor(bg);
+        w.setNavigationBarColor(bg);
+        if (web != null) web.setBackgroundColor(bg);
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController c = w.getInsetsController();
+            int both = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+            if (c != null) c.setSystemBarsAppearance(light ? both : 0, both);
+        } else {
+            View decor = w.getDecorView();
+            int f = decor.getSystemUiVisibility();
+            f = light ? f | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR : f & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26) f = light ? f | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : f & ~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            decor.setSystemUiVisibility(f);
+        }
     }
 
     @Override
@@ -108,11 +176,19 @@ public class MainActivity extends Activity {
         super.onActivityResult(request, result, data);
     }
 
-    // El botón Atrás cierra primero las pantallas abiertas en la app (historial de la página).
+    // El botón Atrás lo decide la app: cierra la pantalla abierta, vuelve a Aprender o sale.
     @Override
     public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        if (web == null) {
+            super.onBackPressed();
+            return;
+        }
+        web.evaluateJavascript("window.RutaBack ? RutaBack() : 'exit'", new ValueCallback<String>() {
+            @Override
+            public void onReceiveValue(String value) {
+                if (value == null || !value.contains("handled")) MainActivity.super.onBackPressed();
+            }
+        });
     }
 
     @Override
@@ -159,6 +235,14 @@ public class MainActivity extends Activity {
             int d = Math.max(1, Math.min(ms, 1000));
             if (Build.VERSION.SDK_INT >= 26) v.vibrate(VibrationEffect.createOneShot(d, VibrationEffect.DEFAULT_AMPLITUDE));
             else v.vibrate(d);
+        }
+
+        @JavascriptInterface
+        public void theme(final String mode) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() { applyBars("light".equals(mode)); }
+            });
         }
 
         @JavascriptInterface
