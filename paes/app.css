@@ -665,7 +665,7 @@ mark { padding: 0 .15em; border-radius: 4px; background: var(--acc); color: var(
 .vx-b.show .plot .pf.p2 { animation-delay: 1s; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .plot .pp { fill: var(--acc); stroke: #000; stroke-width: 2; }
-.plot .pt { fill: var(--ink2); font-size: 12px; font-weight: 700; }
+.plot .pt { fill: var(--ink); font-size: 12px; font-weight: 800; paint-order: stroke; stroke: #0b0b0b; stroke-width: 4px; stroke-linejoin: round; }
 .vb-bars { display: grid; gap: 8px; }
 .vb-bars .br { display: grid; grid-template-columns: 34% 1fr auto; align-items: center; gap: 8px; font-size: 14px; }
 .vb-bars .br > span { color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -705,3 +705,4 @@ mark { padding: 0 .15em; border-radius: 4px; background: var(--acc); color: var(
 .txb.verse { font-style: italic; }
 .txb.verse p { margin: 14px 0; line-height: 1.7; }
 .txb .src { font-style: normal; }
+.vb-eq.sm { font-size: 18px; }

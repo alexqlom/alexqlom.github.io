@@ -130,13 +130,17 @@
       }
       s += `<path d="${d}" class="pf${i ? ' p2' : ''}" pathLength="1"/>`;
     });
-    (p.pts || []).forEach(([x, y, l]) => { s += `<circle cx="${X(x)}" cy="${Y(y)}" r="4.5" class="pp"/>${l ? `<text x="${X(x) + 7}" y="${Y(y) - 7}" class="pt">${esc(l)}</text>` : ''}`; });
+    // Etiquetas legibles: con borde oscuro, hacia adentro del gráfico y sobre el punto si hay espacio.
+    (p.pts || []).forEach(([x, y, l]) => {
+      const px = X(x), py = Y(y), right = px > W * .62, up = py > 30;
+      s += `<circle cx="${px}" cy="${py}" r="4.5" class="pp"/>` + (l ? `<text x="${right ? px - 8 : px + 8}" y="${up ? py - 9 : py + 18}" class="pt" text-anchor="${right ? 'end' : 'start'}">${esc(l)}</text>` : '');
+    });
     if (p.lx) s += `<text x="${W - 12}" y="${Y(0) - 6 > 14 ? Y(0) - 6 : H - 18}" class="pt" text-anchor="end">${esc(p.lx)}</text>`;
     return s + `</svg>`;
   }
   function block(b, i) {
     if (typeof b === 'string') return `<div class="vb-pt" style="--i:${i}"><i></i><span>${rich(b)}</span></div>`;
-    if (b.eq != null) return `<div class="vb-eq">${rich(b.eq)}${b.n ? `<small>${rich(b.n)}</small>` : ''}</div>`;
+    if (b.eq != null) return `<div class="vb-eq${Math.max(...String(b.eq).split('\n').map(l => l.length)) > 26 ? ' sm' : ''}">${rich(b.eq)}${b.n ? `<small>${rich(b.n)}</small>` : ''}</div>`;
     if (b.ex != null) return `<div class="vb-ex"><small>${esc(b.k || 'Ejemplo')}</small><p>${rich(b.ex)}</p></div>`;
     if (b.sol != null) return `<div class="vb-sol"><small>${esc(b.k || 'Solución')}</small><p>${rich(b.sol)}</p></div>`;
     if (b.big != null) return `<div class="vb-big"><b>${rich(b.big)}</b>${b.sub ? `<span>${rich(b.sub)}</span>` : ''}</div>`;
