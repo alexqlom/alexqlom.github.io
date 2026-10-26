@@ -136,6 +136,7 @@
     paper: `<g transform="rotate(-6)"><rect x="-9" y="-12" width="18" height="23" fill="#fff"/><path d="M-6 -6 H6 M-6 -2 H6 M-6 2 H4" stroke="#999" stroke-width="1.2"/></g>`,
     newspaper: `<g transform="rotate(-6)"><rect x="-13" y="-16" width="26" height="30" fill="#ece7da"/><rect x="-10" y="-13" width="20" height="5" fill="#333"/><path d="M-10 -4 H10 M-10 0 H10 M-10 4 H2 M-10 8 H10" stroke="#888" stroke-width="1.2"/></g>`,
     cane: `<g transform="rotate(180)"><path d="M0 -4 L0 40 M0 -4 C0 -10 -8 -10 -8 -4" stroke="#3b2a1d" stroke-width="2.6" fill="none" stroke-linecap="round"/></g>`,
+    broom: `<g transform="rotate(-14)"><rect x="-1.3" y="-30" width="2.6" height="66" fill="#b08a5a"/><path d="M-8 34 L8 34 L13 56 L-13 56Z" fill="#d9b45a"/><path d="M-6 38 L-8 54 M0 38 L0 55 M6 38 L8 54" stroke="#a8862f" stroke-width="1.4"/><rect x="-9" y="32" width="18" height="5" rx="2" fill="#c0392b"/></g>`,
     shovel: `<g transform="rotate(175)"><rect x="-1.3" y="-14" width="2.6" height="52" fill="#8b6b4a"/><path d="M-8 38 L8 38 L6 54 L0 58 L-6 54Z" fill="#8a929c"/></g>`,
     wrench: `<g transform="rotate(200)"><rect x="-2" y="-2" width="4" height="22" rx="2" fill="#8a929c"/><path d="M-6 20 C-6 28 6 28 6 20 L3 20 L3 24 L-3 24 L-3 20Z" fill="#8a929c"/></g>`,
     baguette: `<g transform="rotate(-50)"><rect x="-3.5" y="-24" width="7" height="48" rx="3.5" fill="#d79a52"/><path d="M-2 -14 L2 -16 M-2 -4 L2 -6 M-2 6 L2 4 M-2 16 L2 14" stroke="#a8692b" stroke-width="1.3"/></g>`,
