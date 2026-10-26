@@ -6,7 +6,7 @@ const ctx = { window: {}, document: { addEventListener() {}, removeEventListener
 ctx.window.window = ctx.window;
 vm.createContext(ctx);
 const run = f => vm.runInContext(`(function(window, document){${fs.readFileSync(path.join(root, f), 'utf8')}})(window, document);`, ctx, { filename: f });
-run('icons.js'); run('video.js'); run('data/tests.js');
+run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-mapas.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
 const files = fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js') && f !== 'tests.js').sort();
 files.forEach(f => run('data/' + f));
 const RB = ctx.window.RB;
@@ -24,8 +24,11 @@ for (const t of RB.tests) {
     if (!u) { W(t.id, `falta la unidad ${uid}`); continue; }
     if (!u.name || !u.desc) E(uid, 'unidad sin nombre o descripción');
     if (!RB.hasIcon(u.ic)) E(uid, `ícono desconocido ${u.ic}`);
-    if (!u.vid || !RB.videos[u.vid]) E(uid, `video ${u.vid} no existe`);
-    else if (RB.videos[u.vid].u !== uid) E(uid, `el video ${u.vid} apunta a ${RB.videos[u.vid].u}`);
+    // Cada unidad tiene su video, o (Historia) un video en dibujos por lección.
+    const toonL = u.lessons.map((l, li) => Object.values(RB.videos).find(v => v.kind === 'toon' && v.u === uid && v.l === li));
+    if (u.vid && !RB.videos[u.vid]) E(uid, `video ${u.vid} no existe`);
+    else if (u.vid && RB.videos[u.vid].u !== uid) E(uid, `el video ${u.vid} apunta a ${RB.videos[u.vid].u}`);
+    else if (!u.vid && toonL.some(x => !x)) W(uid, `lecciones sin video: ${toonL.map((x, i) => x ? null : i + 1).filter(Boolean).join(', ')}`);
     let un = 0;
     u.lessons.forEach((l, li) => {
       const w = `${uid}.${li + 1}`;
@@ -75,12 +78,31 @@ const guion = require('./guion.js');
 const narr = {};
 const actx = { RB: { vaudio: (id, d) => { narr[id] = d; } } };
 vm.createContext(actx);
-if (fs.existsSync(path.join(root, 'audio'))) fs.readdirSync(path.join(root, 'audio')).filter(f => /^v-.*\.js$/.test(f)).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'audio', f), 'utf8'), actx));
+if (fs.existsSync(path.join(root, 'audio'))) fs.readdirSync(path.join(root, 'audio')).filter(f => /^(v-.*|h\d+-\d+)\.js$/.test(f)).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'audio', f), 'utf8'), actx));
 const vrows = [];
 for (const id in RB.videos) {
   const v = RB.videos[id];
   if (!RB.units[v.u]) E(id, `unidad ${v.u} no existe`);
   let words = 0, quizzes = 0;
+  if (v.kind === 'toon') {
+    // Videos en dibujos: órdenes válidas, anclas que la narración sí dice y lección existente.
+    if (!RB.units[v.u] || !RB.units[v.u].lessons[v.l]) E(id, `lección ${v.u}.${v.l + 1} no existe`);
+    v.sc.forEach((sc, i) => {
+      RB.toonKit.check(sc).forEach(m => E(`${id}/${i + 1}`, m));
+      if (sc.set && !RB.toonKit.hasSet(sc.set)) E(`${id}/${i + 1}`, `escenario desconocido ${sc.set}`);
+      if (sc.k === 'map' && !RB.toonKit.MAPS[sc.view || 'chile']) E(`${id}/${i + 1}`, `mapa desconocido ${sc.view}`);
+      if (sc.k === 'quiz') { quizzes++; if (!sc.o || sc.o.length < 2 || !(sc.a >= 0 && sc.a < sc.o.length)) E(`${id}/${i + 1}`, 'pregunta mal armada'); }
+      RB.toonKit.cuesOf(sc).forEach(c => { words += (c.text.match(/\S+/g) || []).length; if (!c.text) E(`${id}/${i + 1}`, 'plano sin narración'); });
+    });
+    const rec = narr[id];
+    if (!rec) W(id, 'sin narración grabada (correr tools/voz.py)');
+    else if (rec.h !== guion.huella(guion.scripts.find(x => x.id === id))) W(id, 'la narración grabada no coincide con el guion actual: volver a correr tools/voz.py');
+    const secs = rec ? rec.d : RB.videoSecs(id);
+    if (secs < 120) W(id, `video corto: ${Math.round(secs / 6) / 10} min`);
+    if (secs > 420) W(id, `video largo: ${Math.round(secs / 6) / 10} min`);
+    vrows.push([id, (secs / 60).toFixed(1) + ' min', words + ' palabras', quizzes + ' preguntas', v.sc.length + ' planos']);
+    continue;
+  }
   v.sc.forEach((sc, i) => {
     const b = sc.b || [], s = sc.s || [];
     if (!s.length) E(`${id}/${i + 1}`, 'escena sin narración');

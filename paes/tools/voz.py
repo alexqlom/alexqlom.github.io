@@ -14,12 +14,27 @@ import habla
 from habla_fijo import FIJO
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SR = 24000            # así se guarda y se codifica
 HILOS = int(os.environ.get('PAES_HILOS', '4'))
 REPAIR = False
-VOICE, STEPS, SPEED = 2, 10, 1.0
-TEMPO = 1.07          # la voz se acelera un poco al armar cada video (rubberband conserva el tono)
-GAP = dict(start=.9, sentence=.28, cue=.5, quiz=.6, scene=1.0, end=1.6)
+# Dos perfiles de narración. "clasico": los videos de diapositivas (24 kHz, pausas amplias, rubberband).
+# "toon": los videos en dibujos — voz un poco más rápida desde el modelo, casi sin silencios, 48 kHz,
+# ecualizada hacia el espectro del habla natural y más fuerte (−16 LUFS, como el audio de los teléfonos).
+PERFIL = {
+    'clasico': dict(sr=24000, voice=2, steps=10, speed=1.0, tempo=1.07, kbps='20k', brillo=False,
+                    gap=dict(start=.9, sentence=.28, cue=.5, quiz=.6, scene=1.0, end=1.6)),
+    'toon': dict(sr=48000, voice=2, steps=10, speed=1.15, tempo=1.0, kbps='24k', brillo=True,
+                 gap=dict(start=.35, sentence=.12, cue=.18, quiz=2.6, scene=.32, end=.9)),
+}
+SR = VOICE = STEPS = SPEED = TEMPO = KBPS = BRILLO = GAP = None
+
+
+def usar(nombre):
+    global SR, VOICE, STEPS, SPEED, TEMPO, KBPS, BRILLO, GAP
+    p = PERFIL[nombre]
+    SR, VOICE, STEPS, SPEED, TEMPO, KBPS, BRILLO, GAP = p['sr'], p['voice'], p['steps'], p['speed'], p['tempo'], p['kbps'], p['brillo'], p['gap']
+
+
+usar('clasico')
 FEEDBACK = ['¡Correcto!', '¡Muy bien!', '¡Exacto!', '¡Eso es!', 'No era esa.', 'Casi, pero no.', 'Ups, no era esa.']
 # Lo que dice Lima en la encuesta inicial (app.js usa estas claves).
 APP = [
@@ -104,7 +119,7 @@ class Voice:
     def say(self, spoken, repair=False):
         """Audio de una frase hablada + palabras reconocidas con su tiempo. Reintenta si no se entiende o si
         parece faltar una palabra importante. Con repair=True vuelve a intentar las guardadas que quedaron dudosas."""
-        key = hashlib.sha1(f'supertonic3|{VOICE}|{STEPS}|{SPEED}|{spoken}'.encode()).hexdigest()
+        key = hashlib.sha1((f'supertonic3|{VOICE}|{STEPS}|{SPEED}|{spoken}' + (f'|{SR}' if SR != 24000 else '')).encode()).hexdigest()
         f = os.path.join(self.cache, key[:2], key + '.npz')
         ref = [habla.word_key(w) for w in spoken.split()]
         ref = [w for w in ref if w]
@@ -330,7 +345,7 @@ def build_video(v, voice, outdir):
         scs.append(round(max(0, t - (GAP['start'] if si == 0 else GAP['scene'] * .6)), 2))
         for ci, c in enumerate(sc['cues']):
             if ci:
-                push(sil(GAP['quiz'] if c['kind'] == 'e' else GAP['cue']))
+                push(sil(c['gap'] if c.get('gap') is not None else GAP['quiz'] if c['kind'] == 'e' else GAP['cue']))
             parts, fixed = cue_parts(c['text'])
             c0 = t
             lines = []
@@ -370,7 +385,7 @@ def build_video(v, voice, outdir):
                 ln[0], ln[1] = round(ln[0] * k, 2), round(ln[1] * k, 2)
                 if ln[3]:
                     ln[3] = [int(round(x * k)) for x in ln[3]]
-    y = loudness(y)
+    y = brillo(y) if BRILLO else loudness(y)
     env = envelope(y)
     base = os.path.join(outdir, v['id'])
     encode(y, base + '.webm')
@@ -404,6 +419,50 @@ def loudness(y, target_db=-19.0):
     return y.astype(np.float32)
 
 
+# Espectro promedio de la voz F3 (velocidad 1,15) en tercios de octava, relativo a 500 Hz, y el del habla natural
+# (ANSI S3.5) con un poco más de presencia para los parlantes de teléfono. La diferencia se corrige con un
+# filtro de fase mínima: menos graves retumbantes, más presencia y el silbido de las eses (8 kHz) controlado.
+F3_LTAS = {160: 3.5, 200: 4.8, 250: 3.9, 315: .9, 400: .3, 500: 0, 630: -1.3, 800: -4.7, 1000: -9.1, 1250: -9.4, 1600: -11.0,
+           2000: -12.9, 2500: -17.3, 3150: -17.4, 4000: -23.0, 5000: -17.2, 6300: -12.3, 8000: 2.5, 10000: -4.2, 12500: -15.3, 16000: -16.6}
+HABLA = {160: -6.8, 200: -3.8, 250: -2.5, 315: -2.3, 400: -.65, 500: 0, 630: -1.2, 800: -3.9, 1000: -6.3, 1250: -7.3, 1600: -9.1,
+         2000: -10.9, 2500: -14.1, 3150: -14.7, 4000: -15.9, 5000: -19.0, 6300: -20.7, 8000: -21.1, 10000: -23, 12500: -26, 16000: -30}
+PRESENCIA = {160: -1.5, 200: -1.2, 250: -1, 1250: 1, 1600: 2, 2000: 2, 2500: 2, 3150: 2, 4000: 2.5, 5000: 4, 6300: 5, 8000: 4, 10000: 3, 12500: 2}
+_eq = {}
+
+
+def eq_taps(sr):
+    if sr not in _eq:
+        from scipy.signal import firwin2, minimum_phase
+        fcs = sorted(HABLA)
+        g = np.array([np.clip(HABLA[f] + PRESENCIA.get(f, 0) - F3_LTAS[f], -26, 9) for f in fcs])
+        g -= g[fcs.index(1000)]
+        grid = np.linspace(0, sr / 2, 1025)
+        lg = np.interp(np.log10(np.maximum(grid, 20)), np.log10(np.array(fcs, float)), g)
+        lg[grid < 110] = -24
+        # minimum_phase devuelve la raíz de la magnitud: se diseña con la magnitud al cuadrado.
+        _eq[sr] = minimum_phase(firwin2(2047, grid / (sr / 2), (10 ** (lg / 20)) ** 2), method='homomorphic', n_fft=2 ** 16)
+    return _eq[sr]
+
+
+def ff(y, filtros, extra=None):
+    p = subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'info' if extra else 'error', '-f', 'f32le', '-ar', str(SR), '-ac', '1', '-i', 'pipe:0',
+                        '-af', filtros, '-f', 'f32le', '-ar', str(SR), '-ac', '1', 'pipe:1'], input=y.astype(np.float32).tobytes(), capture_output=True)
+    if p.returncode:
+        raise RuntimeError(p.stderr.decode())
+    return np.frombuffer(p.stdout, dtype=np.float32).copy(), p.stderr.decode()
+
+
+def brillo(y):
+    from scipy.signal import fftconvolve
+    y = fftconvolve(y, eq_taps(SR))[:len(y)].astype(np.float32)
+    y, _ = ff(y, 'acompressor=threshold=-24dB:ratio=2.2:attack=8:release=120:makeup=1')
+    # Volumen: −16 LUFS integrados, en dos pasadas (ganancia lineal, sin bombeo).
+    _, log = ff(y, 'loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json', extra=True)
+    m = json.loads(log[log.rindex('{'):log.rindex('}') + 1])
+    y, _ = ff(y, 'loudnorm=I=-16:TP=-1.5:LRA=11:linear=true:measured_I={input_i}:measured_TP={input_tp}:measured_LRA={input_lra}:measured_thresh={input_thresh}:offset={target_offset}'.format(**m))
+    return y
+
+
 def envelope(y, fps=25):
     """Apertura de la boca de la mascota, de 0 a 9, 25 veces por segundo."""
     fr = SR // fps
@@ -416,7 +475,7 @@ def envelope(y, fps=25):
 
 def encode(y, path):
     p = subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'f32le', '-ar', str(SR), '-ac', '1',
-                        '-i', 'pipe:0', '-c:a', 'libopus', '-b:a', '20k', '-vbr', 'on', '-compression_level', '10',
+                        '-i', 'pipe:0', '-c:a', 'libopus', '-b:a', KBPS, '-vbr', 'on', '-compression_level', '10',
                         '-application', 'audio', '-fflags', '+bitexact', '-flags:a', '+bitexact', path], input=y.astype(np.float32).tobytes(), capture_output=True)
     if p.returncode:
         raise RuntimeError(p.stderr.decode())
@@ -429,7 +488,8 @@ def build_feedback(voice, outdir):
         items.append([s, round(t, 2), round(t + len(y) / SR, 2)])
         chunks += [y, np.zeros(int(.4 * SR), dtype=np.float32)]
         t += len(y) / SR + .4
-    y = loudness(np.concatenate(chunks))
+    y = np.concatenate(chunks)
+    y = brillo(y) if BRILLO else loudness(y)
     encode(y, os.path.join(outdir, 'fb.webm'))
     with open(os.path.join(outdir, 'fb.js'), 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio("fb",%s);\n' % json.dumps(dict(d=round(len(y) / SR, 2), fb=items), ensure_ascii=False, separators=(',', ':')))
@@ -444,7 +504,8 @@ def build_app(voice, outdir):
         clips[k] = [round(t, 2), round(t + len(y) / SR, 2)]
         chunks += [y, np.zeros(int(.5 * SR), dtype=np.float32)]
         t += len(y) / SR + .5
-    y = loudness(np.concatenate(chunks))
+    y = np.concatenate(chunks)
+    y = brillo(y) if BRILLO else loudness(y)
     encode(y, os.path.join(outdir, 'app.webm'))
     with open(os.path.join(outdir, 'app.js'), 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio("app",%s);\n' % json.dumps(dict(d=round(len(y) / SR, 2), clips=clips, e=envelope(y)), ensure_ascii=False, separators=(',', ':')))
@@ -459,6 +520,7 @@ def main():
     ap.add_argument('--app', action='store_true', help='solo las frases de la app (encuesta y respuestas)')
     ap.add_argument('--reverso', action='store_true', help='recorre los videos desde el último (para correr dos procesos)')
     ap.add_argument('--reparar', action='store_true', help='vuelve a grabar las frases guardadas donde pudo faltar una palabra')
+    ap.add_argument('--sin-app', action='store_true', help='no vuelve a armar las frases de la app')
     a = ap.parse_args()
     global REPAIR
     REPAIR = a.reparar
@@ -466,14 +528,18 @@ def main():
     only = set(x for x in a.solo.split(',') if x)
     os.makedirs(a.salida, exist_ok=True)
     voice = Voice(a.modelos, a.cache)
-    build_feedback(voice, a.salida)
-    build_app(voice, a.salida)
+    # Las frases de la app (encuesta y respuestas) usan la misma voz viva de los videos en dibujos.
+    usar('toon')
+    if not a.sin_app:
+        build_feedback(voice, a.salida)
+        build_app(voice, a.salida)
     if a.app:
         return
     total = 0
     for v in (g[::-1] if a.reverso else g):
         if only and v['id'] not in only:
             continue
+        usar('toon' if v.get('kind') == 'toon' else 'clasico')
         t0 = time.time()
         d, worst = build_video(v, voice, a.salida)
         total += d

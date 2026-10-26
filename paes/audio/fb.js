@@ -1,1 +1,1 @@
-RB.vaudio("fb",{"d":8.84,"fb":[["¡Correcto!",0.0,0.79],["¡Muy bien!",1.19,1.9],["¡Exacto!",2.3,3.06],["¡Eso es!",3.46,4.19],["No era esa.",4.59,5.54],["Casi, pero no.",5.94,6.85],["Ups, no era esa.",7.25,8.44]]});
+RB.vaudio("fb",{"d":8.19,"fb":[["¡Correcto!",0.0,0.68],["¡Muy bien!",1.08,1.68],["¡Exacto!",2.08,2.9],["¡Eso es!",3.3,3.98],["No era esa.",4.38,5.12],["Casi, pero no.",5.52,6.28],["Ups, no era esa.",6.68,7.79]]});

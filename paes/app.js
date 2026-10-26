@@ -68,6 +68,16 @@
       });
     });
   }
+  // Cada tema trae su video al entrar a la lección: en Historia, uno por lección (videos en dibujos); en las otras
+  // pruebas, el video de la unidad va al comienzo de su primera lección.
+  for (const id in RB.videos) {
+    const v = RB.videos[id], u = RB.units[v.u];
+    if (v.kind === 'toon' && u && u.lessons[v.l]) u.lessons[v.l].vid = id;
+  }
+  for (const uid in RB.units) {
+    const u = RB.units[uid];
+    if (u.vid && RB.videos[u.vid] && u.lessons.length && !u.lessons.some(l => l.vid)) u.lessons[0].vid = u.vid;
+  }
   const GRADED = it => it.t !== 'info';
   const EXAMT = ['mc', 'tf', 'fill'];
   const testInfo = id => RB.tests.find(t => t.id === (id || S.test)) || RB.tests[0];
@@ -285,17 +295,14 @@
     </section>`;
     let idx = 0;
     cUnits().forEach((u, ui) => {
-      const uDone = u.lessons.filter(l => S.done[l.id]).length, vid = u.vid && RB.videos[u.vid];
+      const uDone = u.lessons.filter(l => S.done[l.id]).length;
       h += `<section class="unit"><div class="unit-h"><small>Unidad ${ui + 1}${u.area ? ' · ' + esc(u.area) : ''}</small><h2>${esc(u.name)}</h2><p>${esc(u.desc)}</p><span class="unit-n">${uDone}/${u.lessons.length}</span>` +
-        `<div class="unit-a">${vid ? `<button class="chip" type="button" data-v="${u.vid}">${I(S.seen[u.vid] ? 'check' : 'film')}Video · ${Math.round(RB.videoSecs(u.vid) / 60)} min</button>` : ''}<button class="chip" type="button" data-u="${u.id}">${I('target')}Practicar</button></div></div><div class="path">`;
-      if (vid) {
-        h += `<div class="node-w" style="--x:0px"><button class="node vid ${S.seen[u.vid] ? 'done' : 'open'}" data-v="${u.vid}" aria-label="Video de introducción: ${esc(vid.title)}">${I('film')}</button><div class="nl">Video de introducción</div></div>`;
-      }
+        `<div class="unit-a"><button class="chip" type="button" data-u="${u.id}">${I('target')}Practicar</button></div></div><div class="path">`;
       u.lessons.forEach((l, li) => {
         const gi = idx++, done = !!S.done[l.id], isCur = gi === cur;
         const off = [54, 0, -54, 0][li % 4];
         h += `<div class="node-w${isCur ? ' has-b' : ''}" style="--x:${off}px">${isCur ? `<span class="bubble">${doneN ? 'Siguiente' : 'Empieza aquí'}</span>` : ''}` +
-          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'open'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : ''}">${I(l.ic || u.ic)}</button>` +
+          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'open'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : ''}${l.vid ? ', con video' : ''}">${I(l.ic || u.ic)}${l.vid && !S.seen[l.vid] ? `<i class="nv">${I('play')}</i>` : ''}</button>` +
           (done ? `<div class="stars" aria-label="${S.stars[l.id] || 1} de 3 estrellas">${[1, 2, 3].map(k => I('star', k <= (S.stars[l.id] || 1) ? 'on' : '')).join('')}</div>` : '') +
           `<div class="nl">${esc(l.n)}</div></div>`;
       });
@@ -312,7 +319,7 @@
       if (b.dataset.v) return openVideo(b.dataset.v);
       if (b.dataset.u) return startTopic(b.dataset.u);
       const a = b.dataset.act;
-      if (a === 'cont') { const st = lessonState(); if (st.cur < st.ls.length) startLesson(st.ls[st.cur].id); }
+      if (a === 'cont') { const st = lessonState(); if (st.cur < st.ls.length) enterLesson(st.ls[st.cur].id); }
       else if (a === 'test') testSheet();
       else if (a === 'exam') examSheet();
       else if (a === 'plan') planView();
@@ -329,17 +336,23 @@
   function lessonSheet(lid) {
     const l = LESSONS[lid], u = RB.units[l.u], done = !!S.done[lid];
     const n = l.items.filter(GRADED).length;
-    const vid = u.vid && RB.videos[u.vid] && !S.seen[u.vid] && u.lessons[0] === l;
+    const vid = l.vid && RB.videos[l.vid], mins = vid ? Math.max(1, Math.round(RB.videoSecs(l.vid) / 60)) : 0;
+    const first = vid && !done && !S.seen[l.vid] && !(S.plan && S.plan.style === 'practice');
     sheet(`<small class="kick">${esc(u.name)}</small><h3>${esc(l.n)}</h3>
-      <p class="muted">${plural(n, 'ejercicio', 'ejercicios')}${done ? ` · ${[1, 2, 3].map(k => k <= (S.stars[lid] || 1) ? '★' : '☆').join('')}` : ''}</p>
-      ${vid ? `<p class="note">${I('film')}Te recomendamos ver primero el video de introducción de esta unidad.</p>` : ''}
-      <button class="btn" data-go>${I('play')}${done ? 'Repasar · +5 XP' : 'Empezar · +10 XP'}</button>
-      ${vid ? `<button class="btn ghost" data-vid>${I('film')}Ver el video primero</button>` : ''}`,
+      <p class="muted">${vid ? `Video de ${mins} min · ` : ''}${plural(n, 'ejercicio', 'ejercicios')}${done ? ` · ${[1, 2, 3].map(k => k <= (S.stars[lid] || 1) ? '★' : '☆').join('')}` : ''}</p>
+      ${first ? `<button class="btn" data-vg>${I('play')}Empezar: video y ejercicios</button><button class="btn ghost" data-go>${I('pen')}Ir directo a los ejercicios</button>`
+    : `<button class="btn" data-go>${I('play')}${done ? 'Repasar · +5 XP' : 'Empezar · +10 XP'}</button>${vid ? `<button class="btn ghost" data-vg>${I('film')}${S.seen[l.vid] ? 'Ver el video otra vez' : 'Ver el video primero'}</button>` : ''}`}`,
       el => {
         $('[data-go]', el).onclick = () => closeLayer(() => startLesson(lid));
-        const vb = $('[data-vid]', el);
-        if (vb) vb.onclick = () => closeLayer(() => openVideo(u.vid));
+        const vb = $('[data-vg]', el);
+        if (vb) vb.onclick = () => closeLayer(() => openVideo(l.vid, { lid }));
       });
+  }
+  // Entrar a una lección: si su video está pendiente, primero el video y al terminar, los ejercicios.
+  function enterLesson(lid) {
+    const l = LESSONS[lid];
+    if (l.vid && RB.videos[l.vid] && !S.seen[l.vid] && !S.done[lid] && !(S.plan && S.plan.style === 'practice')) openVideo(l.vid, { lid });
+    else startLesson(lid);
   }
   const testGrid = (list = RB.tests) => `<div class="lics">${list.map(t => `<button class="licc" data-test="${t.id}" aria-pressed="${t.id === S.test}">${I(t.ic)}<b>${esc(t.s)}</b><span>${esc(t.n)}</span><small>${plural(cItems(t).filter(GRADED).length, 'pregunta', 'preguntas')}</small></button>`).join('')}</div>`;
   function testSheet() {
@@ -890,31 +903,19 @@
   }
 
   // ---------- Videos ----------
-  VIEWS.videos = v => {
-    const T = testInfo(), us = cUnits().filter(u => u.vid && RB.videos[u.vid]);
-    const seenN = us.filter(u => S.seen[u.vid]).length;
-    v.innerHTML = `<h1 class="vt">Videos</h1><p class="muted">${esc(T.n)} · ${seenN} de ${us.length} vistos. Videos animados con narradora: cada uno explica un tema completo con ejemplos y preguntas dentro del video. Puedes pausar, adelantar, ver capítulos y cambiar la velocidad.</p>` +
-      `<div class="chips" role="group" aria-label="Prueba">${RB.tests.map(t => `<button class="chip" type="button" data-t="${t.id}" aria-pressed="${t.id === T.id}">${esc(t.s)}</button>`).join('')}</div>` +
-      `<div class="vlist">${us.map((u, i) => { const vd = RB.videos[u.vid]; return `<button class="vrow" type="button" data-v="${u.vid}"><span class="vth">${I(u.ic)}<em>${Math.round(RB.videoSecs(u.vid) / 60)} min</em></span>` +
-        `<span class="vb"><small>Unidad ${T.units.indexOf(u.id) + 1}${u.area ? ' · ' + esc(u.area) : ''}</small><b>${esc(vd.title)}</b><span>${esc(vd.desc || u.desc)}</span>${S.vpos && S.vpos[u.vid] ? `<i>${I('play')}Seguir desde ${fmtTime(S.vpos[u.vid])}</i>` : S.seen[u.vid] ? `<i>${I('check')}Visto</i>` : ''}</span>` +
-        (S.vpos && S.vpos[u.vid] ? `<i class="vprog" style="--p:${Math.min(1, S.vpos[u.vid] / RB.videoSecs(u.vid)).toFixed(3)}"></i>` : '') + `</button>`; }).join('')}</div>`;
-    v.onclick = e => {
-      const t = e.target.closest('[data-t]'), b = e.target.closest('[data-v]');
-      if (t) { S.test = t.dataset.t; save(); go.scrolled = false; refresh(); return; }
-      if (b) openVideo(b.dataset.v);
-    };
-  };
-  function openVideo(id) {
-    const vd = RB.videos[id], u = RB.units[vd.u];
+  // o.lid: el video se abrió al entrar a esa lección; al terminar, se sigue con sus ejercicios.
+  function openVideo(id, o = {}) {
+    const vd = RB.videos[id], u = RB.units[vd.u], toon = vd.kind === 'toon';
     let player = null;
     RB.hush();
     const ent = openLayer('vidl', `<div class="plv"></div>`, () => { if (player) player.destroy(); setTimeout(refresh, 0); });
     ent.back = () => !!(player && player.back());
     S.vpos = S.vpos || {};
+    // Los videos en dibujos parten sin subtítulos (menos texto en pantalla); se activan con el botón CC.
     player = new RB.VPlayer($('.plv', ent.el), id, {
-      cc: S.set.cc, rate: S.set.rate, music: S.set.music !== false, sfx: S.set.sound, start: S.vpos[id] || 0,
+      cc: toon ? !!S.set.cc2 : S.set.cc, rate: S.set.rate, music: S.set.music !== false, sfx: S.set.sound, start: S.vpos[id] || 0,
       onClose: () => closeLayer(),
-      onCc: on => { S.set.cc = on; save(); },
+      onCc: on => { if (toon) S.set.cc2 = on; else S.set.cc = on; save(); },
       onRate: r => { S.set.rate = r; save(); },
       onMusic: on => { S.set.music = on; save(); },
       onPos: t => { if (t > 8 && t < RB.videoSecs(id) - 10) S.vpos[id] = Math.round(t); else delete S.vpos[id]; save(); },
@@ -930,9 +931,9 @@
         if (first) { xp = 10; streakUp = bumpStreak(); addXP(xp); }
         S.tests[S.test] = 1;
         save(); checkAch();
-        const l1 = u.lessons.find(l => !S.done[l.id]) || u.lessons[0];
+        const l1 = (o.lid && LESSONS[o.lid]) || u.lessons.find(l => l.vid === id) || u.lessons.find(l => !S.done[l.id]) || u.lessons[0];
         box.innerHTML = (xp ? `<p class="note">${I('bolt')}+${xp} XP${streakUp ? ` · ${I('flame', 'on')}¡Racha extendida!` : ''}</p>` : '') +
-          `<button class="btn" type="button" data-l>${I('play')}Practicar: ${esc(l1.n)}</button><button class="btn ghost" type="button" data-p>${I('target')}Práctica mixta del tema</button>`;
+          `<button class="btn" type="button" data-l>${I('pen')}${S.done[l1.id] ? 'Repasar' : 'Ahora, los ejercicios'}: ${esc(l1.n)}</button><button class="btn ghost" type="button" data-p>${I('target')}Práctica mixta del tema</button>`;
         $('[data-l]', box).onclick = () => closeLayer(() => startLesson(l1.id));
         $('[data-p]', box).onclick = () => closeLayer(() => startTopic(u.id));
       },
@@ -1236,9 +1237,9 @@
   }
   const lessonMin = l => Math.max(4, Math.round(l.items.filter(GRADED).length * .45 + 1));
   const videoMin = id => Math.max(3, Math.round(RB.videoSecs(id) / 60));
-  const courseOf = tid => cUnits(testInfo(tid)).map(u => ({ u, vid: u.vid && RB.videos[u.vid] ? u.vid : null, vmin: u.vid && RB.videos[u.vid] ? videoMin(u.vid) : 0, ls: u.lessons.map(l => ({ l, min: lessonMin(l) })) }));
-  const needMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + (video ? c.vmin : 0) + c.ls.reduce((a, x) => a + x.min, 0), 0);
-  const doneMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + (video && c.vid && S.seen[c.vid] ? c.vmin : 0) + c.ls.reduce((a, x) => a + (S.done[x.l.id] ? x.min : 0), 0), 0);
+  const courseOf = tid => cUnits(testInfo(tid)).map(u => ({ u, ls: u.lessons.map(l => ({ l, min: lessonMin(l), vid: l.vid && RB.videos[l.vid] ? l.vid : null, vmin: l.vid && RB.videos[l.vid] ? videoMin(l.vid) : 0 })) }));
+  const needMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + c.ls.reduce((a, x) => a + x.min + (video ? x.vmin : 0), 0), 0);
+  const doneMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + c.ls.reduce((a, x) => a + (S.done[x.l.id] ? x.min : 0) + (video && x.vid && S.seen[x.vid] ? x.vmin : 0), 0), 0);
   const goalFor = mins => clamp(Math.round(mins * 1.2 / 5) * 5, 20, 150);
   function weightsOf(P, tests) {
     const w = {};
@@ -1325,8 +1326,7 @@
     const pending = (id, max) => {
       const out = [];
       for (const c of courseOf(id)) {
-        if (P.style !== 'practice' && c.vid && !S.seen[c.vid]) out.push({ k: 'video', t: id, ref: c.vid, min: c.vmin, label: RB.videos[c.vid].title, u: c.u.name });
-        c.ls.forEach(x => { if (!S.done[x.l.id]) out.push({ k: 'lesson', t: id, ref: x.l.id, min: x.min, label: x.l.n, u: c.u.name }); });
+        c.ls.forEach(x => { if (!S.done[x.l.id]) out.push({ k: 'lesson', t: id, ref: x.l.id, min: x.min + (P.style !== 'practice' && x.vid && !S.seen[x.vid] ? x.vmin : 0), label: x.l.n, u: c.u.name, v: !!x.vid }); });
         if (out.length >= max) break;
       }
       return out;
@@ -1383,7 +1383,7 @@
   function runTask(x) {
     if (x.t && x.t !== S.test) { S.test = x.t; save(); header(); }
     if (x.k === 'video') openVideo(x.ref);
-    else if (x.k === 'lesson') startLesson(x.ref);
+    else if (x.k === 'lesson') enterLesson(x.ref);
     else if (x.k === 'exam') startExam(x.n, x.min);
     else if (x.k === 'review') planReview();
     else if (x.k === 'mistakes') planMistakes();
@@ -1493,7 +1493,7 @@
     limaReady().then(d => {
       const c = d && d.clips && d.clips[k];
       if (!c || !lima.au) return;
-      lima.end = c[1];
+      lima.end = c[1]; lima.key = k;
       try { lima.au.currentTime = c[0]; const pr = lima.au.play(); if (pr && pr.catch) pr.catch(() => { }); } catch (e) { /* sin audio */ }
     });
   }
@@ -1523,7 +1523,17 @@
     const steps = (first ? ['hola'] : []).concat(['pruebas', 'fecha', 'tiempo', 'nivel', 'meta', 'estilo', 'diag', 'plan']);
     let cur = 0, finished = false;
     const hist = [];
-    const ent = openLayer('onb srv', `<div class="srv-top"><button class="ib" type="button" data-back aria-label="Atrás">${I('left')}</button><div class="pbar"><i></i></div>${first ? '' : `<button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button>`}</div><div class="onb-in"></div>`, limaStop);
+    // Lima lee cada paso una sola vez, un momento después de que aparece (al abrir la app espera más), y se
+    // puede silenciar. Elegir opciones redibuja el paso pero no repite la voz.
+    const said = new Set();
+    let sayT = 0;
+    const sayStep = s => {
+      clearTimeout(sayT);
+      if (lima.au && lima.key !== s) { try { lima.au.pause(); } catch (e) { /* nada */ } }
+      if (!first || said.has(s) || S.set.limaMute || !S.set.sound) return;
+      sayT = setTimeout(() => { if (finished || steps[cur] !== s) return; said.add(s); limaSay(s); }, said.size ? 450 : 2000);
+    };
+    const ent = openLayer('onb srv', `<div class="srv-top"><button class="ib" type="button" data-back aria-label="Atrás">${I('left')}</button><div class="pbar"><i></i></div>${first ? `<button class="ib" type="button" data-mute aria-pressed="${!S.set.limaMute}" aria-label="Voz de Lima">${I(S.set.limaMute ? 'mute' : 'vol')}</button>` : `<button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button>`}</div><div class="onb-in"></div>`, () => { clearTimeout(sayT); limaStop(); });
     limaLoop();
     ent.guard = () => !first || finished;
     const box = $('.onb-in', ent.el);
@@ -1532,6 +1542,12 @@
     $('[data-back]', ent.el).onclick = () => { if (!goBack()) toast(`${I('info')}<span>Completa la encuesta para armar tu plan</span>`, 2000); };
     const xb = $('[data-x]', ent.el);
     if (xb) xb.onclick = () => closeLayer();
+    const mb = $('[data-mute]', ent.el);
+    if (mb) mb.onclick = () => {
+      S.set.limaMute = !S.set.limaMute; save();
+      mb.setAttribute('aria-pressed', !S.set.limaMute); mb.innerHTML = I(S.set.limaMute ? 'mute' : 'vol');
+      if (S.set.limaMute) { clearTimeout(sayT); if (lima.au) { try { lima.au.pause(); } catch (e) { /* nada */ } } }
+    };
     const next = () => { hist.push(cur); cur++; render(); box.scrollTop = 0; ent.el.scrollTop = 0; };
     const bubble = t => `<div class="srv-pet"><div class="pet">${RB.mascot('cap')}</div><p class="bub">${t}</p></div>`;
     const tests = () => expandSel(A.sel, A.sci);
@@ -1584,7 +1600,7 @@
       box.innerHTML = `<div class="srv-s" data-s="${s}">${h}</div>`;
       const pe = $('.srv-pet .pet', box);
       lima.pet = pe && RB.Pet ? new RB.Pet(pe) : null;
-      if (first) limaSay(s);
+      sayStep(s);
       wire(s);
     }
     function wire(s) {

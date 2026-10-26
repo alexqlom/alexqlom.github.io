@@ -145,6 +145,7 @@
     if (RB.vtimes[id]) return RB.vtimes[id].d;
     const v = RB.videos[id];
     if (!v) return 0;
+    if (v.kind === 'toon') return Math.round(RB.toonKit.timeline(v, null).d);
     let s = .9;
     v.sc.forEach((sc, si) => {
       if (si) s += 1.1;
@@ -249,6 +250,8 @@
     kill() { this.list.forEach(a => { try { a.cancel(); } catch (e) { /* nada */ } }); this.list = []; }
   }
   const IN = { opacity: 0, transform: 'translateY(.5em)' }, SHOWN = { opacity: 1, transform: 'none' };
+  // Piezas que usan también los videos en dibujos (toon.js).
+  RB.vkit = { Anims, EASE, sentences, estSecs, plain, key, hashN, rng };
   // Texto con **negrita** y ==resaltado== partido en palabras que entran una a una; lo marcado queda agrupado.
   function kin(s) {
     const src = String(s == null ? '' : s), seg = [], re = /(\*\*|==)/g;
@@ -590,7 +593,30 @@
     ok() { this.tone(660, .12, 'sine', .07); this.tone(990, .2, 'sine', .07, .09); },
     bad() { this.tone(200, .22, 'triangle', .06, 0, 150); },
     done() { [523, 659, 784, 1047].forEach((f, i) => this.tone(f, .22, 'triangle', .06, i * .1)); },
+    // Ruido filtrado: base de los golpes y barridos de los videos en dibujos.
+    noise(d, f1, f2, v = .05, type = 'bandpass', q = 1.2) {
+      const c = this.on && ac(); if (!c) return;
+      const n = Math.floor(c.sampleRate * d), buf = c.createBuffer(1, n, c.sampleRate), x = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = buf; f.type = type; f.Q.value = q;
+      f.frequency.setValueAtTime(f1, c.currentTime); f.frequency.exponentialRampToValueAtTime(f2, c.currentTime + d);
+      g.gain.value = v; s.connect(f); f.connect(g); g.connect(c.destination); s.start();
+    },
+    boing() { this.tone(240, .28, 'triangle', .04, 0, 560); this.tone(480, .2, 'sine', .015, .02, 900); },
+    thud() { this.tone(120, .2, 'sine', .09, 0, 48); this.noise(.08, 500, 200, .03, 'lowpass'); },
+    tick() { this.tone(1900, .03, 'square', .012); },
+    ding() { this.tone(1320, .45, 'sine', .03); this.tone(2640, .25, 'sine', .01); },
+    sparkle() { [1700, 2150, 2600, 3100].forEach((f, i) => this.tone(f, .09, 'sine', .014, i * .045)); },
+    boom() { this.noise(.6, 900, 80, .12, 'lowpass', .7); this.tone(90, .5, 'sine', .1, 0, 38); },
+    swish() { this.noise(.22, 1400, 5200, .035); },
+    blip() { this.tone(760, .05, 'sine', .012); this.tone(980, .05, 'sine', .01, .04); },
+    cash() { this.tone(2300, .08, 'triangle', .022); this.tone(3000, .14, 'triangle', .022, .07); },
+    count() { [0, 1, 2, 3].forEach(i => this.tone(1500 + i * 120, .03, 'square', .008, i * .07)); },
+    yay() { [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, .14, 'triangle', .03, i * .06)); },
+    play(n) { if (typeof this[n] === 'function' && n !== 'play' && n !== 'tone' && n !== 'noise') this[n](); },
   };
+  RB.vkit.SFX = SFX;
 
   // ---------- Reproductor ----------
   // o: { cc, rate, music, sfx, start, onEnd(panel), onQuiz(ok), onPos(t), onState(player) }
@@ -649,7 +675,9 @@
     async init() {
       const data = await RB.loadTimes(this.id);
       if (this.dead) return;
-      this.T = timeline(this.v, data);
+      this.toon = this.v.kind === 'toon';
+      this.tl = d => this.toon ? RB.toonKit.timeline(this.v, d) : timeline(this.v, d);
+      this.T = this.tl(data);
       this.mode = 'clock';
       if (data) {
         const src = await srcFor(`audio/${this.id}.webm`);
@@ -670,7 +698,7 @@
           this.mode = 'audio';
           au.onended = () => { if (!this.waitQuiz) this.finish(); };
           au.onpause = () => { if (this.playing && !this.waitQuiz && !this.seeking && !this.ended) this.pause(); };
-        } else { this.T = timeline(this.v, null); this.au = null; }
+        } else { this.T = this.tl(null); this.au = null; }
       }
       this.voiceTTS = this.mode === 'clock' && RB.canSpeak;
       this.buildGlobal();
@@ -696,6 +724,13 @@
         G.add(d, [{ transform: 'translateY(105vh)', opacity: 0 }, { opacity: .7, offset: .15 }, { opacity: .7, offset: .8 }, { transform: 'translateY(-10vh)', opacity: 0 }], -r() * dur, dur, 'linear', { iterations: Infinity });
       });
       const wipes = this.stage.querySelector('.vp-wipes');
+      if (this.toon) {
+        // Los planos en dibujos traen sus propias transiciones; la barra marca los capítulos.
+        this.root.classList.add('toon');
+        this.root.querySelector('.vp-chs').innerHTML = T.chs.map((c, i) => { const e = i + 1 < T.chs.length ? T.chs[i + 1].t0 : T.d; return `<i style="left:${(100 * c.t0 / T.d).toFixed(2)}%;width:${(100 * (e - c.t0) / T.d).toFixed(2)}%"></i>`; }).join('');
+        this.bar.setAttribute('aria-valuemax', Math.round(T.d));
+        return;
+      }
       wipes.innerHTML = T.sc.slice(1).map(() => '<i></i>').join('');
       // Cortinas entre escenas: alternan el sentido para que no se sienta repetitivo.
       [...wipes.children].forEach((w, i) => {
@@ -708,6 +743,7 @@
     // ----- Escenas -----
     buildScene(si) {
       if (this.built[si]) return this.built[si];
+      if (this.toon) return (this.built[si] = RB.toonKit.build(this, si));
       const v = this.v, sc = v.sc[si], S = this.T.sc[si], n = v.sc.length;
       const lay = S.title ? 'L-title' : (sc.b || []).some(b => b && b.tl != null) ? 'L-tl' : '';
       const ic = sc.ic || this.u.ic || 'spark';
@@ -777,11 +813,15 @@
       const si = this.sceneAt(t), S = this.T.sc[si];
       const want = new Set([si]);
       if (si + 1 < this.T.sc.length && t > this.T.sc[si + 1].t0 - .6) want.add(si + 1);
-      if (si > 0 && t < S.t0 + .1) want.add(si - 1);
+      if (si > 0 && t < S.t0 + (this.toon ? .5 : .1)) want.add(si - 1);
       Object.keys(this.built).forEach(k => { if (!want.has(+k)) { const r = this.built[k]; r.A.kill(); r.el.remove(); delete this.built[k]; } });
       want.forEach(k => this.buildScene(k).A.set(t));
       this.G.set(t);
-      if (si !== this.si) { this.si = si; this.root.querySelector('.vp-ch').textContent = `${si + 1}/${this.T.sc.length} · ${plain(this.v.sc[si].h || '')}`; }
+      if (si !== this.si) {
+        this.si = si;
+        const chs = this.T.chs, ci = chs ? chs.filter(c => c.si <= si).length : 0;
+        this.root.querySelector('.vp-ch').textContent = chs ? `${ci}/${chs.length} · ${plain(this.v.sc[si].h || '')}` : `${si + 1}/${this.T.sc.length} · ${plain(this.v.sc[si].h || '')}`;
+      }
     }
     // ----- Cuadro a cuadro -----
     loop() {
@@ -808,9 +848,14 @@
         if (q) return this.askQuiz(q);
         // Efectos al cruzar marcas mientras se reproduce.
         if (t - prev < .5) {
-          T.sc.forEach((s, i) => { if (i && prev < s.t0 && t >= s.t0) SFX.whoosh(); });
-          const S = T.sc[this.sceneAt(t)];
-          S.blockT.forEach(bt => { if (prev < bt && t >= bt) SFX.pop(); });
+          if (this.toon) {
+            Object.values(this.built).forEach(r => (r.fx || []).forEach(([ft, n]) => { if (prev < ft && t >= ft) SFX.play(n); }));
+            T.tq.forEach(q => { if (prev < q.te && t >= q.te) this.toonReveal(q); });
+          } else {
+            T.sc.forEach((s, i) => { if (i && prev < s.t0 && t >= s.t0) SFX.whoosh(); });
+            const S = T.sc[this.sceneAt(t)];
+            S.blockT.forEach(bt => { if (prev < bt && t >= bt) SFX.pop(); });
+          }
           if (this.mode === 'clock') this.clockCues(prev, t);
         }
         if (t >= T.d - .05) return this.finish();
@@ -823,7 +868,12 @@
       const recent = S.blockT.filter(bt => bt <= t && t - bt < 1.6).pop();
       const point = recent != null ? Math.sin(Math.PI * clamp((t - recent) / 1.6, 0, 1)) : 0;
       this.pet.frame(t, this.playing ? lv / 9 : 0, point, point > .1 ? [2, -2] : null);
-      this.petPlace(S, t);
+      if (this.toon) {
+        // Lima aparece y desaparece en su lugar (no se desliza por la pantalla mientras se esconde).
+        const p = RB.toonKit.petAt(this, S, t);
+        if (p.show) this.petEl.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) scale(${p.s.toFixed(3)})`;
+        this.petEl.classList.toggle('off', !p.show);
+      } else this.petPlace(S, t);
       this.music.level(speaking);
       this.captions(t);
       this.ui();
@@ -928,6 +978,7 @@
       if (this.waitQuiz) this.unwait();
       if (this.mode === 'audio') { this.seeking = true; this.au.currentTime = t; this.seeking = false; }
       else { this.clockT = t; this.hold = null; this.speakTok = null; this.speaking = false; TTS.stop(); }
+      if (this.T.tq) this.T.tq.forEach(q => { if (t < q.te) q.revealed = false; });
       this.t = t;
       this.sync(t);
       this.frame(t);
@@ -935,6 +986,20 @@
       if (this.mode === 'clock' && this.playing) { const c = this.T.cues.find(c => c.t0 <= t && t < c.t1); if (c) { this.clockT = c.t0; this.t = c.t0 - .001; } }
     }
     skip(d) { this.seek(this.t + d); this.fx(d > 0 ? '+10 s' : '−10 s', d > 0 ? 'r' : 'l'); }
+    // Preguntas de los videos en dibujos: se responden durante la cuenta regresiva, sin pausar el video.
+    toonAnswer(q, choice) { if (q.answered != null || this.t >= q.te || this.t < q.t0 - .5) return false; q.answered = choice; return true; }
+    toonReveal(q) {
+      if (q.revealed) return;
+      q.revealed = true;
+      const r = this.built[q.si];
+      if (r && r.quizUI) r.quizUI(q);
+      if (q.answered == null) return;
+      const ok = q.answered === q.a;
+      if (ok) SFX.ok(); else SFX.bad();
+      this.pet.react(ok ? 'happy' : 'sad');
+      setTimeout(() => { if (!this.dead) this.pet.react(null); }, 1600);
+      if (this.o.onQuiz) this.o.onQuiz(ok);
+    }
     restart() { this.seek(0, true); this.play(); }
     setRate(r) { this.rate = r; if (this.au) this.au.playbackRate = r; const b = this.root.querySelector('[data-a="rate"]'); if (b) b.textContent = String(r).replace('.', ',') + '×'; if (this.o.onRate) this.o.onRate(r); }
     awake(on) { on = !!on && !this.dead; if (this._aw === on) return; this._aw = on; try { if (NAT() && NAT().keepAwake) NAT().keepAwake(on); } catch (e) { /* app antigua */ } }
@@ -1008,7 +1073,8 @@
     }
     chapters() {
       const P = this.root.querySelector('.vp-panel'), si = this.sceneAt(this.t);
-      P.innerHTML = `<div class="vp-pbg" data-close></div><div class="vp-psheet"><h3>Capítulos</h3><div class="vp-chl">${this.T.sc.map((s, i) => `<button type="button" data-si="${i}" class="${i === si ? 'cur' : ''}"><span>${I(this.v.sc[i].ic || this.u.ic || 'film')}</span><b>${esc(plain(this.v.sc[i].h || ''))}</b><small>${fmt(s.t0)}</small></button>`).join('')}</div></div>`;
+      const list = this.T.chs ? this.T.chs.map(c => ({ i: c.si, s: this.T.sc[c.si], cur: c.si <= si && !this.T.chs.some(d => d.si > c.si && d.si <= si) })) : this.T.sc.map((s, i) => ({ i, s, cur: i === si }));
+      P.innerHTML = `<div class="vp-pbg" data-close></div><div class="vp-psheet"><h3>Capítulos</h3><div class="vp-chl">${list.map(({ i, s, cur }) => `<button type="button" data-si="${i}" class="${cur ? 'cur' : ''}"><span>${I(this.v.sc[i].ic || this.u.ic || 'film')}</span><b>${esc(plain(this.v.sc[i].h || ''))}</b><small>${fmt(s.t0)}</small></button>`).join('')}</div></div>`;
       P.hidden = false; this.panelOpen = true; this.uiShow(true);
       P.onclick = e => {
         const b = e.target.closest('[data-si]');

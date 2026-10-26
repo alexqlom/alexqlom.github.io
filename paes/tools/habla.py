@@ -120,6 +120,7 @@ RESPELL = {
     'Avogadro': 'Avogadro', 'Mercalli': 'Mercali', 'Valech': 'Valech', 'Bachelet': 'Bacheléth', 'Pinochet': 'Pinoché',
     'Kennedy': 'Kénedi', 'Churchill': 'Chérchil', 'Hitler': 'Jítler', 'Wall': 'Uol', 'Street': 'Strit', 'Marshall': 'Márshal',
     'Thatcher': 'Táchet', 'o’higginistas': 'ojiguinistas', "o'higginistas": 'ojiguinistas', 'Brønsted': 'Brónsted', 'boys': 'bóis', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
+    'Diderot': 'Didró', 'D’Alembert': 'Dalambér', "D'Alembert": 'Dalambér', 'Smith': 'Smit', 'Adam': 'Ádam', 'Wikipedia': 'Uikipedia',
 }
 LETTER = {'B': 'be', 'C': 'ce', 'D': 'de', 'F': 'efe', 'G': 'ge', 'H': 'hache', 'J': 'jota', 'K': 'ka', 'L': 'ele',
           'M': 'eme', 'N': 'ene', 'P': 'pe', 'Q': 'cu', 'R': 'erre', 'S': 'ese', 'T': 'te', 'V': 've', 'W': 'doble ve',

@@ -1,18 +1,22 @@
 // Exporta el guion hablado de cada video (lo que dice la narradora, en orden) para generar el audio.
 // Uso: node tools/guion.js [salida.json]
 // Cada escena aporta: la intro (s[0]); por cada bloque, su narración (s[k]); en las preguntas rápidas,
-// además la pregunta (q) y, después de que respondes, la explicación (e).
+// además la pregunta (q) y, después de que respondes, la explicación (e). En los videos en dibujos, cada plano
+// aporta lo que dice la narradora (toon-motor.js decide el orden y la pausa de la cuenta regresiva).
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const root = path.join(__dirname, '..');
 const ctx = { window: {}, document: { addEventListener() {}, removeEventListener() {} }, console, setTimeout, clearTimeout };
 ctx.window.window = ctx.window;
 vm.createContext(ctx);
 const run = f => vm.runInContext(`(function(window, document){${fs.readFileSync(path.join(root, f), 'utf8')}})(window, document);`, ctx, { filename: f });
-run('icons.js'); run('video.js'); run('data/tests.js');
+run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
 fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js') && f !== 'tests.js').sort().forEach(f => run('data/' + f));
 const RB = ctx.window.RB;
 const plain = s => String(s || '').replace(/\*\*|==/g, '').replace(/\s+/g, ' ').trim();
-const out = Object.values(RB.videos).map(v => ({
+const out = Object.values(RB.videos).map(v => v.kind === 'toon' ? {
+  id: v.id, u: v.u, title: v.title, kind: 'toon',
+  sc: v.sc.map(sc => ({ h: plain(sc.h), cues: RB.toonKit.cuesOf(sc).filter(c => c.text) })),
+} : ({
   id: v.id, u: v.u, title: v.title,
   sc: v.sc.map((sc, si) => {
     const cues = [];
