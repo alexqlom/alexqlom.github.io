@@ -16,6 +16,7 @@ from habla_fijo import FIJO
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SR = 24000            # así se guarda y se codifica
 HILOS = int(os.environ.get('PAES_HILOS', '4'))
+REPAIR = False
 VOICE, STEPS, SPEED = 2, 10, 1.0
 TEMPO = 1.07          # la voz se acelera un poco al armar cada video (rubberband conserva el tono)
 GAP = dict(start=.9, sentence=.28, cue=.5, quiz=.6, scene=1.0, end=1.6)
@@ -108,31 +109,40 @@ class Voice:
                 out.append([k, ts])
         return r.text, out
 
-    def say(self, spoken):
-        """Audio de una frase hablada + palabras reconocidas con su tiempo. Reintenta si no se entiende."""
+    def say(self, spoken, repair=False):
+        """Audio de una frase hablada + palabras reconocidas con su tiempo. Reintenta si no se entiende o si
+        parece faltar una palabra importante. Con repair=True vuelve a intentar las guardadas que quedaron dudosas."""
         key = hashlib.sha1(f'supertonic3|{VOICE}|{STEPS}|{SPEED}|{spoken}'.encode()).hexdigest()
         f = os.path.join(self.cache, key[:2], key + '.npz')
-        if os.path.exists(f):
-            z = np.load(f, allow_pickle=False)
-            self.stats['cached'] += 1
-            return z['audio'].astype(np.float32) / 32767, json.loads(str(z['meta']))
         ref = [habla.word_key(w) for w in spoken.split()]
         ref = [w for w in ref if w]
+        old = None
+        if os.path.exists(f):
+            z = np.load(f, allow_pickle=False)
+            old = (z['audio'].astype(np.float32) / 32767, json.loads(str(z['meta'])))
+            if not repair or missing(ref, old[1]['t']) == 0 or old[1].get('rep'):
+                self.stats['cached'] += 1
+                return old
         cmp_ref = [canon(w) for w in ref]
         best = None
-        for attempt in range(3):
+        if old:
+            best = ((missing(ref, old[1]['t']), old[1]['wer']), old[0], old[1])
+        for attempt in range(4 if repair else 3):
             y = self._synth(spoken)
             text, hyp = self._listen(y)
             err, times = align(cmp_ref, [[canon(w), ts] for w, ts in hyp])
             # Se tolera algún error: el reconocedor también se equivoca, sobre todo con nombres propios.
             score = err / max(1, len(ref))
-            cand = (score, y, dict(asr=text, wer=round(score, 3), t=times, n=attempt + 1))
-            if best is None or score < best[0]:
+            ml = missing(ref, times)
+            cand = ((ml, round(score, 3)), y, dict(asr=text, wer=round(score, 3), t=times, n=attempt + 1))
+            if best is None or cand[0] < best[0]:
                 best = cand
-            if score <= .25 and not (err >= 3 and score > .15):
+            if ml == 0 and score <= .25 and not (err >= 3 and score > .15):
                 break
             self.stats['retries'] += 1
-        score, y, meta = best
+        _, y, meta = best
+        if repair:
+            meta['rep'] = 1
         os.makedirs(os.path.dirname(f), exist_ok=True)
         np.savez_compressed(f, audio=np.round(y * 32767).astype(np.int16), meta=json.dumps(meta, ensure_ascii=False))
         self.stats['new'] += 1
@@ -156,6 +166,14 @@ def roman(s):
     for a, b in zip(s, s[1:] + ' '):
         n += -v[a] if b != ' ' and v[b] > v[a] else v[a]
     return n if 0 < n < 400 else 0
+
+
+# Palabras largas que el reconocedor no oyó: señal de que la voz pudo saltarse algo (los nombres propios no cuentan).
+NAMES = {habla.word_key(w) for v in habla.RESPELL.values() for w in v.split()}
+
+
+def missing(ref, times):
+    return sum(1 for w, t in zip(ref, times) if t is None and len(w) >= 6 and w not in NAMES)
 
 
 def trim(y, thr_db=-42, pad=.04):
@@ -281,7 +299,7 @@ def build_video(v, voice, outdir):
                 probs = habla.problems(sp)
                 if probs:
                     log('  ojo, signos en la voz', v['id'], probs, sp)
-                y, meta = voice.say(sp)
+                y, meta = voice.say(sp, REPAIR)
                 dur = len(y) / SR
                 s0 = t
                 push(y)
@@ -399,7 +417,10 @@ def main():
     ap.add_argument('--salida', default=os.path.join(ROOT, 'audio'))
     ap.add_argument('--app', action='store_true', help='solo las frases de la app (encuesta y respuestas)')
     ap.add_argument('--reverso', action='store_true', help='recorre los videos desde el último (para correr dos procesos)')
+    ap.add_argument('--reparar', action='store_true', help='vuelve a grabar las frases guardadas donde pudo faltar una palabra')
     a = ap.parse_args()
+    global REPAIR
+    REPAIR = a.reparar
     g = json.loads(subprocess.run(['node', os.path.join(ROOT, 'tools', 'guion.js')], capture_output=True, check=True).stdout)
     only = set(x for x in a.solo.split(',') if x)
     os.makedirs(a.salida, exist_ok=True)

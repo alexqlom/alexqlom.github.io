@@ -207,7 +207,9 @@
       });
       const W = [];
       cues.forEach(c => c.lines.forEach(l => { if (l.w && l.text) l.text.split(/\s+/).forEach((w, j) => W.push([key(w), l.w[j] != null ? l.w[j] : l.t0])); }));
-      T.sc.push({ si, t0, t1, cues, blockT, W, title: si === 0 || sc.k === 'title' });
+      const title = si === 0 || sc.k === 'title', firstT = blockT.length ? blockT[0] : t1;
+      // Si la escena parte con una intro larga, Lima la presenta al centro junto a una ilustración del tema.
+      T.sc.push({ si, t0, t1, cues, blockT, W, title, intro: !title && firstT - t0 > 2.4 ? firstT - .3 : null });
       (sc.b || []).forEach((b, i) => {
         if (!b || !b.q) return;
         const q = cues.find(c => c.k === i + 1 && c.kind === 'q'), e = cues.find(c => c.k === i + 1 && c.kind === 'e');
@@ -637,7 +639,7 @@
             <div class="vp-row"><span class="vp-time">0:00 / 0:00</span><span class="sp"></span>
               <button class="vb-ib" type="button" data-a="cc" aria-pressed="${this.cc}" aria-label="Subtítulos">${I('cc')}</button>
               <button class="vb-ib txt" type="button" data-a="rate" aria-label="Velocidad">${String(this.rate).replace('.', ',')}×</button>
-              <button class="vb-ib" type="button" data-a="mus" aria-pressed="${this.musicOn}" aria-label="Música de fondo">${I(this.musicOn ? 'vol' : 'mute')}</button></div>
+              <button class="vb-ib" type="button" data-a="mus" aria-pressed="${this.musicOn}" aria-label="Música de fondo">${I('music')}</button></div>
           </div>
         </div>
         <div class="vp-panel" hidden></div>
@@ -695,7 +697,11 @@
       });
       const wipes = this.stage.querySelector('.vp-wipes');
       wipes.innerHTML = T.sc.slice(1).map(() => '<i></i>').join('');
-      [...wipes.children].forEach((w, i) => G.add(w, [{ transform: 'translateX(-190%) skewX(-16deg)' }, { transform: 'translateX(190%) skewX(-16deg)' }], T.sc[i + 1].t0 - .5, .85, EASE.inout));
+      // Cortinas entre escenas: alternan el sentido para que no se sienta repetitivo.
+      [...wipes.children].forEach((w, i) => {
+        const r = i % 2 ? -1 : 1, sk = i % 3 === 2 ? 0 : -16 * r;
+        G.add(w, [{ transform: `translateX(${-190 * r}%) skewX(${sk}deg)` }, { transform: `translateX(${190 * r}%) skewX(${sk}deg)` }], T.sc[i + 1].t0 - .5, .85, EASE.inout);
+      });
       this.root.querySelector('.vp-chs').innerHTML = T.sc.map(s => `<i style="left:${(100 * s.t0 / T.d).toFixed(2)}%;width:${(100 * (s.t1 - s.t0) / T.d).toFixed(2)}%"></i>`).join('');
       this.bar.setAttribute('aria-valuemax', Math.round(T.d));
     }
@@ -707,7 +713,7 @@
       const ic = sc.ic || this.u.ic || 'spark';
       const el = D.createElement('div');
       el.className = 'vs ' + lay;
-      el.innerHTML = `<div class="vs-x"><div class="vs-deco"><div class="dz">${drawIcon(ic)}</div></div>
+      el.innerHTML = `<div class="vs-x"><div class="vs-deco"><div class="dz">${drawIcon(ic)}</div></div>${S.intro ? `<div class="vs-hero"><div class="hz"><span class="hr"></span>${drawIcon(ic)}</div></div>` : ''}
         <header class="vs-h">${S.title ? `<span class="vs-badge">${drawIcon(ic)}</span>` : `<span class="vs-n">${I(ic)}Parte ${si + 1} de ${n}</span>`}<h2>${kin(sc.h || '')}</h2>${sc.sub ? `<p>${kin(sc.sub)}</p>` : ''}</header>
         <div class="vs-view"><div class="vs-cam">${(sc.b || []).map((b, i) => `<div class="vb" data-k="${i + 1}"><div class="vb-in">${blockHTML(b, hashN(this.id + si + ':' + i))}</div></div>`).join('')}</div></div></div>`;
       this.scenesEl.appendChild(el);
@@ -718,6 +724,15 @@
       A.add(deco.firstElementChild, [{ opacity: 0, transform: 'scale(.8) rotate(-8deg)' }, { opacity: 1, transform: 'none' }], t0 + .1, 1.2, EASE.out);
       DRAW(deco.querySelector('svg'), A, t0 + .15, 1.5);
       idle(deco.querySelector('svg'), ic, A, t0 + 1.4);
+      const hero = x.querySelector('.vs-hero');
+      if (hero) {
+        const hz = hero.firstElementChild;
+        A.add(hz, [{ opacity: 0, transform: 'scale(.5) rotate(-12deg)' }, SHOWN], t0 + .3, .7, EASE.back);
+        DRAW(hz.querySelector('svg'), A, t0 + .4, 1.4);
+        idle(hz.querySelector('svg'), ic, A, t0 + 1.8);
+        A.add(hz.querySelector('.hr'), [{ transform: 'scale(.6)', opacity: .9 }, { transform: 'scale(1.5)', opacity: 0 }], t0 + .9, 1.8, 'ease-out', { iterations: Infinity, fill: 'forwards' });
+        A.add(hero, [SHOWN, { opacity: 0, transform: 'translate(34%, 46%) scale(.25)' }], S.intro - .1, .55, EASE.in, { fill: 'forwards' });
+      }
       const h = x.querySelector('.vs-h');
       const chip = h.querySelector('.vs-n, .vs-badge');
       A.add(chip, [{ opacity: 0, transform: S.title ? 'scale(.2) rotate(-25deg)' : 'translateY(-12px)' }, SHOWN], t0 + .12, S.title ? .7 : .4, S.title ? EASE.back : EASE.out);
@@ -813,14 +828,18 @@
       this.captions(t);
       this.ui();
     }
+    // Lima: al centro en las portadas y presentando las intros; en la esquina mientras aparece el contenido.
     petPlace(S, t) {
       const W = this.stage.clientWidth, H = this.stage.clientHeight;
-      const pos = s => s.title ? { x: W / 2 - 66, y: H - 330, s: 1.32 } : { x: 6, y: H - 188, s: .82 };
-      const cur = pos(S), prv = S.si ? pos(this.T.sc[S.si - 1]) : cur, p = ease(clamp((t - S.t0) / .7, 0, 1));
-      const x = lerp(prv.x, cur.x, p), y = lerp(prv.y, cur.y, p), s = lerp(prv.s, cur.s, p);
+      const C = { x: W / 2 - 66, y: H - 330, s: 1.32 }, K = { x: 6, y: H - 188, s: .82 };
+      const starts = s => s.title || s.intro != null ? C : K, ends = s => s.title ? C : K;
+      let from, to, p, center;
+      if (S.intro != null && t >= S.intro) { from = C; to = K; p = ease(clamp((t - S.intro) / .6, 0, 1)); center = p < .5; }
+      else { from = S.si ? ends(this.T.sc[S.si - 1]) : starts(S); to = starts(S); p = ease(clamp((t - S.t0) / .7, 0, 1)); center = to === C && p > .5; }
+      const x = lerp(from.x, to.x, p), y = lerp(from.y, to.y, p), s = lerp(from.s, to.s, p);
       this.petEl.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${s.toFixed(3)})`;
-      this.stage.classList.toggle('pet-c', S.title && p > .5);
-      const cap = S.title ? 1 : 0;
+      this.stage.classList.toggle('pet-c', center);
+      const cap = center ? 1 : 0;
       if (this.capMode !== cap) { this.capMode = cap; this.capEl.classList.toggle('wide', !!cap); }
     }
     // Subtítulos al estilo de los videos cortos: frases de pocas palabras y la palabra dicha en lima.
@@ -944,7 +963,7 @@
         else if (a === 'chap') this.chapters();
         else if (a === 'cc') { this.cc = !this.cc; b.setAttribute('aria-pressed', this.cc); this.capEl.classList.toggle('off', !this.cc); this.capKey = null; if (this.o.onCc) this.o.onCc(this.cc); }
         else if (a === 'rate') { const RT = [1, 1.25, 1.5, 2, .75]; this.setRate(RT[(RT.indexOf(this.rate) + 1) % RT.length] || 1); }
-        else if (a === 'mus') { this.musicOn = !this.musicOn; b.setAttribute('aria-pressed', this.musicOn); b.innerHTML = I(this.musicOn ? 'vol' : 'mute'); if (this.musicOn && this.playing) this.music.start(); else this.music.stop(); if (this.o.onMusic) this.o.onMusic(this.musicOn); }
+        else if (a === 'mus') { this.musicOn = !this.musicOn; b.setAttribute('aria-pressed', this.musicOn); if (this.musicOn && this.playing) this.music.start(); else this.music.stop(); if (this.o.onMusic) this.o.onMusic(this.musicOn); }
         if (this.playing) this.uiShow(false, 2600);
       });
       // Toque: muestra u oculta los controles. Doble toque a un lado: ±10 s.

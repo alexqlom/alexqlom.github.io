@@ -98,7 +98,7 @@ ACRO = {
     'HCl': 'hache ce ele', 'NaOH': 'hidróxido de sodio', 'pH': 'pe hache', 'H₂O': 'hache dos o', 'CO₂': 'ce o dos',
     'H₂S': 'hache dos ese', 'O₂': 'o dos', 'N₂': 'ene dos', 'CH₄': 'ce hache cuatro', 'EE.UU.': 'Estados Unidos',
     'EE. UU.': 'Estados Unidos', 'EE.UU': 'Estados Unidos', 'DEMRE': 'demre', 'TP': 'te pe', 'UV': 'u ve', 'SIDA': 'sida', 'RNA': 'erre ene a',
-    'CONTINUIDAD': 'continuidad', 'Cl': 'ce ele', 'Br': 'be erre', 'OH': 'o hache', 'AB': 'a be', 'Q1': 'cu uno', 'Q3': 'cu tres',
+    'CONTINUIDAD': 'continuidad', 'hCG': 'hache ce ge', 'Cl': 'ce ele', 'Br': 'be erre', 'OH': 'o hache', 'AB': 'a be', 'Q1': 'cu uno', 'Q3': 'cu tres',
 }
 # Nombres extranjeros escritos como se pronuncian en Chile (la tilde marca el acento).
 RESPELL = {
@@ -119,7 +119,7 @@ RESPELL = {
     'Núremberg': 'Núremberg', 'Sarajevo': 'Sarayevo', 'Mijaíl': 'Mijaíl', 'Litovsk': 'Litóvsk', 'Gagarin': 'Gagárin',
     'Avogadro': 'Avogadro', 'Mercalli': 'Mercali', 'Valech': 'Valech', 'Bachelet': 'Bacheléth', 'Pinochet': 'Pinoché',
     'Kennedy': 'Kénedi', 'Churchill': 'Chérchil', 'Hitler': 'Jítler', 'Wall': 'Uol', 'Street': 'Strit', 'Marshall': 'Márshal',
-    'Thatcher': 'Táchet', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
+    'Thatcher': 'Táchet', 'o’higginistas': 'ojiguinistas', "o'higginistas": 'ojiguinistas', 'Brønsted': 'Brónsted', 'boys': 'bóis', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
 }
 LETTER = {'B': 'be', 'C': 'ce', 'D': 'de', 'F': 'efe', 'G': 'ge', 'H': 'hache', 'J': 'jota', 'K': 'ka', 'L': 'ele',
           'M': 'eme', 'N': 'ene', 'P': 'pe', 'Q': 'cu', 'R': 'erre', 'S': 'ese', 'T': 'te', 'V': 've', 'W': 'doble ve',

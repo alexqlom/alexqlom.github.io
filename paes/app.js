@@ -1105,7 +1105,7 @@
   function voiceSheet() {
     const list = RB.tts.refresh();
     const cur = RB.tts.current();
-    sheet(`<small class="kick">Narrador</small><h3>Elige la voz</h3><p class="muted">${NAT() ? 'Estas son las voces en español de tu teléfono. Las de mejor calidad suenan más humanas; si no ves ninguna buena, instala “Servicios de voz de Google” y descarga la voz en español desde Ajustes → Texto a voz.' : 'En Windows, “Microsoft Catalina” es la voz chilena; las que dicen “Natural” u “Online” suenan más humanas.'}</p>` +
+    sheet(`<small class="kick">Lectura en voz alta</small><h3>Voz para leer las preguntas</h3><p class="muted">Los videos traen su propia narradora. Esta voz es la del botón de parlante en las preguntas. ${NAT() ? 'Estas son las voces en español de tu teléfono. Las de mejor calidad suenan más humanas; si no ves ninguna buena, instala “Servicios de voz de Google” y descarga la voz en español desde Ajustes → Texto a voz.' : 'En Windows, “Microsoft Catalina” es la voz chilena; las que dicen “Natural” u “Online” suenan más humanas.'}</p>` +
       `<div class="vlist2">${list.length ? list.map(v => `<button class="row" type="button" data-n="${esc(v.n)}" aria-pressed="${v.n === cur}"><span>${esc(v.n)}<small>${esc(v.l)}${v.q != null && v.q >= 40 ? ' · alta calidad' : ''}${v.net ? ' · usa internet' : ''}</small></span>${v.n === cur ? I('check') : ''}</button>`).join('') : '<p class="muted">No se encontraron voces en español.</p>'}</div>` +
       `<button class="btn ghost" type="button" data-test>${I('vol')}Probar la voz</button>` +
       (NAT() && NAT().ttsSettings ? `<button class="btn ghost" type="button" data-sys>${I('gear')}Ajustes de voz del teléfono</button>` : ''), el => {
@@ -1119,7 +1119,7 @@
         if (VIEWS.perfil && tab === 'perfil') setTimeout(() => { const r = $('[data-act="voice"] small'); if (r) r.textContent = S.set.vname; }, 0);
         $$('[data-n]', el).forEach(x => { x.setAttribute('aria-pressed', x === b); const c = $('.ic', x); if (c) c.remove(); });
         b.insertAdjacentHTML('beforeend', I('check'));
-        RB.say('Hola. Esta será la voz de tus videos de la PAES.');
+        RB.say('Hola. Así sonarán las preguntas cuando toques el parlante.');
       };
       $('[data-test]', el).onclick = () => RB.say('Hola. Vamos a preparar la PAES juntos, un tema a la vez.');
     });
@@ -1143,7 +1143,7 @@
       <h2 class="st">Ensayos</h2><div class="card">${exams.length ? `<ul class="exl">${exams.map(e => `<li><span class="pill pass">${e.pts}</span><b>${esc(testInfo(e.t).s)} · ${e.good}/${e.n}</b><small>${esc(new Date(e.d + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }))} · ${fmtTime(e.secs)}</small></li>`).join('')}</ul>` : `<p class="muted">Aún no haces ensayos. Encuéntralos en Practicar.</p>`}</div>
       <h2 class="st">Logros · ${achN} de ${ACH.length}</h2><div class="agrid">${ACH.map(a => `<button class="ach${S.ach[a.id] ? ' on' : ''}" type="button" data-ach="${a.id}"><i>${I(a.ic)}</i><span>${esc(a.n)}</span></button>`).join('')}</div>
       <h2 class="st">Ajustes</h2><div class="set">
-        <div class="row"><span>Meta diaria</span><div class="seg" data-goal>${[20, 30, 50, 80].map(g => `<button type="button" data-v="${g}" aria-pressed="${S.goal === g}">${g}</button>`).join('')}</div></div>
+        <div class="row"><span>Meta diaria</span><div class="seg" data-goal>${[...new Set([20, 30, 50, 80, S.goal])].sort((x, y) => x - y).map(g => `<button type="button" data-v="${g}" aria-pressed="${S.goal === g}">${g}</button>`).join('')}</div></div>
         <div class="row"><span>Velocidad de los videos</span><div class="seg" data-rate>${[[.75, '0,75'], [1, '1'], [1.25, '1,25'], [1.5, '1,5'], [2, '2']].map(([r, n]) => `<button type="button" data-v="${r}" aria-pressed="${S.set.rate === r}">${n}×</button>`).join('')}</div></div>
         ${sw('cc', 'Subtítulos en los videos')}
         ${sw('music', 'Música en los videos', 'Música suave de fondo, bajo la narración')}
