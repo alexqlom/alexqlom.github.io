@@ -302,7 +302,7 @@
         const gi = idx++, done = !!S.done[l.id], isCur = gi === cur;
         const off = [54, 0, -54, 0][li % 4];
         h += `<div class="node-w${isCur ? ' has-b' : ''}" style="--x:${off}px">${isCur ? `<span class="bubble">${doneN ? 'Siguiente' : 'Empieza aquí'}</span>` : ''}` +
-          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'open'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : ''}${l.vid ? ', con video' : ''}">${I(l.ic || u.ic)}${l.vid && !S.seen[l.vid] ? `<i class="nv">${I('play')}</i>` : ''}</button>` +
+          `<button class="node ${done ? 'done' : isCur ? 'cur' : 'open'}" data-l="${l.id}" aria-label="${esc(l.n)}${done ? ', completada' : ''}${l.vid ? ', con video' : ''}">${I(l.ic || u.ic)}${l.vid && !S.seen[l.vid] ? `<i class="nvid">${I('play')}</i>` : ''}</button>` +
           (done ? `<div class="stars" aria-label="${S.stars[l.id] || 1} de 3 estrellas">${[1, 2, 3].map(k => I('star', k <= (S.stars[l.id] || 1) ? 'on' : '')).join('')}</div>` : '') +
           `<div class="nl">${esc(l.n)}</div></div>`;
       });

@@ -1043,8 +1043,8 @@ b.hl { font-weight: 800; }
 .tch-a svg { width: 100%; height: 100%; }
 .tpy-s { position: absolute; height: 28px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 8px; box-shadow: 0 5px 0 rgba(0, 0, 0, .4); color: #111; font: 900 12px/1 var(--f); text-transform: uppercase; letter-spacing: .03em; transform-origin: 50% 100%; }
 .tpy-s i { font-style: normal; padding: 2px 7px; border-radius: 999px; background: rgba(0, 0, 0, .78); color: #fff; }
-.node .nv { position: absolute; right: -5px; top: -5px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--acc); color: #000; box-shadow: 0 0 0 3px var(--bg); }
-.node .nv .ic { width: 12px; height: 12px; }
+.node .nvid { position: absolute; right: -5px; top: -5px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--acc); color: #000; box-shadow: 0 0 0 3px var(--bg); }
+.node .nvid .ic { width: 12px; height: 12px; }
 .tmap { position: absolute; left: 0; top: 0; width: 360px; height: 640px; overflow: visible; z-index: 1; transform-origin: 180px 320px; }
 .tml { position: absolute; left: 0; top: 0; width: 360px; height: 640px; z-index: 940; pointer-events: none; }
 .tmt { position: absolute; padding: 3px 8px; border-radius: 9px; background: rgba(8, 8, 8, .88); border: 1.5px solid rgba(255, 255, 255, .3); color: #fff; font: 800 12px/1.15 var(--f); white-space: nowrap; }
