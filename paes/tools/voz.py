@@ -82,16 +82,8 @@ class Voice:
         out = []
         for w, ts in words:
             w = w.strip('.,;:¿?¡!')
-            if re.fullmatch(r'[IVXLC]{2,}|[IVX]', w) and roman(w):
-                w = str(roman(w))
-            # El reconocedor escribe cifras, siglas y fórmulas (20%, ADN, CO2, XY): se comparan con su forma hablada.
-            pm = re.fullmatch(r'(\d+)%', w)
-            if pm:
-                for j, ww in enumerate((habla.num(int(pm.group(1))) + ' por ciento').split()):
-                    out.append([habla.word_key(ww), ts + .1 * j])
-                continue
-            if w not in habla.ACRO and re.fullmatch(r'[A-ZÑ]{2,4}\d*', w):
-                sp = ' '.join(LETTERS.get(ch, ch) if not ch.isdigit() else habla.num(int(ch)) for ch in w)
+            sp = asr_spoken(w)
+            if sp is not None:
                 for j, ww in enumerate(sp.split()):
                     out.append([habla.word_key(ww), ts + .1 * j])
                 continue
@@ -117,13 +109,21 @@ class Voice:
         ref = [habla.word_key(w) for w in spoken.split()]
         ref = [w for w in ref if w]
         old = None
+        cmp_ref = [canon(w) for w in ref]
         if os.path.exists(f):
             z = np.load(f, allow_pickle=False)
             old = (z['audio'].astype(np.float32) / 32767, json.loads(str(z['meta'])))
+            if repair and not old[1].get('rep') and any(t is None for t in old[1]['t']):
+                # Se vuelve a escuchar con la comparación actual: muchas "faltas" eran cifras o siglas mal comparadas.
+                text, hyp = self._listen(old[0])
+                err, times = align(cmp_ref, [[canon(w), ts] for w, ts in hyp])
+                old[1].update(asr=text, wer=round(err / max(1, len(ref)), 3), t=times)
+                if missing(ref, times) == 0:
+                    old[1]['rep'] = 1
+                    np.savez_compressed(f, audio=np.round(old[0] * 32767).astype(np.int16), meta=json.dumps(old[1], ensure_ascii=False))
             if not repair or missing(ref, old[1]['t']) == 0 or old[1].get('rep'):
                 self.stats['cached'] += 1
                 return old
-        cmp_ref = [canon(w) for w in ref]
         best = None
         if old:
             best = ((missing(ref, old[1]['t']), old[1]['wer']), old[0], old[1])
@@ -166,6 +166,47 @@ def roman(s):
     for a, b in zip(s, s[1:] + ' '):
         n += -v[a] if b != ' ' and v[b] > v[a] else v[a]
     return n if 0 < n < 400 else 0
+
+
+# El reconocedor escribe cifras, siglas, fórmulas y unidades (18,5 · 20% · ADN · CO2 · 1s2 · 2000W · kWh):
+# se pasan a la forma hablada para compararlas con lo que debía decir la narradora.
+ASR_UNITS = {'w': 'watts', 'kw': 'kilowatts', 'kwh': 'kilowatts hora', 'v': 'volts', 'hz': 'hertz', 'km': 'kilómetros',
+             'kg': 'kilos', 'cm': 'centímetros', 'mm': 'milímetros', 'ml': 'mililitros', 'kcal': 'kilocalorías'}
+ASR_ALIAS = {'PAE': 'paes', 'PAES': 'paes'}
+
+
+def dec_words(i, d):
+    z = len(d) - len(d.lstrip('0'))
+    return ' '.join([habla.num(int(i)), 'coma'] + ['cero'] * z + ([habla.num(int(d))] if d.strip('0') else []))
+
+
+def asr_spoken(w):
+    if not w:
+        return None
+    if w in ASR_ALIAS:
+        return ASR_ALIAS[w]
+    if re.fullmatch(r'[IVXLC]{2,}', w) and roman(w):
+        return habla.num(roman(w))
+    if re.fullmatch(r'[A-ZÑ]', w):
+        return LETTERS.get(w, w)
+    m = re.fullmatch(r'(\d+),(\d+)(%?)', w)
+    if m:
+        return dec_words(m.group(1), m.group(2)) + (' por ciento' if m.group(3) else '')
+    m = re.fullmatch(r'(\d{1,3}(?:\.\d{3})+|\d+)(%?)', w)
+    if m:
+        return habla.num(int(m.group(1).replace('.', ''))) + (' por ciento' if m.group(2) else '')
+    if w in habla.ACRO or w.upper() in habla.ACRO:
+        return habla.ACRO.get(w, habla.ACRO.get(w.upper()))
+    m = re.fullmatch(r'(\d+)([A-Za-z]{1,4})', w)
+    if m and m.group(2).lower() in ASR_UNITS:
+        return habla.num(int(m.group(1))) + ' ' + ASR_UNITS[m.group(2).lower()]
+    if w.lower() in ASR_UNITS and len(w) > 1 and not w.islower():
+        return ASR_UNITS[w.lower()]
+    # Mezclas de letras y cifras (1s2, 2P6, C1, KX) o siglas cortas (XY, AT): letra por letra.
+    if re.fullmatch(r'(?=.*\d)[A-Za-zÑñ\d]{2,8}', w) or re.fullmatch(r'[A-ZÑ]{2,4}', w):
+        parts = re.findall(r'\d+|[A-Za-zÑñ]', w)
+        return ' '.join(habla.num(int(x)) if x.isdigit() else LETTERS.get(x.upper(), x) for x in parts)
+    return None
 
 
 # Palabras largas que el reconocedor no oyó: señal de que la voz pudo saltarse algo (los nombres propios no cuentan).
