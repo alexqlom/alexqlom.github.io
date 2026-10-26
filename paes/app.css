@@ -975,6 +975,9 @@ b.hl { font-weight: 800; }
 .tth span { display: inline-block; }
 .tth.w { color: #fff; text-shadow: 0 4px 0 rgba(0, 0, 0, .6); }
 .tth.r { color: #ff6b6b; }
+.ts.light .tth { color: #141414; text-shadow: 0 3px 0 var(--acc), 0 0 6px rgba(255, 255, 255, .7); }
+.ts.light .tth.r { color: #c81e1e; }
+.ts.light .ttn small { color: #141414; text-shadow: 0 2px 0 rgba(255, 255, 255, .6); }
 .tth.box span { background: var(--acc); color: #000; padding: 2px 10px; border-radius: 8px; text-shadow: none; box-shadow: 0 4px 0 #6f8f00; margin: 2px 0; }
 .tty { position: absolute; left: 14px; top: 18px; }
 .tty b { display: inline-block; padding: 4px 14px 5px; border-radius: 12px; background: var(--acc); color: #000; font: 900 26px/1.1 var(--f); letter-spacing: .02em; box-shadow: 0 4px 0 #6f8f00; font-variant-numeric: tabular-nums; }

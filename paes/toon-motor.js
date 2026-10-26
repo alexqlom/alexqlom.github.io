@@ -192,6 +192,11 @@
     p.order.forEach(id => chk(p.act[id].at, id));
     p.ev.forEach(e => chk(e.at, e.id || e.a));
     (sc.it || []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'item'); });
+    // Íconos de las plantillas y personajes de las comparaciones.
+    const icOk = ic => { const nm = String(ic || '').replace('+', '').split(':')[0]; return !nm || !!T.PROPS[nm]; };
+    const icons = sc.k === 'title' ? [].concat(sc.em || []) : sc.k === 'recap' || sc.k === 'chain' ? (sc.it || []).map(x => x[0]) : sc.k === 'tl' ? (sc.it || []).map(x => x.filter(y => !(typeof y === 'string' && y[0] === '@'))[2]) : [];
+    icons.forEach(ic => { if (!icOk(ic)) errs.push(`ícono desconocido "${ic}"`); });
+    if (sc.k === 'vs') [sc.l, sc.r].forEach(side => { const who = side && side[1]; if (who && !T.CAST[String(who).split('/')[0]]) errs.push(`personaje desconocido "${who}"`); });
     // En los mapas, que existan los lugares, países y regiones que se nombran.
     const M = sc.k === 'map' && T.MAPS && T.MAPS[sc.view || 'chile'];
     if (M) {
@@ -338,7 +343,7 @@
     const v = P.v, sh = v.sc[si], S = P.T.sc[si];
     const A = new Anims();
     const el = D.createElement('div');
-    el.className = 'ts';
+    el.className = 'ts' + (LIGHT.has(sh.set) ? ' light' : '');
     el.style.zIndex = String(10 + si);
     const stW = P.stage.clientWidth || W0, stH = P.stage.clientHeight || H0;
     const k = Math.min(stW / W0, stH / H0);
@@ -795,7 +800,7 @@
         if (!p.tr) { p.tr = new Track(p.el, 'fill', LAND); ctx.tracks.push(p.tr); }
         p.tr.to(t, e.a === 'dim' ? LAND : '#ffffff', .12).to(t + .12, col, .35);
       });
-      if (e.text) { const [x, y] = mapPt(ctx, codes(w[0])[0]); mapTag(ctx, x, y, e.text, t + .2); }
+      if (e.text) { const [x, y] = mapPt(ctx, codes(w[0])[0]); mapTag(ctx, x + (+e.kv.dx || 0), y + (+e.kv.dy || 0), e.text, t + .2); }
       ctx.sfx(t, 'pop');
     } else if (e.a === 'lab') {
       const [x, y] = mapPt(ctx, w[0]);
@@ -915,13 +920,21 @@
   // ---------- Plantillas de planos ----------
   // Actor sintético (para las plantillas): mismo motor que los creados con órdenes.
   const synth = (ctx, id, type, x, y, s, enter, t, extra) => {
-    const it = Object.assign({ id, prop: type[0] === '+' ? type.slice(1) : null, sp: type[0] === '+' ? null : type, at: null, enter, x, y, s, flip: false, kv: {}, text: null, words: [] }, extra || {});
+    const it = Object.assign({ id, prop: type[0] === '+' ? type.slice(1) : null, sp: type[0] === '+' ? null : type.replace(/\//g, ' '), at: null, enter, x, y, s, flip: false, kv: {}, text: null, words: [] }, extra || {});
     const a = makeActor(ctx, it, t);
     ctx.actors[id] = a;
     return a;
   };
   const atOf = (S, arr, prev) => { const a = (arr.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); return a ? anchorT(S, a, prev) : null; };
   const noAt = arr => arr.filter(y => !(typeof y === 'string' && y[0] === '@'));
+  // Escenarios claros: los textos grandes van en oscuro para que se lean.
+  const LIGHT = new Set(['paper', 'snow', 'desert']);
+  // Ícono de plantilla: "flag:us" o "doc:1925" pasa la opción (bandera o texto) al objeto.
+  const iconOf = (ic, dflt) => {
+    const [nm, arg] = String(ic || '').replace('+', '').split(':');
+    const fn = T.PROPS[nm] || (dflt && T.PROPS[dflt]);
+    return fn ? fn(arg ? { f: arg, t: arg } : {}) : null;
+  };
   const div = (cls, html, css) => { const d = D.createElement('div'); d.className = cls; if (html != null) d.innerHTML = html; if (css) d.style.cssText = css; return d; };
   T.TPL = {
     // Portada: título grande, emblema y Lima presentando.
@@ -929,7 +942,7 @@
       const { sh, S, A, hud } = ctx;
       T.FX(ctx, 'rays', S.t0, { kv: { x: 180, y: 300 } });
       const em = [].concat(sh.em || 'star');
-      em.forEach((p, i) => synth(ctx, 'em' + i, p.startsWith('+') ? p : '+' + p, em.length === 1 ? 180 : 110 + i * (140 / Math.max(1, em.length - 1)), 300 + (i % 2) * 14, em.length === 1 ? 1.5 : 1.05, i ? 'pop' : 'zoom', S.t0 + .2 + i * .2));
+      em.forEach((p, i) => { const [nm, arg] = p.replace('+', '').split(':'); synth(ctx, 'em' + i, '+' + nm, em.length === 1 ? 180 : 110 + i * (140 / Math.max(1, em.length - 1)), 300 + (i % 2) * 14, em.length === 1 ? 1.5 : 1.05, i ? 'pop' : 'zoom', S.t0 + .2 + i * .2, arg ? { kv: { f: arg, t: arg } } : null); });
       if (sh.sub) { const d = div('tsub', esc(sh.sub)); hud.appendChild(d); A.add(d, [{ opacity: 0, transform: 'translate(-50%,-10px)' }, { opacity: 1, transform: 'translate(-50%,0)' }], S.t0 + .1, .4, 'ease-out'); }
       const d = div('ttitle', String(sh.t || '').split(/\s+/).map(w => `<span>${esc(w)}</span>`).join(' '));
       const n = String(sh.t || '').length;
@@ -989,8 +1002,7 @@
         const t = atOf(S, x, prev);
         const tt = t != null ? t : prev + Math.max(.6, (S.t1 - S.t0 - 2) / its.length);
         prev = tt;
-        const fn = T.PROPS[String(ic).replace('+', '')] || T.PROPS.star;
-        const [w, hh, svg] = fn({});
+        const [w, hh, svg] = iconOf(ic, 'star');
         const c = div('trc-i', `<span class="ic"><svg viewBox="0 0 ${w} ${hh}">${svg}</svg></span><b>${esc(text)}</b>`);
         grid.appendChild(c);
         A.add(c, [{ opacity: 0, transform: 'translateY(26px) scale(.8) rotate(-3deg)' }, { opacity: 1, transform: 'translateY(-4px) scale(1.04)', offset: .7 }, { opacity: 1, transform: 'none' }], tt, .42, 'ease-out');
@@ -1017,8 +1029,8 @@
         const t = atOf(S, x, prev);
         const tt = t != null ? t : prev + Math.max(.8, (S.t1 - S.t0 - 1.5) / n);
         prev = tt;
-        const fn = ic && T.PROPS[String(ic).replace('+', '')];
-        const icon = fn ? (() => { const [w, hh, svg] = fn({}); return `<span class="ic"><svg viewBox="0 0 ${w} ${hh}">${svg}</svg></span>`; })() : '';
+        const ico = ic && iconOf(ic);
+        const icon = ico ? `<span class="ic"><svg viewBox="0 0 ${ico[0]} ${ico[1]}">${ico[2]}</svg></span>` : '';
         const row = div('ttl-i', `<i class="dot"></i><b class="yr">${esc(yr)}</b><span class="tx">${esc(text || '')}</span>${icon}`, `top:${r1(top + i * gap - 18)}px`);
         hud.appendChild(row);
         A.add(row.querySelector('.dot'), [{ transform: 'scale(0)' }, { transform: 'scale(1.5)', offset: .6 }, { transform: 'scale(1)' }], tt, .35, 'ease-out');
@@ -1071,8 +1083,7 @@
         const t = atOf(S, x, prev);
         const tt = t != null ? t : prev + Math.max(.8, (S.t1 - S.t0 - 1) / n);
         prev = tt;
-        const fn = T.PROPS[String(ic).replace('+', '')] || T.PROPS.star;
-        const [w, hh, svg] = fn({});
+        const [w, hh, svg] = iconOf(ic, 'star');
         const c = div('tch-i', `<span class="ic"><svg viewBox="0 0 ${w} ${hh}">${svg}</svg></span><b>${esc(text)}</b>`, `top:${r1(top + i * gap)}px`);
         hud.appendChild(c);
         A.add(c, [{ opacity: 0, transform: 'translate(-50%,20px) scale(.85)' }, { opacity: 1, transform: 'translate(-50%,0) scale(1)' }], tt, .4, RB.vkit.EASE.back);
