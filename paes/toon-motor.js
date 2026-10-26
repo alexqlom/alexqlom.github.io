@@ -166,7 +166,7 @@
       }
       const ev = { li, at, a, words, quotes, kv, text: quotes[0] };
       if (MAPOPS.has(a)) ev.type = 'map';
-      else if (/^(T|Y|L|N|S)$/.test(a)) ev.type = 'hud';
+      else if (/^(T|Y|L|N|S|F)$/.test(a)) ev.type = 'hud';
       else if (/^(cam|fx|sfx|arrow|lima)$/.test(a)) ev.type = a;
       else {
         ev.type = 'do'; ev.id = a; ev.what = words[0]; ev.args = words.slice(1);
@@ -192,6 +192,9 @@
     p.order.forEach(id => chk(p.act[id].at, id));
     p.ev.forEach(e => chk(e.at, e.id || e.a));
     (sc.it || []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'item'); });
+    [].concat(sc.hl || [], sc.mark || [], sc.line ? [sc.line] : []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'marca'); });
+    if (sc.k === 'read') (sc.hl || []).forEach(h => { const ph = h.find(y => typeof y === 'string' && y[0] !== '@' && !/^(lime|red|blue|yel|org|pur|teal|pink|gry|wht|grn|brn)$/.test(y)); if (ph && !String(sc.txt || '').includes(ph)) errs.push(`el texto no contiene "${ph}"`); });
+    if (sc.k === 'plot') (sc.it || []).forEach(x => { if (x[0] === 'f' && !fnOf(x[1])) errs.push(`función inválida "${x[1]}"`); });
     // Íconos de las plantillas y personajes de las comparaciones.
     const icOk = ic => { const nm = String(ic || '').replace('+', '').split(':')[0]; return !nm || !!T.PROPS[nm]; };
     const icons = sc.k === 'title' ? [].concat(sc.em || []) : sc.k === 'recap' || sc.k === 'chain' ? (sc.it || []).map(x => x[0]) : sc.k === 'tl' ? (sc.it || []).map(x => x.filter(y => !(typeof y === 'string' && y[0] === '@'))[2]) : [];
@@ -324,6 +327,7 @@
     if (it.prop) {
       const fn = T.PROPS[it.prop] || T.PROPS.question2;
       const o = Object.assign({ t: it.text || it.kv.t }, it.kv);
+      if (o.c) o.c = mcol(o.c);
       if (it.kv.v) o.v = it.kv.v.split(',').map(Number);
       if (it.kv.f) o.f = it.kv.f;
       const [w, h, svg, opt] = fn(o);
@@ -499,7 +503,7 @@
     loop('.tw', [{ opacity: .15 }, { opacity: .95 }], 1.7, { direction: 'alternate' });
     loop('.spark', [{ opacity: 1, transform: 'scale(1)' }, { opacity: .4, transform: 'scale(1.5)' }], .18, { direction: 'alternate' });
     loop('.vote', [{ transform: 'translateY(-10px)', opacity: 0 }, { transform: 'translateY(0px)', opacity: 1, offset: .3 }, { transform: 'translateY(26px)', opacity: 1, offset: .8 }, { transform: 'translateY(30px)', opacity: 0 }], 1.6, { easing: 'linear' });
-    svg.querySelectorAll('.bar').forEach((n, i) => A.add(n, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], a.te + .2 + i * .12, .45, RB.vkit.EASE.back));
+    svg.querySelectorAll('.cbar').forEach((n, i) => A.add(n, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], a.te + .2 + i * .12, .45, RB.vkit.EASE.back));
     svg.querySelectorAll('.line').forEach(n => A.add(n, [{ strokeDasharray: '1 1', strokeDashoffset: 1 }, { strokeDasharray: '1 1', strokeDashoffset: 0 }], a.te + .2, 1.1, 'ease-in-out'));
   }
 
@@ -708,6 +712,21 @@
       hud.appendChild(d);
       A.add(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], t, .3, RB.vkit.EASE.back);
       if (e.kv.until) A.add(d, [{ opacity: 1 }, { opacity: 0 }], anchorT(S, e.kv.until, t) || t + 3, .25, 'ease-in', { fill: 'forwards' });
+    } else if (kind === 'F') {
+      // Fórmula: conserva mayúsculas y símbolos; [[…]] marca una parte en color. Reemplaza a la fórmula anterior a la misma altura.
+      const y = e.kv.y ? +e.kv.y : 300, n = text.replace(/\[\[|\]\]/g, '').length;
+      d.className = 'ttf' + (n > 26 ? ' wrap' : '');
+      d.style.top = y + 'px';
+      d.style.fontSize = (n <= 12 ? 36 : n <= 18 ? 30 : n <= 26 ? 25 : 21) + 'px';
+      if (e.kv.c) d.style.color = mcol(e.kv.c);
+      d.innerHTML = esc(text).replace(/\[\[(.+?)\]\]/g, '<span class="hl">$1</span>');
+      hud.appendChild(d);
+      A.add(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.08)', offset: .7 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], t, .38, 'ease-out');
+      ctx.lastF = ctx.lastF || {};
+      const old = ctx.lastF[y];
+      if (old) A.add(old, [{ opacity: 1 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.9)' }], t - .05, .2, 'ease-in', { fill: 'forwards' });
+      ctx.lastF[y] = d;
+      ctx.sfx(t, 'pop');
     } else if (kind === 'S') {
       d.className = 'tts';
       if (e.kv.y) d.style.top = e.kv.y + 'px';
@@ -928,7 +947,7 @@
   const atOf = (S, arr, prev) => { const a = (arr.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); return a ? anchorT(S, a, prev) : null; };
   const noAt = arr => arr.filter(y => !(typeof y === 'string' && y[0] === '@'));
   // Escenarios claros: los textos grandes van en oscuro para que se lean.
-  const LIGHT = new Set(['paper', 'snow', 'desert']);
+  const LIGHT = new Set(['paper', 'snow', 'desert', 'clinic']);
   // Ícono de plantilla: "flag:us" o "doc:1925" pasa la opción (bandera o texto) al objeto.
   const iconOf = (ic, dflt) => {
     const [nm, arg] = String(ic || '').replace('+', '').split(':');
@@ -1137,5 +1156,219 @@
       });
     },
   };
+
+  // ---------- Plantillas para Matemática, Ciencias y Lectura ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  const svgEl = (tag, attrs, parent) => { const e = D.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const niceStep = span => span <= 12 ? 1 : span <= 24 ? 2 : span <= 60 ? 5 : span <= 120 ? 10 : span <= 300 ? 25 : 50;
+  const numTxt = v => (Math.round(v * 100) / 100).toString().replace('.', ',').replace('-', '−');
+  // Expresión de una función: "x^2 - 4", "2*sin(x)", "log(x)" (log = base 10, ln = natural).
+  const fnOf = expr => {
+    const body = String(expr).replace(/\^/g, '**').replace(/π/g, 'PI').replace(/√/g, 'sqrt');
+    try { return new Function('x', 'sin', 'cos', 'tan', 'sqrt', 'log', 'ln', 'exp', 'abs', 'PI', 'E', 'floor', `return (${body});`); } catch (e) { return null; }
+  };
+  const callFn = (f, x) => f(x, Math.sin, Math.cos, Math.tan, Math.sqrt, Math.log10, Math.log, Math.exp, Math.abs, Math.PI, Math.E, Math.floor);
+  // Traza un camino que se dibuja solo (pathLength 1) entre t y t + d.
+  const drawIn = (A, el, t, d) => { el.setAttribute('pathLength', '1'); el.style.strokeDasharray = '1 1'; el.style.strokeDashoffset = '1'; A.add(el, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], t, d, 'ease-in-out'); };
+  const popIn = (A, el, t) => A.add(el, [{ opacity: 0, transform: 'scale(0)' }, { opacity: 1, transform: 'scale(1.25)', offset: .7 }, { opacity: 1, transform: 'scale(1)' }], t, .35, 'ease-out');
+  const fadeIn = (A, el, t, d = .3) => A.add(el, [{ opacity: 0 }, { opacity: 1 }], t, d, 'ease-out');
+  const svgText = (parent, x, y, s, cls, color, anchor = 'middle') => { const e = svgEl('text', { x: r1(x), y: r1(y), class: cls || 'tx', 'text-anchor': anchor }, parent); if (color) e.style.fill = color; e.textContent = s; return e; };
+
+  Object.assign(T.TPL, {
+    // Plano o figura: ejes opcionales, funciones, puntos, segmentos, vectores, polígonos, círculos, ángulos y rótulos.
+    // { k: 'plot', x: [-5, 5], y: [-5, 5], eq: true (misma escala), axes, grid, xl, yl, box: [x, y, ancho, alto],
+    //   it: [['f', 'x^2-4', 'lime', 'rótulo', '@a'], ['p', 2, 0, 'A', '@b'], ['seg', x1, y1, x2, y2, 'red', '5 cm', '@c'],
+    //        ['vec', ...], ['poly', '0,0 4,0 0,3', 'blue', 'rótulo'], ['circ', cx, cy, r, 'yel', 'rótulo'],
+    //        ['ang', vx, vy, ax, ay, bx, by, 'org', 'α'], ['txt', x, y, 'texto', 'wht'], ['h', y, 'red', 'rótulo'], ['v', x, 'red', 'rótulo']] }
+    plot(ctx) {
+      const { sh, S, A, hud } = ctx;
+      const [x0, x1] = sh.x || [-5, 5], [y0, y1] = sh.y || [-5, 5];
+      // box: [x, y, ancho, alto] o 'top' (deja abajo espacio para personajes).
+      const box = sh.box === 'top' ? [34, 104, 296, 236] : sh.box || [34, 150, 296, 300];
+      let sx = box[2] / (x1 - x0), sy = box[3] / (y1 - y0), bx = box[0], by = box[1];
+      if (sh.eq) { const k = Math.min(sx, sy); bx += (box[2] - k * (x1 - x0)) / 2; by += (box[3] - k * (y1 - y0)) / 2; sx = sy = k; }
+      const X = x => bx + (x - x0) * sx, Y = y => by + (y1 - y) * sy;
+      const svg = svgEl('svg', { class: 'tplot', viewBox: `0 0 ${W0} ${H0}` }, hud);
+      const clipId = 'pc' + Math.random().toString(36).slice(2, 8);
+      const defs = svgEl('defs', {}, svg), cp = svgEl('clipPath', { id: clipId }, defs);
+      svgEl('rect', { x: r1(X(x0) - 2), y: r1(Y(y1) - 2), width: r1((x1 - x0) * sx + 4), height: r1((y1 - y0) * sy + 4) }, cp);
+      const t0 = S.t0 + .15;
+      if (sh.axes !== false) {
+        const g = svgEl('g', { class: 'tpl-ax' }, svg);
+        const step = sh.step || niceStep(Math.max(x1 - x0, y1 - y0));
+        if (sh.grid !== false) {
+          for (let x = Math.ceil(x0 / step) * step; x <= x1 + 1e-9; x += step) svgEl('line', { x1: r1(X(x)), y1: r1(Y(y0)), x2: r1(X(x)), y2: r1(Y(y1)), class: 'gr' }, g);
+          for (let y = Math.ceil(y0 / step) * step; y <= y1 + 1e-9; y += step) svgEl('line', { x1: r1(X(x0)), y1: r1(Y(y)), x2: r1(X(x1)), y2: r1(Y(y)), class: 'gr' }, g);
+        }
+        const ax = y0 <= 0 && y1 >= 0 ? 0 : y0, ay = x0 <= 0 && x1 >= 0 ? 0 : x0;
+        svgEl('line', { x1: r1(X(x0)), y1: r1(Y(ax)), x2: r1(X(x1) + 8), y2: r1(Y(ax)), class: 'axl' }, g);
+        svgEl('line', { x1: r1(X(ay)), y1: r1(Y(y0)), x2: r1(X(ay)), y2: r1(Y(y1) - 8), class: 'axl' }, g);
+        svgEl('path', { d: `M${r1(X(x1) + 12)} ${r1(Y(ax))} l-9 -5 l0 10Z M${r1(X(ay))} ${r1(Y(y1) - 12)} l-5 9 l10 0Z`, class: 'axh' }, g);
+        const lab = sh.lab || step * (Math.max(x1 - x0, y1 - y0) > 16 && step === 1 ? 2 : 1);
+        for (let x = Math.ceil(x0 / lab) * lab; x <= x1 + 1e-9; x += lab) if (Math.abs(x - ay) > 1e-9) svgText(g, X(x), Y(ax) + 16, numTxt(x), 'tk');
+        for (let y = Math.ceil(y0 / lab) * lab; y <= y1 + 1e-9; y += lab) if (Math.abs(y - ax) > 1e-9) svgText(g, X(ay) - 7, Y(y) + 4, numTxt(y), 'tk', null, 'end');
+        svgText(g, X(x1) + 10, Y(ax) - 9, sh.xl || 'x', 'tkn', null, 'end');
+        svgText(g, X(ay) + 9, Y(y1) - 4, sh.yl || 'y', 'tkn', null, 'start');
+        fadeIn(A, g, t0, .45);
+      }
+      const layer = svgEl('g', { 'clip-path': sh.clip === false ? '' : `url(#${clipId})` }, svg), top = svgEl('g', {}, svg);
+      let prev = S.t0 + .5;
+      (sh.it || []).forEach(raw => {
+        const at = atOf(S, raw, prev); const t = at != null ? at : prev + .8; prev = t;
+        const x = noAt(raw), kind = x[0];
+        if (kind === 'f') {
+          const [, expr, col, label] = x, f = fnOf(expr); if (!f) return;
+          let d = '', pen = false, lastY = null;
+          const n = 220, ylo = y0 - (y1 - y0), yhi = y1 + (y1 - y0);
+          for (let i = 0; i <= n; i++) {
+            const xv = x0 + (x1 - x0) * i / n; let yv;
+            try { yv = callFn(f, xv); } catch (e) { yv = NaN; }
+            const ok = Number.isFinite(yv) && yv > ylo && yv < yhi && !(lastY != null && Math.abs(yv - lastY) > (y1 - y0) * 1.5);
+            if (ok) { d += (pen ? 'L' : 'M') + r1(X(xv)) + ' ' + r1(Y(yv)); pen = true; } else pen = false;
+            lastY = Number.isFinite(yv) ? yv : null;
+          }
+          const p = svgEl('path', { d, class: 'fn' }, layer); p.style.stroke = mcol(col || 'lime');
+          drawIn(A, p, t, 1.3); ctx.sfx(t, 'swish');
+          if (label) {
+            // Rótulo junto a la curva: el punto visible más a la derecha que quede dentro del plano, con el texto a su lado.
+            let lx = null, ly = null;
+            for (const fr of [.8, .7, .9, .6, .5, .4, .3, .2]) { const xv = x0 + (x1 - x0) * fr; let yv; try { yv = callFn(f, xv); } catch (e) { yv = NaN; } if (Number.isFinite(yv) && yv < y1 - (y1 - y0) * .08 && yv > y0 + (y1 - y0) * .08) { lx = xv; ly = yv; break; } }
+            if (lx == null) { lx = (x0 + x1) / 2; ly = (y0 + y1) / 2; }
+            const px = X(lx), right = px < W0 - 120;
+            const e = svgText(top, right ? px + 12 : px - 12, Y(ly) + 5, label, 'tx', mcol(col || 'lime'), right ? 'start' : 'end'); fadeIn(A, e, t + 1.1); }
+        } else if (kind === 'p') {
+          const [, px, py, label, col] = x;
+          const g = svgEl('g', { class: 'pt' }, top);
+          const c = svgEl('circle', { cx: r1(X(px)), cy: r1(Y(py)), r: 6.5 }, g); c.style.fill = mcol(col || 'yel');
+          if (label) svgText(g, X(px) + 10, Y(py) - 11, label, 'tx', null, 'start');
+          popIn(A, g, t); ctx.sfx(t, 'pop');
+        } else if (kind === 'seg' || kind === 'vec') {
+          const [, ax1, ay1, ax2, ay2, col, label] = x, c = mcol(col || (kind === 'vec' ? 'yel' : 'wht'));
+          const l = svgEl('path', { d: `M${r1(X(ax1))} ${r1(Y(ay1))} L${r1(X(ax2))} ${r1(Y(ay2))}`, class: kind === 'vec' ? 'vc' : 'sg' }, top); l.style.stroke = c;
+          drawIn(A, l, t, .6);
+          if (kind === 'vec') { const ang = Math.atan2(Y(ay2) - Y(ay1), X(ax2) - X(ax1)), hx = X(ax2), hy = Y(ay2), k = 13;
+            const h = svgEl('path', { d: `M${r1(hx)} ${r1(hy)} L${r1(hx - k * Math.cos(ang - .45))} ${r1(hy - k * Math.sin(ang - .45))} L${r1(hx - k * Math.cos(ang + .45))} ${r1(hy - k * Math.sin(ang + .45))}Z` }, top); h.style.fill = c; fadeIn(A, h, t + .5, .15); }
+          if (label) { const mx = (X(ax1) + X(ax2)) / 2, my = (Y(ay1) + Y(ay2)) / 2, ang = Math.atan2(Y(ay2) - Y(ay1), X(ax2) - X(ax1)), nx = -Math.sin(ang) * 15, ny = Math.cos(ang) * 15;
+            const e = svgText(top, mx - nx, my - ny + 5, label, 'tx', c); fadeIn(A, e, t + .45); }
+          ctx.sfx(t, 'swish');
+        } else if (kind === 'poly') {
+          const [, pts, col, label] = x, c = mcol(col || 'blue');
+          const P2 = String(pts).trim().split(/\s+/).map(q => q.split(',').map(Number));
+          const pg = svgEl('path', { d: 'M' + P2.map(([a, b]) => r1(X(a)) + ' ' + r1(Y(b))).join(' L') + 'Z', class: 'pg' }, top); pg.style.stroke = c; pg.style.fill = c;
+          drawIn(A, pg, t, .9); A.add(pg, [{ fillOpacity: 0 }, { fillOpacity: .22 }], t + .6, .4, 'ease-out');
+          if (label) { const cx = P2.reduce((a, q) => a + q[0], 0) / P2.length, cy = P2.reduce((a, q) => a + q[1], 0) / P2.length; const e = svgText(top, X(cx), Y(cy) + 5, label, 'tx'); fadeIn(A, e, t + .8); }
+          ctx.sfx(t, 'swish');
+        } else if (kind === 'circ') {
+          const [, cx, cy, rr, col, label] = x, c = mcol(col || 'teal');
+          const ce = svgEl('ellipse', { cx: r1(X(cx)), cy: r1(Y(cy)), rx: r1(rr * sx), ry: r1(rr * sy), class: 'pg' }, top); ce.style.stroke = c; ce.style.fill = c;
+          drawIn(A, ce, t, .9); A.add(ce, [{ fillOpacity: 0 }, { fillOpacity: .18 }], t + .6, .4, 'ease-out');
+          if (label) { const e = svgText(top, X(cx), Y(cy) + 5, label, 'tx'); fadeIn(A, e, t + .8); }
+          ctx.sfx(t, 'swish');
+        } else if (kind === 'ang') {
+          const [, vx, vy, ax2, ay2, bx2, by2, col, label] = x, c = mcol(col || 'org');
+          const V = [X(vx), Y(vy)], a1 = Math.atan2(Y(ay2) - V[1], X(ax2) - V[0]), a2 = Math.atan2(Y(by2) - V[1], X(bx2) - V[0]);
+          let da = a2 - a1; while (da <= -Math.PI) da += 2 * Math.PI; while (da > Math.PI) da -= 2 * Math.PI;
+          const R = 24, right = Math.abs(Math.abs(da) - Math.PI / 2) < .02;
+          let d;
+          if (right) { const u = [Math.cos(a1), Math.sin(a1)], w = [Math.cos(a2), Math.sin(a2)], k = 14; d = `M${r1(V[0] + u[0] * k)} ${r1(V[1] + u[1] * k)} L${r1(V[0] + (u[0] + w[0]) * k)} ${r1(V[1] + (u[1] + w[1]) * k)} L${r1(V[0] + w[0] * k)} ${r1(V[1] + w[1] * k)}`; }
+          else d = `M${r1(V[0] + R * Math.cos(a1))} ${r1(V[1] + R * Math.sin(a1))} A${R} ${R} 0 0 ${da > 0 ? 1 : 0} ${r1(V[0] + R * Math.cos(a1 + da))} ${r1(V[1] + R * Math.sin(a1 + da))}`;
+          const ap = svgEl('path', { d, class: 'an' }, top); ap.style.stroke = c;
+          drawIn(A, ap, t, .5);
+          if (label) { const mid = a1 + da / 2; const e = svgText(top, V[0] + (R + 15) * Math.cos(mid), V[1] + (R + 15) * Math.sin(mid) + 5, label, 'tx', c); fadeIn(A, e, t + .4); }
+        } else if (kind === 'txt') {
+          const [, tx, ty, s, col] = x; const e = svgText(top, X(tx), Y(ty), s, 'tx', col ? mcol(col) : null); popIn(A, e, t);
+          e.style.transformBox = 'fill-box'; e.style.transformOrigin = 'center';
+        } else if (kind === 'h' || kind === 'v') {
+          const [, val, col, label] = x, c = mcol(col || 'red');
+          const d = kind === 'h' ? `M${r1(X(x0))} ${r1(Y(val))} L${r1(X(x1))} ${r1(Y(val))}` : `M${r1(X(val))} ${r1(Y(y0))} L${r1(X(val))} ${r1(Y(y1))}`;
+          const l = svgEl('path', { d, class: 'dl' }, top); l.style.stroke = c; fadeIn(A, l, t, .4);
+          if (label) { const e = kind === 'h' ? svgText(top, X(x1) - 4, Y(val) - 8, label, 'tx', c, 'end') : svgText(top, X(val) + 6, Y(y1) + 16, label, 'tx', c, 'start'); fadeIn(A, e, t + .2); }
+        }
+      });
+    },
+    // Barras: { k: 'bars', it: [['Lunes', 12, '@a', 'lime'], ...], max, unit, step, base, bh (alto), line: [valor, 'rótulo', '@b', 'red'] }
+    bars(ctx) {
+      const { sh, S, A, hud } = ctx;
+      const its = sh.it || [], vals = its.map(x => +noAt(x)[1]);
+      const max = sh.max || Math.max(1, ...vals) * 1.15;
+      const ax = 44, aw = 290, base = sh.base || 470, ah = sh.bh || 280;
+      const svg = svgEl('svg', { class: 'tplot', viewBox: `0 0 ${W0} ${H0}` }, hud);
+      const g0 = svgEl('g', {}, svg);
+      svgEl('line', { x1: ax, y1: base, x2: ax + aw, y2: base, class: 'axl' }, g0);
+      svgEl('line', { x1: ax, y1: base, x2: ax, y2: base - ah - 10, class: 'axl' }, g0);
+      const step = sh.step || niceStep(max) * (max > 12 ? 1 : 1);
+      for (let v = step; v <= max + 1e-9; v += step) { const yy = base - v / max * ah; svgEl('line', { x1: ax, y1: r1(yy), x2: ax + aw, y2: r1(yy), class: 'gr' }, g0); svgText(g0, ax - 6, yy + 4, numTxt(v), 'tk', null, 'end'); }
+      fadeIn(A, g0, S.t0 + .15, .4);
+      const n = Math.max(1, its.length), slot = aw / n, bw = Math.min(56, slot * .64);
+      let prev = S.t0 + .4;
+      its.forEach((raw, i) => {
+        const at = atOf(S, raw, prev); const t = at != null ? at : prev + .7; prev = t;
+        const [lab, val, col] = noAt(raw), h = Math.max(1, +val / max * ah), cx = ax + slot * (i + .5), c = mcol(col || 'lime');
+        const r = svgEl('rect', { x: r1(cx - bw / 2), y: r1(base - h), width: r1(bw), height: r1(h), rx: 5, class: 'tbar' }, svg); r.style.fill = c;
+        r.style.transformBox = 'fill-box'; r.style.transformOrigin = '50% 100%';
+        A.add(r, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1.06)', offset: .8 }, { transform: 'scaleY(1)' }], t, .5, 'ease-out');
+        const vt = svgText(svg, cx, base - h - 8, numTxt(+val) + (sh.unit || ''), 'tx'); fadeIn(A, vt, t + .4);
+        const lt = svgText(svg, cx, base + 18, lab, 'tk2'); fadeIn(A, lt, t);
+        ctx.sfx(t, 'pop');
+      });
+      if (sh.line) {
+        const lv = sh.line.find(y => typeof y === 'number'), lab = sh.line.find(y => typeof y === 'string' && y[0] !== '@' && !MCOL[y]), lc = mcol(sh.line.find(y => MCOL[y]) || 'red');
+        const t = atOf(S, sh.line, prev) || prev + .6, yy = base - lv / max * ah;
+        const l = svgEl('path', { d: `M${ax} ${r1(yy)} L${ax + aw} ${r1(yy)}`, class: 'dl' }, svg); l.style.stroke = lc; drawIn(A, l, t, .6);
+        if (lab) { const e = svgText(svg, ax + aw, yy - 8, lab, 'tx', lc, 'end'); fadeIn(A, e, t + .4); }
+      }
+    },
+    // Tabla: { k: 'table', cols: ['x', 'f'], it: [['1', '3', '@a'], ...], mark: [[fila, '@b', 'lime'], ...], top }
+    table(ctx) {
+      const { sh, S, A, hud } = ctx;
+      const cols = sh.cols || [], rows = sh.it || [];
+      const nC = Math.max(cols.length, ...rows.map(r => noAt(r).length), 1);
+      const cw = Math.min(sh.cw || 110, 326 / nC), top = sh.top || 150, rh = sh.rh || 40, x0 = (W0 - cw * nC) / 2;
+      const box = div('ttb', null, `left:${r1(x0)}px;top:${top}px;width:${r1(cw * nC)}px`);
+      hud.appendChild(box);
+      const rowEls = [];
+      if (cols.length) { const h = div('ttb-r h', cols.map(c => `<span style="width:${r1(cw)}px">${esc(c)}</span>`).join('')); box.appendChild(h); fadeIn(A, h, S.t0 + .15); }
+      let prev = S.t0 + .4;
+      rows.forEach(raw => {
+        const at = atOf(S, raw, prev); const t = at != null ? at : prev + .6; prev = t;
+        const cells = noAt(raw);
+        const r = div('ttb-r', cells.map(c => `<span style="width:${r1(cw)}px">${esc(c)}</span>`).join(''), `height:${rh}px`);
+        box.appendChild(r); rowEls.push(r);
+        A.add(r, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], t, .3, 'ease-out');
+        ctx.sfx(t, 'tick');
+      });
+      (sh.mark || []).forEach(m => {
+        const i = m.find(y => typeof y === 'number'), r = rowEls[i]; if (!r) return;
+        const c = mcol(m.find(y => typeof y === 'string' && MCOL[y]) || 'lime'), t = atOf(S, m, prev) || prev + .6;
+        A.add(r, [{ boxShadow: '0 0 0 0 rgba(0,0,0,0)', transform: 'scale(1)' }, { boxShadow: `0 0 0 3px ${c}`, transform: 'scale(1.04)', offset: .6 }, { boxShadow: `0 0 0 3px ${c}`, transform: 'scale(1)' }], t, .4, 'ease-out');
+        ctx.sfx(t, 'ding');
+      });
+    },
+    // Texto para leer: { k: 'read', ttl: 'Texto', txt: 'El párrafo…', hl: [['frase', '@a', 'lime'], ...], top }
+    read(ctx) {
+      const { sh, S, A, hud } = ctx;
+      const txt = String(sh.txt || '');
+      const marks = (sh.hl || []).map(h => ({ ph: h.find(y => typeof y === 'string' && y[0] !== '@' && !MCOL[y]), c: h.find(y => typeof y === 'string' && MCOL[y]) || 'lime', h }));
+      // Ubica cada frase en orden y arma el HTML con sus marcas.
+      const spans = []; let from = 0;
+      marks.forEach((m, i) => { const k = txt.indexOf(m.ph, from) >= 0 ? txt.indexOf(m.ph, from) : txt.indexOf(m.ph); if (k >= 0) { spans.push([k, k + m.ph.length, i]); from = k + m.ph.length; } });
+      spans.sort((a, b) => a[0] - b[0]);
+      let html = '', pos = 0;
+      spans.forEach(([a, b, i]) => { if (a < pos) return; html += esc(txt.slice(pos, a)) + `<mark data-i="${i}">${esc(txt.slice(a, b))}</mark>`; pos = b; });
+      html += esc(txt.slice(pos));
+      const card = div('trd' + (sh.small ? ' small' : ''), (sh.ttl ? `<b class="trd-t">${esc(sh.ttl)}</b>` : '') + `<p>${html}</p>`, `top:${sh.top || 130}px`);
+      hud.appendChild(card);
+      A.add(card, [{ opacity: 0, transform: 'translate(-50%,16px) rotate(-1deg)' }, { opacity: 1, transform: 'translate(-50%,0) rotate(0deg)' }], S.t0 + .1, .45, 'ease-out');
+      let prev = S.t0 + .5;
+      marks.forEach((m, i) => {
+        const el = card.querySelector(`mark[data-i="${i}"]`); if (!el) return;
+        const at = atOf(S, m.h, prev); const t = at != null ? at : prev + .8; prev = t;
+        const c = mcol(m.c);
+        A.add(el, [{ backgroundSize: '0% 100%', color: '#1a1a1a' }, { backgroundSize: '100% 100%', color: '#000' }], t, .45, 'ease-out');
+        el.style.backgroundImage = `linear-gradient(${c}, ${c})`;
+        ctx.sfx(t, 'swish');
+      });
+    },
+  });
   T.version = 1;
 })();

@@ -78,7 +78,7 @@ const guion = require('./guion.js');
 const narr = {};
 const actx = { RB: { vaudio: (id, d) => { narr[id] = d; } } };
 vm.createContext(actx);
-if (fs.existsSync(path.join(root, 'audio'))) fs.readdirSync(path.join(root, 'audio')).filter(f => /^(v-.*|h\d+-\d+)\.js$/.test(f)).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'audio', f), 'utf8'), actx));
+if (fs.existsSync(path.join(root, 'audio'))) fs.readdirSync(path.join(root, 'audio')).filter(f => /^(v-.*|[a-z][a-z0-9]*-\d+)\.js$/.test(f)).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'audio', f), 'utf8'), actx));
 const vrows = [];
 for (const id in RB.videos) {
   const v = RB.videos[id];

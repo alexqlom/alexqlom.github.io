@@ -1051,3 +1051,33 @@ b.hl { font-weight: 800; }
 .tmt.big { padding: 5px 12px; font-size: 16px; border-color: var(--acc); color: var(--acc); }
 .tmp { position: absolute; width: 26px; height: 36px; }
 .tmp svg { width: 100%; height: 100%; display: block; }
+
+/* Videos en dibujos: fórmulas, planos y gráficos, tablas y textos para leer */
+.ttf { position: absolute; left: 50%; transform: translate(-50%, -50%); padding: 8px 18px 9px; border-radius: 14px; background: rgba(14, 14, 14, .88); border: 2px solid rgba(255, 255, 255, .16); color: #fff; font: 700 32px/1.18 'Noto Serif', Cambria, 'Times New Roman', serif; white-space: nowrap; text-align: center; letter-spacing: .01em; box-shadow: 0 6px 0 rgba(0, 0, 0, .35); }
+.ttf.wrap { white-space: normal; width: 320px; }
+.ttf .hl { color: var(--acc); }
+.ts.light .ttf { background: rgba(20, 20, 20, .9); }
+.tplot { position: absolute; left: 0; top: 0; width: 360px; height: 640px; overflow: visible; pointer-events: none; }
+.tplot .gr { stroke: rgba(255, 255, 255, .09); stroke-width: 1; }
+.tplot .axl { stroke: rgba(255, 255, 255, .62); stroke-width: 2; }
+.tplot .axh { fill: rgba(255, 255, 255, .62); }
+.tplot .tk { fill: rgba(255, 255, 255, .62); font: 700 11px var(--f); }
+.tplot .tk2 { fill: rgba(255, 255, 255, .88); font: 800 12px var(--f); text-anchor: middle; }
+.tplot .tkn { fill: rgba(255, 255, 255, .85); font: italic 800 14px 'Noto Serif', serif; }
+.tplot .tx { fill: #fff; font: 800 15px var(--f); paint-order: stroke; stroke: rgba(0, 0, 0, .9); stroke-width: 4px; stroke-linejoin: round; }
+.tplot .fn { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.tplot .sg, .tplot .vc { fill: none; stroke-width: 4; stroke-linecap: round; }
+.tplot .pg { stroke-width: 3.5; stroke-linejoin: round; fill-opacity: 0; }
+.tplot .an { fill: none; stroke-width: 3; }
+.tplot .dl { fill: none; stroke-width: 2.5; stroke-dasharray: 7 6; }
+.tplot .pt { transform-box: fill-box; transform-origin: center; }
+.tplot .pt circle { stroke: #111; stroke-width: 2.5; }
+.ttb { position: absolute; display: flex; flex-direction: column; gap: 4px; }
+.ttb-r { display: flex; gap: 4px; border-radius: 9px; }
+.ttb-r span { display: grid; place-items: center; min-height: 36px; border-radius: 8px; background: rgba(255, 255, 255, .09); color: #fff; font: 800 17px/1.1 var(--f); text-align: center; padding: 4px; box-sizing: border-box; }
+.ttb-r.h span { background: var(--acc); color: #000; font-size: 14px; min-height: 32px; }
+.trd { position: absolute; left: 50%; transform: translateX(-50%); width: 316px; padding: 14px 16px 16px; border-radius: 14px; background: #f6f1e4; color: #1a1a1a; box-shadow: 0 8px 0 rgba(0, 0, 0, .35); box-sizing: border-box; }
+.trd-t { display: block; margin-bottom: 6px; color: #7a6845; font: 900 12px var(--f); letter-spacing: .08em; text-transform: uppercase; }
+.trd p { margin: 0; font: 600 16.5px/1.45 'Noto Serif', Georgia, serif; }
+.trd.small p { font-size: 14.5px; }
+.trd mark { color: inherit; background: none; background-repeat: no-repeat; background-size: 0% 100%; border-radius: 4px; padding: 0 2px; }

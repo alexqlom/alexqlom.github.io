@@ -13,7 +13,7 @@ const adir = path.join(root, 'audio');
 if (fs.existsSync(adir)) {
   const ctx = { RB: { vaudio: (id, d) => { if (id !== 'fb' && d && d.d) dur[id] = d.d; } } };
   vm.createContext(ctx);
-  fs.readdirSync(adir).filter(f => /^(v-.*|h\d+-\d+)\.js$/.test(f)).sort().forEach(f => vm.runInContext(fs.readFileSync(path.join(adir, f), 'utf8'), ctx));
+  fs.readdirSync(adir).filter(f => /^(v-.*|[a-z][a-z0-9]*-\d+)\.js$/.test(f)).sort().forEach(f => vm.runInContext(fs.readFileSync(path.join(adir, f), 'utf8'), ctx));
   fs.writeFileSync(path.join(adir, 'indice.js'), `// Duración en segundos de cada video narrado (lo genera tools/sync.js).\nRB.vdur = ${JSON.stringify(dur)};\n`);
 }
 const shell = ['./', './index.html', './app.css', './app.js', './icons.js', './video.js', './toon.js', './toon-arte.js', './toon-mapas.js', './toon-motor.js', './data/tests.js', './audio/indice.js']
