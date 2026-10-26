@@ -98,6 +98,7 @@ ACRO = {
     'HCl': 'hache ce ele', 'NaOH': 'hidróxido de sodio', 'pH': 'pe hache', 'H₂O': 'hache dos o', 'CO₂': 'ce o dos',
     'H₂S': 'hache dos ese', 'O₂': 'o dos', 'N₂': 'ene dos', 'CH₄': 'ce hache cuatro', 'EE.UU.': 'Estados Unidos',
     'EE. UU.': 'Estados Unidos', 'EE.UU': 'Estados Unidos', 'DEMRE': 'demre', 'TP': 'te pe', 'UV': 'u ve', 'SIDA': 'sida', 'RNA': 'erre ene a',
+    'RDA': 'erre de a', 'RFA': 'erre efe a', 'ISI': 'isi',
     'FOCH': 'foch', 'FECH': 'fech', 'CUT': 'cut', 'MIR': 'mir', 'UP': 'u pe', 'PDC': 'pe de ce', 'OEA': 'o e a', 'CEPAL': 'cepal', 'FMI': 'efe eme i',
     'CONTINUIDAD': 'continuidad', 'hCG': 'hache ce ge', 'Cl': 'ce ele', 'Br': 'be erre', 'OH': 'o hache', 'AB': 'a be', 'Q1': 'cu uno', 'Q3': 'cu tres',
 }
@@ -121,6 +122,7 @@ RESPELL = {
     'Avogadro': 'Avogadro', 'Mercalli': 'Mercali', 'Valech': 'Valech', 'Bachelet': 'Bacheléth', 'Pinochet': 'Pinoché',
     'Kennedy': 'Kénedi', 'Churchill': 'Chérchil', 'Hitler': 'Jítler', 'Wall': 'Uol', 'Street': 'Strit', 'Marshall': 'Márshal',
     'Thatcher': 'Táchet', 'o’higginistas': 'ojiguinistas', "o'higginistas": 'ojiguinistas', 'Brønsted': 'Brónsted', 'boys': 'bóis', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
+    'Prebisch': 'Prébish', 'Batista': 'Batista', 'glasnost': 'glásnost', 'perestroika': 'perestróika', 'Apolo': 'Apolo',
     'John': 'Yon', 'Maynard': 'Méinard', 'Normandía': 'Normandía', 'Sudetes': 'Sudetes',
     'Theodore': 'Téodor', 'Wilson': 'Uílson', 'Führer': 'Fíurer', 'Brest-Litovsk': 'Brest Litóvsk', 'Franklin': 'Fránklin',
     'Diderot': 'Didró', 'D’Alembert': 'Dalambér', "D'Alembert": 'Dalambér', 'Smith': 'Smit', 'Adam': 'Ádam', 'Wikipedia': 'Uikipedia',
