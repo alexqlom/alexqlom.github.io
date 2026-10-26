@@ -1020,7 +1020,8 @@ b.hl { font-weight: 800; }
 .tq-c b { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font: 900 34px/1 var(--f); opacity: 0; }
 .trc { position: absolute; left: 14px; right: 14px; top: 140px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .trc-i { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 8px; border-radius: 18px; background: rgba(20, 20, 20, .9); border: 2px solid #2e2e2e; text-align: center; }
-.trc-i .ic svg { width: 54px; height: 46px; }
+.trc-i .ic, .tch-i .ic { width: auto; height: auto; display: block; }
+.trc-i .ic svg { width: 54px; height: 46px; display: block; }
 .trc-i b { color: #fff; font: 800 14px/1.2 var(--f); }
 .trc.many .trc-i .ic svg { width: 44px; height: 36px; }
 .trc.many .trc-i { padding: 9px 6px; }

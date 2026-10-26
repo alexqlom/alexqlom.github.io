@@ -46,6 +46,13 @@
   const flagSVG = (code, x = 0, y = 0, s = 1) => `<g transform="translate(${x} ${y}) scale(${s})"><clipPath id="fc${code}${x}${y}"><rect width="60" height="40" rx="2"/></clipPath><g clip-path="url(#fc${code}${x}${y})">${FLAG[code] || FLAG.blanca}</g></g>`;
   T.flagSVG = flagSVG;
 
+  // Fracciones: t="2/3" (partes pintadas / total) o t="1,1/4" (grupos de partes con distinto color).
+  const fracFill = o => {
+    const [a, nS] = String(o.t || '1/4').split('/'), n = Math.max(1, Math.min(24, parseInt(nS, 10) || 4));
+    const grp = String(a).split(',').map(x => parseInt(x, 10) || 0), cs = [o.c || O, L, B, PU];
+    return [n, i => { let acc = 0; for (let g = 0; g < grp.length; g++) { acc += grp[g]; if (i < acc) return cs[g % 4]; } return '#2a2a2a'; }];
+  };
+
   // ---------- Utilería ----------
   // Cada entrada: o => [ancho, alto, dibujo, { g: apoya en el suelo }]. o.t = texto, o.c = color, o.f = bandera.
   const P = {
@@ -297,6 +304,8 @@
     sphere: o => { const c = o.c || PU; return [90, 90, `<circle cx="45" cy="45" r="40" fill="${c}"/><ellipse cx="45" cy="45" rx="40" ry="12" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="2" stroke-dasharray="5 4"/><circle cx="32" cy="30" r="10" fill="#fff" opacity=".3"/>`]; },
     percent: o => [80, 80, `<circle cx="40" cy="40" r="36" fill="${o.c || L}"/>${txt(40, 55, '%', 42, '#111')}`],
     pie: o => { const v = o.v && o.v.length ? o.v : [50, 30, 20], tot = v.reduce((a, b) => a + b, 0) || 1, cs = [L, B, O, PU, TE, R, Y]; let a0 = -Math.PI / 2, s = ''; v.forEach((x, i) => { const a1 = a0 + 2 * Math.PI * x / tot, big = a1 - a0 > Math.PI ? 1 : 0; s += `<path d="M50 50 L${(50 + 44 * Math.cos(a0)).toFixed(1)} ${(50 + 44 * Math.sin(a0)).toFixed(1)} A44 44 0 ${big} 1 ${(50 + 44 * Math.cos(a1)).toFixed(1)} ${(50 + 44 * Math.sin(a1)).toFixed(1)}Z" fill="${cs[i % cs.length]}" stroke="#111" stroke-width="2"/>`; a0 = a1; }); return [100, 100, s]; },
+    frac: o => { const [n, fill] = fracFill(o); let s = ''; for (let i = 0; i < n; i++) { const a0 = -Math.PI / 2 + i * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n; s += n === 1 ? `<circle cx="50" cy="50" r="44" fill="${fill(i)}"/>` : `<path d="M50 50 L${(50 + 44 * Math.cos(a0)).toFixed(1)} ${(50 + 44 * Math.sin(a0)).toFixed(1)} A44 44 0 0 1 ${(50 + 44 * Math.cos(a1)).toFixed(1)} ${(50 + 44 * Math.sin(a1)).toFixed(1)}Z" fill="${fill(i)}" stroke="#f4f4f4" stroke-width="2.5" stroke-linejoin="round"/>`; } return [100, 100, `${s}<circle cx="50" cy="50" r="44" fill="none" stroke="#f4f4f4" stroke-width="3"/>`]; },
+    fracbar: o => { const [n, fill] = fracFill(o), w = 196 / n; let s = ''; for (let i = 0; i < n; i++) s += `<rect x="${(2 + i * w).toFixed(1)}" y="2" width="${w.toFixed(1)}" height="36" fill="${fill(i)}" stroke="#f4f4f4" stroke-width="2.5"/>`; return [200, 40, s]; },
     // ---------- Lectura y escritura ----------
     pencil: o => [130, 26, `<rect x="16" y="4" width="92" height="18" fill="${o.c || Y}"/><rect x="16" y="4" width="92" height="6" fill="#fff" opacity=".25"/><rect x="108" y="4" width="16" height="18" rx="3" fill="#ff8fa3"/><rect x="104" y="4" width="6" height="18" fill="#c9d3de"/><path d="M16 4 L2 13 L16 22Z" fill="#f2d2a2"/><path d="M6 10.5 L2 13 L6 15.5Z" fill="#333"/>`],
     notebook: o => [90, 110, `<rect x="10" y="4" width="76" height="102" rx="5" fill="${o.c || B}"/><rect x="18" y="12" width="60" height="86" rx="3" fill="#f4f1ea"/>${[26, 40, 54, 68, 82].map(y => `<path d="M24 ${y} L72 ${y}" stroke="#9fb8d8" stroke-width="2"/>`).join('')}${[16, 34, 52, 70, 88].map(y => `<circle cx="10" cy="${y}" r="4" fill="#9aa3ad"/>`).join('')}${o.t ? txt(48, 60, o.t, o.t.length > 6 ? 11 : 14, '#333', 800) : ''}`],

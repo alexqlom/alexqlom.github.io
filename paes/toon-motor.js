@@ -194,7 +194,10 @@
     (sc.it || []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'item'); });
     [].concat(sc.hl || [], sc.mark || [], sc.line ? [sc.line] : []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'marca'); });
     if (sc.k === 'read') (sc.hl || []).forEach(h => { const ph = h.find(y => typeof y === 'string' && y[0] !== '@' && !/^(lime|red|blue|yel|org|pur|teal|pink|gry|wht|grn|brn)$/.test(y)); if (ph && !String(sc.txt || '').includes(ph)) errs.push(`el texto no contiene "${ph}"`); });
-    if (sc.k === 'plot') (sc.it || []).forEach(x => { if (x[0] === 'f' && !fnOf(x[1])) errs.push(`función inválida "${x[1]}"`); });
+    if (sc.k === 'plot') (sc.it || []).forEach(x => {
+      if (!['f', 'p', 'o', 'seg', 'vec', 'poly', 'circ', 'ang', 'txt', 'h', 'v', 'arc'].includes(x[0])) errs.push(`elemento de plano desconocido "${x[0]}"`);
+      if (x[0] === 'f' && !fnOf(x[1])) errs.push(`función inválida "${x[1]}"`);
+    });
     // Íconos de las plantillas y personajes de las comparaciones.
     const icOk = ic => { const nm = String(ic || '').replace('+', '').split(':')[0]; return !nm || !!T.PROPS[nm]; };
     const icons = sc.k === 'title' ? [].concat(sc.em || []) : sc.k === 'recap' || sc.k === 'chain' ? (sc.it || []).map(x => x[0]) : sc.k === 'tl' ? (sc.it || []).map(x => x.filter(y => !(typeof y === 'string' && y[0] === '@'))[2]) : [];
@@ -1180,11 +1183,14 @@
     //   it: [['f', 'x^2-4', 'lime', 'rótulo', '@a'], ['p', 2, 0, 'A', '@b'], ['seg', x1, y1, x2, y2, 'red', '5 cm', '@c'],
     //        ['vec', ...], ['poly', '0,0 4,0 0,3', 'blue', 'rótulo'], ['circ', cx, cy, r, 'yel', 'rótulo'],
     //        ['ang', vx, vy, ax, ay, bx, by, 'org', 'α'], ['txt', x, y, 'texto', 'wht'], ['h', y, 'red', 'rótulo'], ['v', x, 'red', 'rótulo']] }
+    // Recta numérica: { k: 'plot', nl: true, x: [-6, 6], top, it: [['p', -4, 0, '−4'], ['o', 3, 0], ['arc', -4, 5, 'lime', '+9'], ['seg', 3, 0, 6, 0, 'lime']] }
     plot(ctx) {
       const { sh, S, A, hud } = ctx;
-      const [x0, x1] = sh.x || [-5, 5], [y0, y1] = sh.y || [-5, 5];
+      // nl: recta numérica (solo el eje x con sus marcas; los puntos y saltos van sobre ella).
+      const nl = !!sh.nl;
+      const [x0, x1] = sh.x || [-5, 5], [y0, y1] = nl ? [-1, 1.6] : sh.y || [-5, 5];
       // box: [x, y, ancho, alto] o 'top' (deja abajo espacio para personajes).
-      const box = sh.box === 'top' ? [34, 104, 296, 236] : sh.box || [34, 150, 296, 300];
+      const box = nl ? [26, sh.top || 210, 308, 156] : sh.box === 'top' ? [34, 104, 296, 236] : sh.box || [34, 150, 296, 300];
       let sx = box[2] / (x1 - x0), sy = box[3] / (y1 - y0), bx = box[0], by = box[1];
       if (sh.eq) { const k = Math.min(sx, sy); bx += (box[2] - k * (x1 - x0)) / 2; by += (box[3] - k * (y1 - y0)) / 2; sx = sy = k; }
       const X = x => bx + (x - x0) * sx, Y = y => by + (y1 - y) * sy;
@@ -1193,7 +1199,17 @@
       const defs = svgEl('defs', {}, svg), cp = svgEl('clipPath', { id: clipId }, defs);
       svgEl('rect', { x: r1(X(x0) - 2), y: r1(Y(y1) - 2), width: r1((x1 - x0) * sx + 4), height: r1((y1 - y0) * sy + 4) }, cp);
       const t0 = S.t0 + .15;
-      if (sh.axes !== false) {
+      if (nl) {
+        const g = svgEl('g', { class: 'tpl-ax' }, svg), y = Y(0), step = sh.step || 1;
+        svgEl('line', { x1: r1(X(x0) - 12), y1: r1(y), x2: r1(X(x1) + 12), y2: r1(y), class: 'axl' }, g);
+        svgEl('path', { d: `M${r1(X(x1) + 18)} ${r1(y)} l-9 -5 l0 10Z M${r1(X(x0) - 18)} ${r1(y)} l9 -5 l0 10Z`, class: 'axh' }, g);
+        const lab = sh.lab || step;
+        for (let x = Math.ceil(x0 / step - 1e-9) * step; x <= x1 + 1e-9; x += step) {
+          svgEl('line', { x1: r1(X(x)), y1: r1(y - 7), x2: r1(X(x)), y2: r1(y + 7), class: 'axl' }, g);
+          if (Math.abs(x / lab - Math.round(x / lab)) < 1e-6) svgText(g, X(x), y + 27, numTxt(x), 'tk2');
+        }
+        fadeIn(A, g, t0, .45);
+      } else if (sh.axes !== false) {
         const g = svgEl('g', { class: 'tpl-ax' }, svg);
         const step = sh.step || niceStep(Math.max(x1 - x0, y1 - y0));
         if (sh.grid !== false) {
@@ -1211,7 +1227,7 @@
         svgText(g, X(ay) + 9, Y(y1) - 4, sh.yl || 'y', 'tkn', null, 'start');
         fadeIn(A, g, t0, .45);
       }
-      const layer = svgEl('g', { 'clip-path': sh.clip === false ? '' : `url(#${clipId})` }, svg), top = svgEl('g', {}, svg);
+      const layer = svgEl('g', { 'clip-path': sh.clip === false || nl ? '' : `url(#${clipId})` }, svg), top = svgEl('g', {}, svg);
       let prev = S.t0 + .5;
       (sh.it || []).forEach(raw => {
         const at = atOf(S, raw, prev); const t = at != null ? at : prev + .8; prev = t;
@@ -1236,10 +1252,12 @@
             if (lx == null) { lx = (x0 + x1) / 2; ly = (y0 + y1) / 2; }
             const px = X(lx), right = px < W0 - 120;
             const e = svgText(top, right ? px + 12 : px - 12, Y(ly) + 5, label, 'tx', mcol(col || 'lime'), right ? 'start' : 'end'); fadeIn(A, e, t + 1.1); }
-        } else if (kind === 'p') {
+        } else if (kind === 'p' || kind === 'o') {
+          // 'o': punto hueco (extremo abierto de un intervalo).
           const [, px, py, label, col] = x;
           const g = svgEl('g', { class: 'pt' }, top);
-          const c = svgEl('circle', { cx: r1(X(px)), cy: r1(Y(py)), r: 6.5 }, g); c.style.fill = mcol(col || 'yel');
+          const c = svgEl('circle', { cx: r1(X(px)), cy: r1(Y(py)), r: nl ? 8 : 6.5 }, g);
+          if (kind === 'o') { c.style.fill = '#111'; c.style.stroke = mcol(col || 'yel'); c.style.strokeWidth = '3.5'; } else c.style.fill = mcol(col || 'yel');
           if (label) svgText(g, X(px) + 10, Y(py) - 11, label, 'tx', null, 'start');
           popIn(A, g, t); ctx.sfx(t, 'pop');
         } else if (kind === 'seg' || kind === 'vec') {
@@ -1275,6 +1293,15 @@
           const ap = svgEl('path', { d, class: 'an' }, top); ap.style.stroke = c;
           drawIn(A, ap, t, .5);
           if (label) { const mid = a1 + da / 2; const e = svgText(top, V[0] + (R + 15) * Math.cos(mid), V[1] + (R + 15) * Math.sin(mid) + 5, label, 'tx', c); fadeIn(A, e, t + .4); }
+        } else if (kind === 'arc') {
+          // Salto sobre la recta: ['arc', desde, hasta, color, rótulo].
+          const [, ax1, ax2, col, label] = x, c = mcol(col || 'lime'), xa = X(ax1), xb = X(ax2), y = Y(0) - 10;
+          const hgt = Math.min(92, 22 + Math.abs(xb - xa) * .38), mx = (xa + xb) / 2;
+          const l = svgEl('path', { d: `M${r1(xa)} ${r1(y)} Q${r1(mx)} ${r1(y - hgt * 2)} ${r1(xb)} ${r1(y)}`, class: 'sg' }, top); l.style.stroke = c;
+          drawIn(A, l, t, .7);
+          const dir = Math.sign(xb - xa) || 1, h = svgEl('path', { d: `M${r1(xb)} ${r1(y + 2)} l${-dir * 13} -9 l${dir * 3} 13Z` }, top); h.style.fill = c; fadeIn(A, h, t + .6, .15);
+          if (label) { const e = svgText(top, mx, y - hgt - 10, label, 'tx', c); fadeIn(A, e, t + .5); }
+          ctx.sfx(t, 'swish');
         } else if (kind === 'txt') {
           const [, tx, ty, s, col] = x; const e = svgText(top, X(tx), Y(ty), s, 'tx', col ? mcol(col) : null); popIn(A, e, t);
           e.style.transformBox = 'fill-box'; e.style.transformOrigin = 'center';
