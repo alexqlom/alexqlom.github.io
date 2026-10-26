@@ -98,6 +98,7 @@ ACRO = {
     'HCl': 'hache ce ele', 'NaOH': 'hidróxido de sodio', 'pH': 'pe hache', 'H₂O': 'hache dos o', 'CO₂': 'ce o dos',
     'H₂S': 'hache dos ese', 'O₂': 'o dos', 'N₂': 'ene dos', 'CH₄': 'ce hache cuatro', 'EE.UU.': 'Estados Unidos',
     'EE. UU.': 'Estados Unidos', 'EE.UU': 'Estados Unidos', 'DEMRE': 'demre', 'TP': 'te pe', 'UV': 'u ve', 'SIDA': 'sida', 'RNA': 'erre ene a',
+    'PGU': 'pe ge u', 'SII': 'ese i i', 'UF': 'u efe', 'IDH': 'i de hache', 'PNUD': 'pe nud', 'TLC': 'te ele ce',
     'FNE': 'efe ene e', 'TDLC': 'te de ele ce',
     'INDH': 'i ene de hache', 'TC': 'te ce', 'Servel': 'Servel',
     'PEM': 'pem', 'POJH': 'pe o jota hache', 'DD.HH.': 'derechos humanos',
