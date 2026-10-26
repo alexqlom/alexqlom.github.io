@@ -985,7 +985,7 @@ b.hl { font-weight: 800; }
 .ttn i { font: 900 50px/1 var(--f); font-style: normal; margin-left: 4px; }
 .ttn small { display: block; margin-top: 4px; color: #fff; font: 800 18px/1.2 var(--f); text-shadow: 0 3px 0 rgba(0, 0, 0, .6); }
 .ttl { position: absolute; padding: 4px 10px; border-radius: 10px; background: rgba(10, 10, 10, .85); border: 1.5px solid rgba(255, 255, 255, .25); color: #fff; font: 800 13px/1.2 var(--f); white-space: nowrap; }
-.tts { position: absolute; left: 50%; top: 200px; padding: 8px 16px; border-radius: 12px; background: #fff; color: #111; font: 900 30px/1.05 var(--f); text-transform: uppercase; white-space: nowrap; box-shadow: 0 6px 0 rgba(0, 0, 0, .45); }
+.tts { position: absolute; left: 50%; top: 200px; padding: 8px 16px; border-radius: 12px; background: #fff; color: #111; font: 900 30px/1.05 var(--f); text-transform: uppercase; white-space: nowrap; text-align: center; box-shadow: 0 6px 0 rgba(0, 0, 0, .45); }
 .tfx { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
 .tfx-p { position: absolute; left: 0; top: 0; }
 .tfx-p i { display: block; border-radius: 2px; }
@@ -1025,7 +1025,7 @@ b.hl { font-weight: 800; }
 .ttl-i { position: absolute; left: 0; right: 10px; height: 40px; display: flex; align-items: center; }
 .ttl-i .dot { position: absolute; left: 84px; top: 12px; width: 16px; height: 16px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 0 4px rgba(198, 255, 0, .25); }
 .ttl-i .yr { position: absolute; right: 284px; padding: 3px 8px; border-radius: 9px; background: #fff; color: #111; font: 900 15px/1.2 var(--f); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.ttl-i .tx { position: absolute; left: 112px; right: 60px; color: #fff; font: 800 15px/1.18 var(--f); }
+.ttl-i .tx { position: absolute; left: 112px; max-width: 190px; padding: 4px 9px; border-radius: 9px; background: rgba(12, 12, 12, .86); color: #fff; font: 800 15px/1.18 var(--f); }
 .ttl-i .ic { position: absolute; right: 0; width: 50px; height: 42px; }
 .ttl-i .ic svg { width: 100%; height: 100%; }
 .tvs-v { position: absolute; left: 50%; top: 300px; color: var(--acc); font: 900 34px/1 var(--f); text-shadow: 0 4px 0 #000; }

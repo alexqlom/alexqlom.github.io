@@ -104,6 +104,13 @@
     const m = /^(.*?[^+-])([+-]\d+(?:\.\d+)?)$/.exec(a);
     if (m && !/^[+-]?\d+(\.\d+)?%?$/.test(a)) { a = m[1]; off = +m[2]; }
     if (/^\+\d/.test(a)) return prev + parseFloat(a);
+    // Un entero es primero una palabra de la narración (un año, un día del mes); si no aparece, son segundos.
+    const nm = /^(\d+)(?:#(\d+))?$/.exec(a);
+    if (nm) {
+      let k = 0;
+      for (const w of S.W) if (w[0] === nm[1] && ++k === (+nm[2] || 1)) return w[1] + off;
+      if (nm[2]) return null;
+    }
     if (/^\d+(\.\d+)?$/.test(a)) return S.t0 + parseFloat(a) + off;
     if (/^\d+(\.\d+)?%$/.test(a)) return S.t0 + (S.t1 - S.t0) * parseFloat(a) / 100 + off;
     if (a === 'end') return S.t1 - .7 + off;
@@ -177,10 +184,27 @@
   T.check = (sc) => {
     const p = parse(sc), errs = p.err.slice();
     const S = { t0: 0, t1: 10, W: T.textWords(sc).map((w, i) => [w, i]) };
-    const chk = (a, who) => { if (a && !/^[+]?\d|%$|^end$|^start$/.test(a) && anchorT(S, a, 0) == null) errs.push(`${who}: la narración no dice "@${a}"`); };
+    const hasNum = a => { const m = /^(\d+)(?:#(\d+))?(?:[+-][\d.]+)?$/.exec(a); return S.W.filter(w => w[0] === m[1]).length >= (+m[2] || 1); };
+    const chk = (a, who) => {
+      if (!a || /^\+\d|^\d+\.\d+$|%$|^end$|^start$/.test(a)) return;
+      if (/^\d+(#\d+)?([+-][\d.]+)?$/.test(a) ? !hasNum(a) : anchorT(S, a, 0) == null) errs.push(`${who}: la narración no dice "@${a}"`);
+    };
     p.order.forEach(id => chk(p.act[id].at, id));
     p.ev.forEach(e => chk(e.at, e.id || e.a));
     (sc.it || []).forEach(x => { const a = (x.find(y => typeof y === 'string' && y[0] === '@') || '').slice(1); chk(a, 'item'); });
+    // En los mapas, que existan los lugares, países y regiones que se nombran.
+    const M = sc.k === 'map' && T.MAPS && T.MAPS[sc.view || 'chile'];
+    if (M) {
+      const pt = k => M.places[k] || M.cen[k] || M.regions[k] || p.act[k] || /^\d+,\d+$/.test(k || '');
+      p.ev.filter(e => e.type === 'map').forEach(e => {
+        const w = e.words, bad = k => errs.push(`${e.a}: "${k}" no está en el mapa ${sc.view || 'chile'}`);
+        if (e.a === 'hl' || e.a === 'dim') codes(w[0]).forEach(c => { if (!M.shapes[c]) bad(c); });
+        else if (e.a === 'reg') { if (!M.regions[w[0]]) bad(w[0]); }
+        else if (e.a === 'go') { if (!pt(w[0])) bad(w[0]); if (!pt(w[1])) bad(w[1]); }
+        else if (e.a === 'tok') { if (!pt(w[2])) bad(w[2]); if (!pt(w[3])) bad(w[3]); if (!w[1] || (w[1][0] === '+' && !T.PROPS[w[1].slice(1)])) bad(w[1]); }
+        else if (!pt(w[0])) bad(w[0]);
+      });
+    }
     return errs;
   };
 
@@ -682,7 +706,17 @@
     } else if (kind === 'S') {
       d.className = 'tts';
       if (e.kv.y) d.style.top = e.kv.y + 'px';
-      d.textContent = text;
+      // Sellos largos: en dos líneas parejas y con la letra justa para que quepan en pantalla.
+      const ws = text.split(/\s+/);
+      let lines = [text];
+      if (text.length > 16 && ws.length > 1) {
+        let best = null;
+        for (let i = 1; i < ws.length; i++) { const l2 = [ws.slice(0, i).join(' '), ws.slice(i).join(' ')], m = Math.max(l2[0].length, l2[1].length); if (!best || m < best[0]) best = [m, l2]; }
+        lines = best[1];
+      }
+      const m = Math.max(...lines.map(l => l.length));
+      d.style.fontSize = clamp(Math.floor(285 / (m * .64)), 16, 30) + 'px';
+      d.innerHTML = lines.map(esc).join('<br>');
       hud.appendChild(d);
       A.add(d, [{ opacity: 0, transform: 'translate(-50%,0) scale(2.2) rotate(-8deg)' }, { opacity: 1, transform: 'translate(-50%,0) scale(.96) rotate(-4deg)', offset: .7 }, { opacity: 1, transform: 'translate(-50%,0) scale(1) rotate(-4deg)' }], t, .34, 'ease-out');
       ctx.shkT.hit(t + .24, [[.05, 'translate(-4px,2px)'], [.1, 'translate(3px,-2px)'], [.15, 'translate(0px,0px)']], 'linear', .02);
