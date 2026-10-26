@@ -22,9 +22,9 @@
   // ---------- Estado ----------
   const KEY = 'paes-v1';
   const DEF = () => ({
-    v: 1, test: null, goal: 30, xp: 0, days: {}, streak: 0, best: 0, last: null, hearts: 5, hAt: Date.now(),
+    v: 1, test: null, sel: [], plan: null, today: null, act: null, vpos: {}, goal: 30, xp: 0, days: {}, streak: 0, best: 0, last: null, hearts: 5, hAt: Date.now(),
     done: {}, stars: {}, q: {}, exams: [], ach: {}, seen: {}, tests: {}, revs: 0, perf: 0, goals: 0, goalDay: null,
-    blitz: 0, vq: 0, set: { sound: true, vib: true, voice: true, cc: true, rate: 1, vname: '', inf: false },
+    blitz: 0, vq: 0, set: { sound: true, vib: true, voice: true, cc: true, music: true, rate: 1, vname: '', inf: false, remind: true, rh: 19 },
   });
   let S = DEF();
   const load = raw => { const o = JSON.parse(raw); return Object.assign(DEF(), o, { set: Object.assign(DEF().set, o.set || {}) }); };
@@ -180,16 +180,26 @@
       $('[data-yes]', ent.el).onclick = () => { yes = true; closeLayer(); };
     });
   }
-  // Botón Atrás de Android (lo llama la app nativa): cierra la capa de arriba o vuelve a Aprender.
+  // Botón Atrás de Android (lo llama la app nativa). Nunca cierra la app de golpe: cierra la capa de arriba,
+  // retrocede un paso en la encuesta, vuelve a Aprender y, en el inicio, pide tocar Atrás otra vez para salir.
+  let lastBack = 0;
+  const exitPress = () => {
+    const now = Date.now();
+    if (now - lastBack < 2200) { lastBack = 0; return 'exit'; }
+    lastBack = now;
+    toast(`${I('info')}<span>Toca <b>Atrás</b> otra vez para salir</span>`, 2000);
+    return 'handled';
+  };
   window.PaesBack = () => {
     const top = OV[OV.length - 1];
     if (top) {
-      if (top.guard && !top.guard() && !top.ask) return 'exit';
+      if (top.back && top.back()) return 'handled';
+      if (top.guard && !top.guard() && !top.ask) return exitPress();
       history.back();
       return 'handled';
     }
-    if (tab !== 'aprender') { go('aprender'); return 'handled'; }
-    return 'exit';
+    if (tab !== 'aprender') { go('aprender'); window.scrollTo(0, 0); return 'handled'; }
+    return exitPress();
   };
   function toast(html, ms = 2600) {
     const t = D.createElement('div');
@@ -264,10 +274,11 @@
     const T = testInfo(), { ls, cur } = lessonState();
     const doneN = ls.filter(l => S.done[l.id]).length, dxp = S.days[today()] || 0;
     const nq = cItems().filter(GRADED).length;
-    let h = `<section class="hero">
+    let h = planCard() + `<section class="hero">
       <div class="goal"><div class="ring" style="--p:${clamp(dxp / S.goal, 0, 1).toFixed(3)}"><span>${I(dxp >= S.goal ? 'check' : 'target')}</span></div>
         <div><small>Meta diaria</small><b>${Math.min(dxp, S.goal)} / ${S.goal} XP</b></div>
         <div class="streakc">${I('flame', S.last === today() ? 'on' : '')}<b>${streakNow()}</b><small>${streakNow() === 1 ? 'día' : 'días'}</small></div></div>
+      ${selTests().length > 1 || S.plan ? `<div class="tsel" role="group" aria-label="Tus pruebas">${selTests().map(id => `<button class="chip" type="button" data-t="${id}" aria-pressed="${id === S.test}">${I(testInfo(id).ic)}${esc(testInfo(id).s)}</button>`).join('')}<button class="chip more" type="button" data-act="test" aria-label="Todas las pruebas">${I('grid')}</button></div>` : ''}
       <div class="course"><button class="lic-big" data-act="test" aria-label="Cambiar prueba">${I(T.ic)}</button>
         <div><small>${esc(T.n)} · ${plural(nq, 'pregunta', 'preguntas')}</small><b>${doneN} de ${ls.length} lecciones</b><div class="bar"><i style="width:${(100 * doneN / Math.max(1, ls.length)).toFixed(1)}%"></i></div></div></div>
       ${cur < ls.length ? `<button class="btn" data-act="cont">${I('play')}${doneN ? 'Continuar' : 'Comenzar'}</button>` : `<button class="btn" data-act="exam">${I('exam')}Prueba completa: haz un ensayo</button>`}
@@ -293,8 +304,10 @@
     h += `<p class="foot">Preguntas de práctica basadas en los temarios PAES del DEMRE. No es material oficial: revisa siempre los temarios vigentes de tu admisión.</p>`;
     v.innerHTML = h;
     v.onclick = e => {
-      const b = e.target.closest('[data-l],[data-act],[data-v],[data-u]');
+      const b = e.target.closest('[data-l],[data-act],[data-v],[data-u],[data-task],[data-t]');
       if (!b) return;
+      if (b.dataset.task != null) { const x = S.today && S.today.tasks[+b.dataset.task]; if (x) runTask(x); return; }
+      if (b.dataset.t) { if (b.dataset.t !== S.test) { S.test = b.dataset.t; save(); go.scrolled = false; refresh(); } return; }
       if (b.dataset.l) return lessonSheet(b.dataset.l);
       if (b.dataset.v) return openVideo(b.dataset.v);
       if (b.dataset.u) return startTopic(b.dataset.u);
@@ -302,9 +315,12 @@
       if (a === 'cont') { const st = lessonState(); if (st.cur < st.ls.length) startLesson(st.ls[st.cur].id); }
       else if (a === 'test') testSheet();
       else if (a === 'exam') examSheet();
+      else if (a === 'plan') planView();
+      else if (a === 'survey') survey({ edit: true });
+      else if (a === 'tmore') { planCard.open = true; $('.tasks', v).classList.add('open'); b.remove(); }
     };
     const curNode = $('.node.cur', v);
-    if (curNode && !go.scrolled) {
+    if (curNode && !go.scrolled && !S.plan) {
       go.scrolled = true;
       setTimeout(() => { if (curNode.getBoundingClientRect().bottom > innerHeight - 100) curNode.scrollIntoView({ block: 'center' }); }, 30);
     }
@@ -325,15 +341,16 @@
         if (vb) vb.onclick = () => closeLayer(() => openVideo(u.vid));
       });
   }
-  const testGrid = () => `<div class="lics">${RB.tests.map(t => `<button class="licc" data-test="${t.id}" aria-pressed="${t.id === S.test}">${I(t.ic)}<b>${esc(t.s)}</b><span>${esc(t.n)}</span><small>${plural(cItems(t).filter(GRADED).length, 'pregunta', 'preguntas')}</small></button>`).join('')}</div>`;
+  const testGrid = (list = RB.tests) => `<div class="lics">${list.map(t => `<button class="licc" data-test="${t.id}" aria-pressed="${t.id === S.test}">${I(t.ic)}<b>${esc(t.s)}</b><span>${esc(t.n)}</span><small>${plural(cItems(t).filter(GRADED).length, 'pregunta', 'preguntas')}</small></button>`).join('')}</div>`;
   function testSheet() {
-    sheet(`<small class="kick">Prueba</small><h3>¿Qué prueba quieres estudiar?</h3><p class="muted">Tu progreso en cada prueba se guarda por separado. Puedes cambiar cuando quieras.</p>${testGrid()}`, el => {
-      $('.lics', el).onclick = e => {
+    const mine = RB.tests.filter(t => selTests().includes(t.id)), other = RB.tests.filter(t => !selTests().includes(t.id));
+    sheet(`<small class="kick">Prueba</small><h3>¿Qué prueba quieres estudiar?</h3><p class="muted">Tu progreso en cada prueba se guarda por separado. Puedes cambiar cuando quieras.</p>${S.plan ? `<small class="kick sub2">En tu plan</small>${testGrid(mine)}${other.length ? `<small class="kick sub2">Otras pruebas</small>${testGrid(other)}` : ''}` : testGrid()}`, el => {
+      $$('.lics', el).forEach(g => g.onclick = e => {
         const b = e.target.closest('[data-test]');
         if (!b) return;
         S.test = b.dataset.test; save();
         closeLayer(() => { go.scrolled = false; refresh(); window.scrollTo(0, 0); toast(`${I('check')}<span>Ahora estudias <b>${esc(testInfo().n)}</b></span>`); });
-      };
+      });
     });
   }
 
@@ -643,7 +660,7 @@
     if (ses.state !== 'answer') return;
     ses.state = 'fb';
     const q = ses.cur, it = q.it, soft = it.t === 'match' || it.t === 'sort', kind = ses.cfg.kind;
-    if (!q.retry) { ses.graded++; if (ok) ses.firstOk++; }
+    if (!q.retry) { ses.graded++; if (ok) ses.firstOk++; (ses.log = ses.log || []).push([it, ok]); }
     record(it, ok);
     let requeued = false;
     if (ok) { ses.combo++; SFX.ok(); } else {
@@ -691,7 +708,18 @@
       save();
       return;
     }
+    if (cfg.kind === 'diag') {
+      const by = diagResult(ses);
+      bumpStreak(); addXP(10); save(); SFX.done();
+      body.innerHTML = `<div class="res"><div class="res-ic">${I('target')}</div><h2>¡Diagnóstico listo!</h2><p class="muted">Ajusté tu plan con estos resultados.</p>` +
+        `<div class="card diagr">${Object.entries(by).map(([id, [g, n]]) => `<div class="accr"><b>${I(testInfo(id).ic)}${esc(testInfo(id).n)}</b><span>${g}/${n}</span><i class="meter" aria-hidden="true"><i style="width:${Math.round(100 * g / n)}%"></i></i></div>`).join('')}</div></div>`;
+      goB.textContent = 'Ver mi plan';
+      goB.onclick = () => closeLayer(() => { if (cfg.onDone) cfg.onDone(by); else refresh(); });
+      return;
+    }
     let xp = 0, title = '¡Sesión completada!', ic = 'trophy', extra = '';
+    if (cfg.kind === 'review') mark(cfg.src === 'mis' ? 'mis' : 'rev');
+    if (cfg.mix) mark('mix_' + S.test);
     if (cfg.kind === 'lesson') {
       const first = !S.done[cfg.lid];
       xp = (first ? 10 : 5) + (perfect ? (first ? 5 : 2) : 0);
@@ -734,7 +762,7 @@
   function startMistakes() {
     const items = wrongItems().slice(0, 12);
     if (!items.length) { toast(`${I('check')}<span>No tienes errores pendientes en esta prueba.</span>`, 3000); return; }
-    startSession({ kind: 'review', items: shuffle(items), tag: true });
+    startSession({ kind: 'review', items: shuffle(items), tag: true, src: 'mis' });
   }
   function startTopic(uid) {
     const items = shuffle(unitItems(RB.units[uid]).filter(GRADED)).slice(0, 12);
@@ -742,7 +770,7 @@
   }
   function startMix() {
     const items = shuffle(cItems().filter(GRADED)).slice(0, 15);
-    startSession({ kind: 'practice', items, tag: true });
+    startSession({ kind: 'practice', items, tag: true, mix: true });
   }
   function noHearts() {
     sheet(`<small class="kick">Sin vidas</small><h3>Descansa un momento</h3><p class="muted">Recuperas una vida cada 30 minutos (la próxima en ${nextHeartMin()} min). Haz un repaso para ganar una ahora, o desactiva las vidas en Perfil → Ajustes.</p>` +
@@ -865,10 +893,11 @@
   VIEWS.videos = v => {
     const T = testInfo(), us = cUnits().filter(u => u.vid && RB.videos[u.vid]);
     const seenN = us.filter(u => S.seen[u.vid]).length;
-    v.innerHTML = `<h1 class="vt">Videos</h1><p class="muted">${esc(T.n)} · ${seenN} de ${us.length} vistos. Cada video explica un tema completo con animaciones, ejemplos y preguntas rápidas. Puedes pausar, saltar escenas y cambiar la velocidad.</p>` +
+    v.innerHTML = `<h1 class="vt">Videos</h1><p class="muted">${esc(T.n)} · ${seenN} de ${us.length} vistos. Videos animados con narradora: cada uno explica un tema completo con ejemplos y preguntas dentro del video. Puedes pausar, adelantar, ver capítulos y cambiar la velocidad.</p>` +
       `<div class="chips" role="group" aria-label="Prueba">${RB.tests.map(t => `<button class="chip" type="button" data-t="${t.id}" aria-pressed="${t.id === T.id}">${esc(t.s)}</button>`).join('')}</div>` +
       `<div class="vlist">${us.map((u, i) => { const vd = RB.videos[u.vid]; return `<button class="vrow" type="button" data-v="${u.vid}"><span class="vth">${I(u.ic)}<em>${Math.round(RB.videoSecs(u.vid) / 60)} min</em></span>` +
-        `<span class="vb"><small>Unidad ${T.units.indexOf(u.id) + 1}${u.area ? ' · ' + esc(u.area) : ''}</small><b>${esc(vd.title)}</b><span>${esc(vd.desc || u.desc)}</span>${S.seen[u.vid] ? `<i>${I('check')}Visto</i>` : ''}</span></button>`; }).join('')}</div>`;
+        `<span class="vb"><small>Unidad ${T.units.indexOf(u.id) + 1}${u.area ? ' · ' + esc(u.area) : ''}</small><b>${esc(vd.title)}</b><span>${esc(vd.desc || u.desc)}</span>${S.vpos && S.vpos[u.vid] ? `<i>${I('play')}Seguir desde ${fmtTime(S.vpos[u.vid])}</i>` : S.seen[u.vid] ? `<i>${I('check')}Visto</i>` : ''}</span>` +
+        (S.vpos && S.vpos[u.vid] ? `<i class="vprog" style="--p:${Math.min(1, S.vpos[u.vid] / RB.videoSecs(u.vid)).toFixed(3)}"></i>` : '') + `</button>`; }).join('')}</div>`;
     v.onclick = e => {
       const t = e.target.closest('[data-t]'), b = e.target.closest('[data-v]');
       if (t) { S.test = t.dataset.t; save(); go.scrolled = false; refresh(); return; }
@@ -877,34 +906,37 @@
   };
   function openVideo(id) {
     const vd = RB.videos[id], u = RB.units[vd.u];
-    let player;
-    const ent = openLayer('pl vidl', `<header class="lh"><button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button><b>${esc(vd.title)}</b></header>` +
-      `<div class="lbody"><div class="plv"></div><div class="vafter" hidden></div></div>`, () => player && player.destroy());
-    $('[data-x]', ent.el).onclick = () => closeLayer(refresh);
-    RB.tts.setPref(S.set.vname);
+    let player = null;
+    RB.hush();
+    const ent = openLayer('vidl', `<div class="plv"></div>`, () => { if (player) player.destroy(); setTimeout(refresh, 0); });
+    ent.back = () => !!(player && player.back());
+    S.vpos = S.vpos || {};
     player = new RB.VPlayer($('.plv', ent.el), id, {
-      voice: S.set.voice, cc: S.set.cc, rate: S.set.rate,
-      onVoice: on => { S.set.voice = on; save(); },
+      cc: S.set.cc, rate: S.set.rate, music: S.set.music !== false, sfx: S.set.sound, start: S.vpos[id] || 0,
+      onClose: () => closeLayer(),
       onCc: on => { S.set.cc = on; save(); },
       onRate: r => { S.set.rate = r; save(); },
-      onQuiz: ok => { if (ok) { S.vq++; save(); SFX.ok(); } else { SFX.bad(); buzz(80); } },
-      onReveal: () => SFX.pop(),
-      onEnd: () => {
+      onMusic: on => { S.set.music = on; save(); },
+      onPos: t => { if (t > 8 && t < RB.videoSecs(id) - 10) S.vpos[id] = Math.round(t); else delete S.vpos[id]; save(); },
+      onQuiz: ok => { if (ok) { S.vq++; save(); } else buzz(80); },
+      onReady: (p, st) => {
+        if (st) toast(`${I('play')}<span>Seguimos donde quedaste · ${fmtTime(st)}</span>`, 2600);
+        p.play();
+      },
+      onEnd: box => {
         const first = !S.seen[id];
         S.seen[id] = S.seen[id] || today();
         let xp = 0, streakUp = false;
         if (first) { xp = 10; streakUp = bumpStreak(); addXP(xp); }
-        save(); SFX.done(); checkAch();
-        const box = $('.vafter', ent.el), l1 = u.lessons[0];
-        box.hidden = false;
-        box.innerHTML = `<div class="res small"><h2>¡Video terminado!</h2>${xp ? `<p class="note">${I('bolt')}+${xp} XP${streakUp ? ` · ${I('flame', 'on')}¡Racha extendida!` : ''}</p>` : ''}</div>` +
+        S.tests[S.test] = 1;
+        save(); checkAch();
+        const l1 = u.lessons.find(l => !S.done[l.id]) || u.lessons[0];
+        box.innerHTML = (xp ? `<p class="note">${I('bolt')}+${xp} XP${streakUp ? ` · ${I('flame', 'on')}¡Racha extendida!` : ''}</p>` : '') +
           `<button class="btn" type="button" data-l>${I('play')}Practicar: ${esc(l1.n)}</button><button class="btn ghost" type="button" data-p>${I('target')}Práctica mixta del tema</button>`;
         $('[data-l]', box).onclick = () => closeLayer(() => startLesson(l1.id));
         $('[data-p]', box).onclick = () => closeLayer(() => startTopic(u.id));
-        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       },
     });
-    setTimeout(() => { if (!player.dead) player.play(); }, 450);
   }
 
   // ---------- Practicar ----------
@@ -1112,12 +1144,14 @@
       <h2 class="st">Logros · ${achN} de ${ACH.length}</h2><div class="agrid">${ACH.map(a => `<button class="ach${S.ach[a.id] ? ' on' : ''}" type="button" data-ach="${a.id}"><i>${I(a.ic)}</i><span>${esc(a.n)}</span></button>`).join('')}</div>
       <h2 class="st">Ajustes</h2><div class="set">
         <div class="row"><span>Meta diaria</span><div class="seg" data-goal>${[20, 30, 50, 80].map(g => `<button type="button" data-v="${g}" aria-pressed="${S.goal === g}">${g}</button>`).join('')}</div></div>
-        ${sw('voice', 'Narración por voz en los videos', RB.canSpeak ? 'El narrador lee cada escena' : 'No hay voz disponible', !RB.canSpeak)}
-        ${RB.canSpeak ? `<button class="row" type="button" data-act="voice">${I('mic')}<span>Voz del narrador<small>${esc(S.set.vname || RB.tts.current() || 'Automática')}</small></span></button>` : ''}
-        <div class="row"><span>Velocidad de los videos</span><div class="seg" data-rate>${[[.85, '0,85'], [1, '1'], [1.25, '1,25'], [1.5, '1,5']].map(([r, n]) => `<button type="button" data-v="${r}" aria-pressed="${S.set.rate === r}">${n}×</button>`).join('')}</div></div>
+        <div class="row"><span>Velocidad de los videos</span><div class="seg" data-rate>${[[.75, '0,75'], [1, '1'], [1.25, '1,25'], [1.5, '1,5'], [2, '2']].map(([r, n]) => `<button type="button" data-v="${r}" aria-pressed="${S.set.rate === r}">${n}×</button>`).join('')}</div></div>
         ${sw('cc', 'Subtítulos en los videos')}
+        ${sw('music', 'Música en los videos', 'Música suave de fondo, bajo la narración')}
+        ${RB.canSpeak ? `<button class="row" type="button" data-act="voice">${I('mic')}<span>Voz para leer las preguntas<small>${esc(S.set.vname || RB.tts.current() || 'Automática')} · los videos traen su propia narradora</small></span></button>` : ''}
         ${sw('sound', 'Sonidos')}${sw('vib', 'Vibración', 'Al equivocarte')}
+        ${NAT() && NAT().remind ? `${sw('remind', 'Recordatorio diario', 'Aviso si aún no terminas el plan de hoy')}<div class="row"><span>Hora del recordatorio</span><div class="seg" data-rh>${[17, 18, 19, 20, 21].map(h => `<button type="button" data-v="${h}" aria-pressed="${(S.set.rh || 19) === h}">${h}:00</button>`).join('')}</div></div>` : ''}
         ${sw('inf', 'Vidas ilimitadas', 'Practica sin perder vidas')}
+        <button class="row" type="button" data-act="plan">${I('target')}<span>Mi plan de estudio<small>${S.plan && S.plan.date ? `PAES: ${esc(fmtDate(S.plan.date, { day: 'numeric', month: 'short', year: 'numeric' }))} · ${S.plan.mins} min al día · ${selTests().map(tShort).join(', ')}` : 'Responde la encuesta para armarlo'}</small></span></button>
         <button class="row" type="button" data-act="test">${I(T.ic)}<span>Prueba que estudias<small>${esc(T.n)}</small></span></button>
         <button class="row" type="button" data-act="export">${I('down')}<span>Exportar progreso<small>Guarda una copia en un archivo</small></span></button>
         <label class="row">${I('up')}<span>Importar progreso<small>Recupera tu progreso desde un archivo</small></span><input type="file" accept="application/json,.json,text/plain" data-import hidden></label>
@@ -1132,18 +1166,20 @@
       const seg = b.closest('.seg');
       if (seg && seg.hasAttribute('data-goal')) { S.goal = +b.dataset.v; save(); refresh(); return; }
       if (seg && seg.hasAttribute('data-rate')) { S.set.rate = +b.dataset.v; save(); refresh(); return; }
+      if (seg && seg.hasAttribute('data-rh')) { S.set.rh = +b.dataset.v; save(); syncReminder(); refresh(); return; }
       const a = b.dataset.act;
       if (a === 'test') testSheet();
+      else if (a === 'plan') planView();
       else if (a === 'voice') voiceSheet();
       else if (a === 'export') exportData();
       else if (a === 'reset') {
         ask({ title: '¿Borrar todo tu progreso?', text: 'Perderás tus lecciones, XP, rachas, ensayos y logros. No se puede deshacer.', ok: 'Borrar todo', cancel: 'Cancelar' }).then(ok => {
           if (!ok) return;
-          S = DEF(); save(); go.scrolled = false; go('aprender'); onboarding();
+          S = DEF(); save(); go.scrolled = false; go('aprender'); survey();
         });
       }
     };
-    $$('[data-set]', v).forEach(inp => inp.addEventListener('change', () => { S.set[inp.dataset.set] = inp.checked; save(); header(); }));
+    $$('[data-set]', v).forEach(inp => inp.addEventListener('change', () => { S.set[inp.dataset.set] = inp.checked; save(); header(); if (inp.dataset.set === 'remind') syncReminder(); }));
     $('[data-import]', v).addEventListener('change', e => {
       const f = e.target.files[0];
       if (!f) return;
@@ -1170,30 +1206,430 @@
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
 
-  // ---------- Bienvenida ----------
-  function onboarding() {
-    const ent = openLayer('onb', `<div class="onb-in"></div>`);
-    ent.guard = () => !!S.test;
+  // ---------- Plan de estudio ----------
+  // La encuesta inicial guarda en S.plan la fecha de la PAES, el tiempo y los días disponibles, el nivel en
+  // cada prueba, la meta y la forma de estudiar. Con eso se reparte cada día entre las pruebas (más tiempo a
+  // las más débiles y a las que tienen más temario), con ensayos semanales y un repaso final antes de la prueba.
+  const SCI = ['bio', 'fis', 'qui'];
+  const PICK = [
+    { id: 'lec', n: 'Competencia Lectora', s: 'LEC', tag: 'Obligatoria', ic: 'book' },
+    { id: 'm1', n: 'Matemática M1', s: 'M1', tag: 'Obligatoria', ic: 'calc' },
+    { id: 'm2', n: 'Matemática M2', s: 'M2', tag: 'Electiva · carreras científicas', ic: 'sigma' },
+    { id: 'his', n: 'Historia y Cs. Sociales', s: 'HIS', tag: 'Electiva', ic: 'landmark' },
+    { id: 'sci', n: 'Ciencias', s: 'CIE', tag: 'Electiva · Biología, Física y Química', ic: 'atom' },
+  ];
+  const UNIT_TEST = {};
+  RB.tests.forEach(t => t.units.forEach(u => { UNIT_TEST[u] = t.id; }));
+  const ORDER = RB.tests.map(t => t.id);
+  const selTests = () => { const s = (S.sel || []).filter(id => ORDER.includes(id)); return s.length ? s : [S.test || 'lec']; };
+  const tShort = id => testInfo(id).s;
+  const daysBetween = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+  const fmtDate = (d, o = { day: 'numeric', month: 'long', year: 'numeric' }) => new Date(d + 'T12:00:00').toLocaleDateString('es-CL', o);
+  // Fechas de referencia (estimadas): la PAES regular cae a fines de noviembre o inicios de diciembre y la de
+  // invierno a mediados de junio. Se toma el lunes más cercano; la persona puede poner la fecha exacta.
+  const nearMonday = (y, m, d) => { const x = new Date(y, m, d, 12); let off = (8 - x.getDay()) % 7; if (off > 3) off -= 7; x.setDate(x.getDate() + off); return dayStr(x); };
+  function examDates() {
+    const y = new Date().getFullYear(), t = today();
+    let reg = nearMonday(y, 11, 1); if (reg <= t) reg = nearMonday(y + 1, 11, 1);
+    let inv = nearMonday(y, 5, 15); if (inv <= t) inv = nearMonday(y + 1, 5, 15);
+    return [{ k: 'reg', n: 'PAES regular', d: reg }, { k: 'inv', n: 'PAES de invierno', d: inv }].sort((a, b) => a.d.localeCompare(b.d));
+  }
+  const lessonMin = l => Math.max(4, Math.round(l.items.filter(GRADED).length * .45 + 1));
+  const videoMin = id => Math.max(3, Math.round(RB.videoSecs(id) / 60));
+  const courseOf = tid => cUnits(testInfo(tid)).map(u => ({ u, vid: u.vid && RB.videos[u.vid] ? u.vid : null, vmin: u.vid && RB.videos[u.vid] ? videoMin(u.vid) : 0, ls: u.lessons.map(l => ({ l, min: lessonMin(l) })) }));
+  const needMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + (video ? c.vmin : 0) + c.ls.reduce((a, x) => a + x.min, 0), 0);
+  const doneMin = (tid, video = true) => courseOf(tid).reduce((s, c) => s + (video && c.vid && S.seen[c.vid] ? c.vmin : 0) + c.ls.reduce((a, x) => a + (S.done[x.l.id] ? x.min : 0), 0), 0);
+  const goalFor = mins => clamp(Math.round(mins * 1.2 / 5) * 5, 20, 150);
+  function weightsOf(P, tests) {
+    const w = {};
+    tests.forEach(id => {
+      const lv = (P.lvl && P.lvl[id]) || 3;
+      let x = 1.55 - .22 * (lv - 1);
+      if (SCI.includes(id) && P.sci) x *= id === P.sci ? 1.3 : .7;
+      if (P.target >= 800) x *= 1.05;
+      w[id] = x * Math.sqrt(Math.max(40, needMin(id)) / 160);
+    });
+    return w;
+  }
+  const weekStart = d => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() - x.getDay()); return dayStr(x); };
+  function studyDays(P, from) {
+    const out = [], end = P.date, wd = P.days && P.days.length ? P.days : [1, 2, 3, 4, 5, 6];
+    for (let d = from; d < end && out.length < 500; d = addDays(d, 1)) if (wd.includes(new Date(d + 'T12:00:00').getDay())) out.push(d);
+    return out;
+  }
+  const examLen = (M, tid) => { const T = testInfo(tid); if (M >= T.ex.min + 15) return { n: T.ex.n, min: T.ex.min, name: 'completo' }; if (M >= 55) return { n: 30, min: 45, name: 'medio' }; return { n: 15, min: 20, name: 'mini' }; };
+  // Reparto día a día (determinista desde el inicio del plan): cada día toca 1 a 3 pruebas según el tiempo.
+  function schedule(P, tests = selTests()) {
+    const days = studyDays(P, P.start || today()), n = days.length;
+    const f = n ? clamp(Math.round(n * .18), Math.min(2, n), 21) : 0, L = n - f;
+    const w = weightsOf(P, tests), sw = tests.reduce((s, id) => s + w[id], 0) || 1, M = P.mins || 30;
+    const k = Math.min(tests.length, M <= 30 ? 1 : M <= 75 ? 2 : 3);
+    const credit = Object.fromEntries(tests.map(id => [id, 0])), exRot = tests.slice().sort((a, b) => w[b] - w[a]);
+    let ei = 0;
+    const out = days.map((d, i) => {
+      const final = i >= L, lastOfWeek = !days[i + 1] || weekStart(days[i + 1]) !== weekStart(d);
+      const exam = (final ? (i - L) % 2 === 0 : lastOfWeek && i >= 3) ? exRot[ei++ % exRot.length] : null;
+      tests.forEach(id => { credit[id] += w[id] / sw * k; });
+      const focus = tests.slice().sort((a, b) => credit[b] - credit[a] || ORDER.indexOf(a) - ORDER.indexOf(b)).slice(0, k);
+      focus.forEach(id => { credit[id] -= 1; });
+      return { d, focus, exam, final };
+    });
+    return { days: out, n, L, f, k, w, sw };
+  }
+  function planStats(P, tests = selTests()) {
+    const sc = schedule(P, tests), M = P.mins || 30, video = P.style !== 'practice', per = {};
+    tests.forEach(id => { per[id] = { need: needMin(id, video), done: doneMin(id, video), alloc: 0, days: 0 }; });
+    sc.days.forEach(day => {
+      if (day.final) return;
+      const learn = Math.max(8, M - 5 - (day.exam ? examLen(M, day.exam).min : 0));
+      day.focus.forEach(id => { per[id].alloc += learn / day.focus.length; per[id].days++; });
+    });
+    tests.forEach(id => { const p = per[id]; p.cov = p.need ? Math.min(1, (p.done + p.alloc) / p.need) : 1; p.share = sc.w[id] / sc.sw; });
+    return { sc, per };
+  }
+  function makePlan(A) {
+    const tests = expandSel(A.sel, A.sci);
+    const P = { v: 1, ver: ((S.plan && S.plan.ver) || 0) + 1, start: today(), date: A.date, dk: A.dk, mins: A.mins, days: A.days.slice().sort(), lvl: A.lvl, target: A.target, career: (A.career || '').trim().slice(0, 60), style: A.style, sci: A.sci, picks: A.sel.slice() };
+    const st = planStats(P, tests);
+    P.base = tests.reduce((s, id) => s + st.per[id].done, 0);
+    P.reach = tests.reduce((s, id) => s + Math.min(st.per[id].need, st.per[id].done + st.per[id].alloc), 0);
+    return { P, tests, st };
+  }
+  const expandSel = (sel, sci) => ORDER.filter(id => sel.includes(id) || (sel.includes('sci') && SCI.includes(id)))
+    .sort((a, b) => (SCI.includes(a) && SCI.includes(b) && sci) ? (a === sci ? -1 : b === sci ? 1 : 0) : 0);
+  // Ritmo: cuánto debería llevar visto a esta altura según el plan.
+  function pace() {
+    const P = S.plan;
+    if (!P || !P.date) return null;
+    const sc = schedule(P), learn = sc.days.filter(d => !d.final), passed = learn.filter(d => d.d < today()).length;
+    const exp = learn.length ? passed / learn.length : 1, video = P.style !== 'practice';
+    const done = selTests().reduce((s, id) => s + doneMin(id, video), 0), want = P.base + (P.reach - P.base) * exp, diff = done - want;
+    if (!isFinite(diff)) return null;
+    if (diff >= 25) return { cls: 'ok', txt: 'Vas adelantado' };
+    if (diff >= -12) return { cls: 'ok', txt: 'Vas al día' };
+    const n = Math.max(1, Math.round(-diff / 10));
+    return { cls: 'late', txt: `Vas ${plural(n, 'lección', 'lecciones')} atrasado` };
+  }
+  const TASK_IC = { video: 'film', lesson: 'pen', exam: 'exam', review: 'replay', mistakes: 'x', mix: 'spark' };
+  const TASK_N = { video: 'Video', lesson: 'Lección', exam: 'Ensayo', review: 'Repaso', mistakes: 'Errores', mix: 'Práctica' };
+  // Tareas de hoy: se arman una vez al día (así no cambian mientras se avanza) y se marcan solas al cumplirlas.
+  function todayPlan() {
+    const P = S.plan;
+    if (!P || !P.date) return null;
+    const t = today();
+    if (S.today && S.today.d === t && S.today.v === P.ver) return S.today;
+    const sc = schedule(P), M = P.mins || 30, tasks = [];
+    let day = sc.days.find(x => x.d === t);
+    // El día en que se arma el plan siempre se estudia, aunque no sea día de estudio.
+    if (!day && P.start === t) { const nx = sc.days.find(x => x.d > t); day = { d: t, focus: nx ? nx.focus : selTests().slice(0, sc.k || 1), exam: null, final: !!(nx && nx.final) }; }
+    const pending = (id, max) => {
+      const out = [];
+      for (const c of courseOf(id)) {
+        if (P.style !== 'practice' && c.vid && !S.seen[c.vid]) out.push({ k: 'video', t: id, ref: c.vid, min: c.vmin, label: RB.videos[c.vid].title, u: c.u.name });
+        c.ls.forEach(x => { if (!S.done[x.l.id]) out.push({ k: 'lesson', t: id, ref: x.l.id, min: x.min, label: x.l.n, u: c.u.name }); });
+        if (out.length >= max) break;
+      }
+      return out;
+    };
+    const fill = (focus, budget) => {
+      const per = Math.max(8, budget / focus.length);
+      focus.forEach(id => {
+        let left = per;
+        const pend = pending(id, 6);
+        while (pend.length && left > 3) { const x = pend.shift(); tasks.push(x); left -= x.min; }
+        if (!tasks.some(x => x.t === id)) tasks.push({ k: 'mix', t: id, min: 10, label: `Práctica mixta de ${tShort(id)}` });
+      });
+    };
+    if (!day) {
+      // Día libre: sugerencias livianas para no perder la racha.
+      const nx = sc.days.find(x => x.d > t);
+      fill(nx ? nx.focus.slice(0, 1) : selTests().slice(0, 1), 12);
+      tasks.splice(1);
+      tasks.push({ k: 'review', min: 5, label: 'Repaso inteligente' });
+      S.today = { d: t, v: P.ver, free: true, tasks };
+    } else {
+      let budget = M - 5;
+      if (day.exam) { const e = examLen(M, day.exam); tasks.push({ k: 'exam', t: day.exam, n: e.n, min: e.min, label: `Ensayo ${e.name} de ${testInfo(day.exam).n}` }); budget -= e.min; }
+      if (day.final) {
+        tasks.push({ k: 'mistakes', min: 10, label: 'Repasa tus errores' });
+        if (budget > 25) fill(day.focus.slice(0, 1), budget - 10);
+      } else if (budget >= 8 || !day.exam) fill(day.focus, Math.max(8, budget));
+      tasks.push({ k: 'review', min: 5, label: 'Repaso inteligente' });
+      S.today = { d: t, v: P.ver, tasks, final: day.final };
+    }
+    save();
+    return S.today;
+  }
+  function taskDone(x) {
+    const d = S.today && S.today.d, act = S.act && S.act.d === d ? S.act : {};
+    switch (x.k) {
+      case 'video': return !!S.seen[x.ref];
+      case 'lesson': return !!S.done[x.ref];
+      case 'exam': return S.exams.some(e => e.d === d && e.t === x.t);
+      case 'review': return !!act.rev;
+      case 'mistakes': return !!act.mis;
+      case 'mix': return !!act['mix_' + x.t];
+    }
+    return false;
+  }
+  // Recordatorio diario (solo en la app Android): avisa a la hora elegida si el plan de hoy no está completo.
+  function syncReminder() {
+    const N = NAT();
+    if (!N || !N.remind) return;
+    const P = S.plan, on = !!(S.set.remind && P);
+    try { N.remind(on, S.set.rh || 19, 0, 'Lima: ¡te toca estudiar!', P ? `Tu plan de hoy: ${P.mins} minutos. ¡Vamos que se puede!` : 'Unos minutos al día hacen la diferencia.', P ? (P.days || []).join(',') : ''); } catch (e) { /* app antigua */ }
+  }
+  function mark(k) { const t = today(); if (!S.act || S.act.d !== t) S.act = { d: t }; S.act[k] = (S.act[k] || 0) + 1; }
+  function runTask(x) {
+    if (x.t && x.t !== S.test) { S.test = x.t; save(); header(); }
+    if (x.k === 'video') openVideo(x.ref);
+    else if (x.k === 'lesson') startLesson(x.ref);
+    else if (x.k === 'exam') startExam(x.n, x.min);
+    else if (x.k === 'review') planReview();
+    else if (x.k === 'mistakes') planMistakes();
+    else if (x.k === 'mix') startMix();
+  }
+  // Repaso de todas las pruebas del plan (no solo la que se está mirando).
+  const selItems = () => uniq(selTests().flatMap(id => cItems(testInfo(id))));
+  function planReview() {
+    let items = selItems().filter(it => GRADED(it) && S.q[it.id] && S.q[it.id].d <= today()).sort((a, b) => (S.q[b.id].w - S.q[a.id].w)).slice(0, 12);
+    if (items.length < 6) {
+      const doneItems = selTests().flatMap(id => cUnits(testInfo(id)).flatMap(u => u.lessons)).filter(l => S.done[l.id]).flatMap(l => l.items).filter(GRADED);
+      items = uniq(items.concat(shuffle(doneItems))).slice(0, 12);
+    }
+    if (!items.length) {
+      mark('rev'); save(); refresh();
+      toast(`${I('check')}<span>Aún no hay nada que repasar: el repaso aparece cuando completas lecciones. ¡Marcado como hecho!</span>`, 3400);
+      return;
+    }
+    startSession({ kind: 'review', items: shuffle(items), tag: true, src: 'rev' });
+  }
+  function planMistakes() {
+    const items = selItems().filter(it => GRADED(it) && S.q[it.id] && S.q[it.id].w > 0 && S.q[it.id].b < 3).slice(0, 12);
+    if (!items.length) { mark('mis'); save(); refresh(); toast(`${I('check')}<span>No tienes errores pendientes. ¡Bien!</span>`, 2600); return; }
+    startSession({ kind: 'review', items: shuffle(items), tag: true, src: 'mis' });
+  }
+  function taskSub(x) {
+    if (x.k === 'review') return 'Preguntas que te tocan hoy, de todas tus pruebas';
+    if (x.k === 'mistakes') return 'Preguntas que fallaste antes';
+    return `${tShort(x.t)} · ${TASK_N[x.k]}${x.u ? ' · ' + esc(x.u) : ''}`;
+  }
+  function planCard() {
+    const P = S.plan;
+    if (!P || !P.date) return '';
+    const left = daysBetween(today(), P.date);
+    if (left < 0) return `<section class="plan"><div class="plan-h"><div><small>Tu plan</small><b>La fecha de tu PAES ya pasó</b></div></div><p class="muted">Pon la fecha de tu próxima PAES para seguir con un plan.</p><button class="btn" type="button" data-act="survey">${I('replay')}Actualizar mi plan</button></section>`;
+    const tp = todayPlan(), n = tp.tasks.length, done = tp.tasks.filter(taskDone).length, nx = tp.tasks.findIndex(x => !taskDone(x)), pc = pace();
+    if (nx < 0 && NAT() && NAT().planDone) { try { NAT().planDone(today()); } catch (e) { /* app antigua */ } }
+    const lbl = fmtDate(today(), { weekday: 'long', day: 'numeric', month: 'short' });
+    return `<section class="plan">
+      <div class="plan-h"><div><small>${tp.free ? 'Día libre' : 'Plan de hoy'} · ${esc(lbl)}</small><b>${left === 0 ? '¡Hoy es la PAES! Mucho éxito' : `Faltan ${plural(left, 'día', 'días')} para la PAES`}</b>${pc ? `<span class="pace ${pc.cls}">${I(pc.cls === 'ok' ? 'check' : 'info')}${pc.txt}</span>` : ''}</div>
+        <div class="ring" style="--p:${(n ? done / n : 1).toFixed(3)}"><span>${done}/${n}</span></div></div>
+      ${tp.free ? `<p class="muted small">Hoy no es día de estudio en tu plan. Si quieres, adelanta algo cortito:</p>` : ''}
+      <ol class="tasks${planCard.open ? ' open' : ''}">${tp.tasks.map((x, i) => { const ok = taskDone(x); return `<li${i >= 5 ? ' class="more"' : ''}><button class="task${ok ? ' done' : ''}${i === nx ? ' next' : ''}" type="button" data-task="${i}"><i class="tk">${I(ok ? 'check' : TASK_IC[x.k])}</i><span><b>${esc(x.label)}</b><small>${taskSub(x)}</small></span><em>${x.min} min</em></button></li>`; }).join('')}</ol>
+      ${n > 5 && !planCard.open ? `<button class="tmore" type="button" data-act="tmore">${I('down')}Ver ${plural(n - 5, 'tarea más', 'tareas más')} · ${tp.tasks.reduce((s, x) => s + x.min, 0)} min en total</button>` : ''}
+      ${nx >= 0 ? `<button class="btn" type="button" data-task="${nx}">${I('play')}${done ? 'Seguir con el plan' : 'Empezar el plan de hoy'}</button>` : `<p class="note done-all">${I('trophy')}¡Plan de hoy completo! Mañana sigue.</p>`}
+      <button class="link" type="button" data-act="plan">${I('list')}Ver mi plan completo</button>
+    </section>`;
+  }
+  function planView() {
+    const P = S.plan;
+    if (!P) return survey({ edit: true });
+    const tests = selTests(), { sc, per } = planStats(P, tests), left = daysBetween(today(), P.date);
+    const lastLearn = sc.days.filter(d => !d.final).pop(), firstFinal = sc.days.find(d => d.final);
+    const upcoming = sc.days.filter(d => d.d >= today()).slice(0, 12);
+    const short = d => fmtDate(d, { weekday: 'short', day: 'numeric', month: 'short' });
+    const hours = Math.round(P.mins * (P.days || []).length / 6) / 10;
+    const html = `<header class="lh"><button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button><b>Mi plan de estudio</b></header>
+      <div class="lbody planv">
+        <div class="pv-hero"><div class="pv-pet">${RB.mascot('cap')}</div><div><small>PAES · ${esc(fmtDate(P.date))}</small><b>${left > 0 ? `Faltan ${plural(left, 'día', 'días')}` : left === 0 ? '¡Es hoy!' : 'Ya pasó'}</b><span>${plural(sc.n, 'día de estudio', 'días de estudio')} · ${P.mins} min al día · ≈${String(hours).replace('.', ',')} h por semana</span>${P.career ? `<span>Meta: ${esc(P.career)}${P.target ? ` · ${P.target} pts` : ''}</span>` : P.target ? `<span>Meta: ${P.target} puntos</span>` : ''}</div></div>
+        <h2 class="st">Cómo se reparte tu tiempo</h2>
+        <div class="card pv-tests">${tests.map(id => { const p = per[id]; return `<div class="pvt"><b>${I(testInfo(id).ic)}${esc(testInfo(id).n)}</b><span>${Math.round(p.share * 100)}% del tiempo · alcanzas a ver ${Math.round(p.cov * 100)}% del temario</span><i class="meter"><i style="width:${Math.round(p.cov * 100)}%"></i></i></div>`; }).join('')}</div>
+        ${tests.some(id => per[id].cov < .98) ? `<p class="note warnn">${I('info')}Con este tiempo no alcanzas a ver todo. El plan prioriza tus pruebas más débiles; si puedes, sube los minutos diarios.</p>` : `<p class="note">${I('check')}Con este ritmo alcanzas a ver todo el temario antes de la prueba.</p>`}
+        <h2 class="st">Etapas</h2>
+        <div class="card pv-phases"><div><b>1 · Aprender</b><span>${lastLearn ? `Hasta el ${esc(short(lastLearn.d))}: videos y lecciones de cada tema, con un ensayo al final de cada semana.` : 'No quedan días de aprendizaje.'}</span></div>
+          <div><b>2 · Repaso final</b><span>${firstFinal ? `Desde el ${esc(short(firstFinal.d))}: ensayos, tus errores y repaso inteligente.` : 'Muy poco tiempo: el plan va directo a repasar.'}</span></div></div>
+        <h2 class="st">Próximos días</h2>
+        <div class="card pv-days">${upcoming.length ? upcoming.map(d => `<div class="pvd${d.d === today() ? ' today' : ''}"><b>${d.d === today() ? 'Hoy' : esc(short(d.d))}</b><span>${d.exam ? `<em>${I('exam')}Ensayo ${esc(tShort(d.exam))}</em>` : ''}${d.final ? '<em class="f">Repaso</em>' : ''}${d.focus.map(id => `<i>${esc(tShort(id))}</i>`).join('')}</span></div>`).join('') : '<p class="muted">No quedan días de estudio antes de la fecha.</p>'}</div>
+        <button class="btn" type="button" data-edit>${I('gear')}Editar mi plan</button>
+        <button class="btn ghost" type="button" data-diag>${I('target')}Hacer un diagnóstico</button>
+      </div>`;
+    const ent = openLayer('pl', html);
+    $('[data-x]', ent.el).onclick = () => closeLayer();
+    $('[data-edit]', ent.el).onclick = () => closeLayer(() => survey({ edit: true }));
+    $('[data-diag]', ent.el).onclick = () => closeLayer(() => startDiag(() => { S.today = null; save(); refresh(); planView(); }));
+  }
+
+  // Diagnóstico: unas preguntas de cada prueba elegida para ajustar el nivel del plan.
+  function startDiag(onDone) {
+    const items = [];
+    selTests().forEach(id => {
+      const pool = shuffle(cItems(testInfo(id)).filter(it => EXAMT.includes(it.t) && (!it.tx || id === 'lec')));
+      const seenU = new Set();
+      for (const it of pool) { if (items.filter(x => UNIT_TEST[x._u] === id).length >= 3) break; if (!seenU.has(it._u)) { seenU.add(it._u); items.push(it); } }
+    });
+    if (!items.length) return onDone && onDone();
+    startSession({ kind: 'diag', items, tag: true, onDone });
+  }
+  function diagResult(ses) {
+    const by = {};
+    (ses.log || []).forEach(([it, ok]) => { const id = UNIT_TEST[it._u]; if (!id) return; (by[id] = by[id] || [0, 0])[1]++; if (ok) by[id][0]++; });
+    if (S.plan) {
+      S.plan.lvl = S.plan.lvl || {};
+      Object.entries(by).forEach(([id, [g, n]]) => { const dl = 1 + 4 * g / n, self = S.plan.lvl[id] || 3; S.plan.lvl[id] = clamp(Math.round((self + dl) / 2), 1, 5); });
+      S.plan.diag = today();
+      S.plan.ver = (S.plan.ver || 0) + 1;
+    }
+    return by;
+  }
+
+  // ---------- Encuesta inicial ----------
+  const LV = ['Me cuesta mucho', 'Me cuesta', 'Más o menos', 'Me va bien', 'Me va muy bien'];
+  // Lima habla en la encuesta con la misma narradora de los videos (audio/app.webm) y mueve la boca al hablar.
+  const lima = { pet: null, raf: 0, au: null, d: null, end: 0 };
+  const limaReady = () => lima.p || (lima.p = RB.loadTimes('app').then(d => { lima.d = d; if (d) { lima.au = new Audio('audio/app.webm'); lima.au.preload = 'auto'; } return d; }));
+  function limaSay(k) {
+    if (!S.set.sound) return;
+    limaReady().then(d => {
+      const c = d && d.clips && d.clips[k];
+      if (!c || !lima.au) return;
+      lima.end = c[1];
+      try { lima.au.currentTime = c[0]; const pr = lima.au.play(); if (pr && pr.catch) pr.catch(() => { }); } catch (e) { /* sin audio */ }
+    });
+  }
+  function limaLoop() {
+    cancelAnimationFrame(lima.raf);
+    const step = () => {
+      const au = lima.au;
+      let o = 0;
+      if (au && !au.paused) {
+        if (au.currentTime >= lima.end) au.pause();
+        else if (lima.d && lima.d.e) o = (+lima.d.e[Math.floor(au.currentTime * 25)] || 0) / 9;
+      }
+      if (lima.pet) lima.pet.frame(performance.now() / 1000, o, 0, null);
+      lima.raf = requestAnimationFrame(step);
+    };
+    step();
+  }
+  function limaStop() { cancelAnimationFrame(lima.raf); lima.pet = null; if (lima.au) { try { lima.au.pause(); } catch (e) { /* nada */ } } }
+  function survey(o = {}) {
+    const first = !S.plan;
+    const P0 = S.plan || {};
+    const A = {
+      sel: P0.picks ? P0.picks.slice() : S.sel && S.sel.length ? [...new Set(S.sel.map(id => SCI.includes(id) ? 'sci' : id))] : [],
+      sci: P0.sci || null, date: P0.date || null, dk: P0.dk || null, mins: P0.mins || 45, days: (P0.days || [1, 2, 3, 4, 5, 6]).slice(),
+      lvl: Object.assign({}, P0.lvl || {}), target: P0.target || 700, career: P0.career || '', style: P0.style || 'video',
+    };
+    const steps = (first ? ['hola'] : []).concat(['pruebas', 'fecha', 'tiempo', 'nivel', 'meta', 'estilo', 'diag', 'plan']);
+    let cur = 0, finished = false;
+    const hist = [];
+    const ent = openLayer('onb srv', `<div class="srv-top"><button class="ib" type="button" data-back aria-label="Atrás">${I('left')}</button><div class="pbar"><i></i></div>${first ? '' : `<button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button>`}</div><div class="onb-in"></div>`, limaStop);
+    limaLoop();
+    ent.guard = () => !first || finished;
     const box = $('.onb-in', ent.el);
-    let goal = S.goal;
-    const step1 = () => {
-      box.innerHTML = `<div class="wm">PAES<i></i></div><h1>Prepara la PAES, un tema a la vez.</h1><p>Lecciones cortas, videos narrados y ensayos con puntaje estimado.</p>
-        <ul class="feat"><li>${I('list')}${plural(allGraded().length, 'pregunta', 'preguntas')} de todas las pruebas</li><li>${I('film')}${Object.keys(RB.videos).length} videos con animaciones y narrador</li><li>${I('exam')}Ensayos con tiempo real y puntaje</li><li>${I('flame')}Rachas, metas diarias y repaso inteligente</li></ul>
-        <button class="btn" type="button" data-n>Comenzar</button>`;
-      $('[data-n]', box).onclick = step2;
-    };
-    const step2 = () => {
-      box.innerHTML = `<small class="kick">Paso 1 de 2</small><h1>¿Con qué prueba partes?</h1><p>Puedes cambiar de prueba cuando quieras desde el botón de arriba.</p>${testGrid()}`;
-      $('.lics', box).onclick = e => { const b = e.target.closest('[data-test]'); if (b) { S.test = b.dataset.test; save(); step3(); } };
-    };
-    const step3 = () => {
-      box.innerHTML = `<small class="kick">Paso 2 de 2</small><h1>Elige tu meta diaria</h1><p>Un poco cada día es la mejor forma de llegar preparado.</p>
-        <div class="goals">${[[20, 'Relajada', '~10 min al día'], [30, 'Normal', '~15 min al día'], [50, 'Seria', '~25 min al día'], [80, 'Intensa', '~40 min al día']].map(([g, n, d]) => `<button class="goalc" type="button" data-g="${g}" aria-pressed="${g === goal}"><b>${n}</b><span>${g} XP · ${d}</span></button>`).join('')}</div>
-        <button class="btn" type="button" data-n>Empezar a estudiar</button>`;
-      $('.goals', box).onclick = e => { const b = e.target.closest('[data-g]'); if (!b) return; goal = +b.dataset.g; $$('.goalc', box).forEach(x => x.setAttribute('aria-pressed', x === b)); };
-      $('[data-n]', box).onclick = () => { S.goal = goal; save(); closeLayer(() => { go.scrolled = false; go('aprender'); }); };
-    };
-    step1();
+    const goBack = () => { if (hist.length) { cur = hist.pop(); render(); return true; } if (!first) { closeLayer(); return true; } return false; };
+    ent.back = goBack;
+    $('[data-back]', ent.el).onclick = () => { if (!goBack()) toast(`${I('info')}<span>Completa la encuesta para armar tu plan</span>`, 2000); };
+    const xb = $('[data-x]', ent.el);
+    if (xb) xb.onclick = () => closeLayer();
+    const next = () => { hist.push(cur); cur++; render(); box.scrollTop = 0; ent.el.scrollTop = 0; };
+    const bubble = t => `<div class="srv-pet"><div class="pet">${RB.mascot('cap')}</div><p class="bub">${t}</p></div>`;
+    const tests = () => expandSel(A.sel, A.sci);
+    function render() {
+      const s = steps[cur];
+      $('.pbar i', ent.el).style.width = (100 * cur / (steps.length - 1)) + '%';
+      $('[data-back]', ent.el).style.visibility = cur === 0 && first ? 'hidden' : 'visible';
+      const footer = (lbl, dis) => `<div class="srv-f"><button class="btn" type="button" data-next${dis ? ' disabled' : ''}>${lbl}</button></div>`;
+      let h = '';
+      if (s === 'hola') {
+        h = bubble('¡Hola! Soy <b>Lima</b>, tu profe para la PAES. Te haré unas preguntas rápidas para armar tu <b>plan de estudio</b>.') +
+          `<ul class="feat"><li>${I('list')}${plural(allGraded().length, 'pregunta', 'preguntas')} de todas las pruebas</li><li>${I('film')}${Object.keys(RB.videos).length} videos animados, con narradora</li><li>${I('exam')}Ensayos con tiempo real y puntaje</li><li>${I('target')}Un plan diario hecho para ti</li></ul>` + footer('¡Vamos!');
+      } else if (s === 'pruebas') {
+        h = bubble('¿Qué pruebas vas a rendir? <b>Marca todas</b> las que darás.') +
+          `<div class="pk">${PICK.map(p => `<button class="pkc" type="button" data-p="${p.id}" aria-pressed="${A.sel.includes(p.id)}"><i class="pki">${I(p.ic)}</i><span><b>${esc(p.n)}</b><small>${esc(p.tag)}</small></span><i class="pkb">${I('check')}</i></button>`).join('')}</div>
+          <button class="link" type="button" data-all>${I('check')}Marcar todas</button>
+          ${A.sel.includes('sci') ? `<div class="sub"><b>¿Qué módulo electivo de Ciencias darás?</b><div class="seg" data-sci>${[['bio', 'Biología'], ['fis', 'Física'], ['qui', 'Química'], ['', 'Aún no sé']].map(([k, n]) => `<button type="button" data-v="${k}" aria-pressed="${(A.sci || '') === k}">${n}</button>`).join('')}</div><small class="muted">Ciencias incluye las tres materias; tu electivo tendrá más preguntas.</small></div>` : ''}` +
+          footer('Continuar', !A.sel.length);
+      } else if (s === 'fecha') {
+        const opts = examDates();
+        if (!A.date) { A.date = opts[0].d; A.dk = opts[0].k; }
+        h = bubble('¿Cuándo das la PAES?') + `<div class="goals">${opts.map(x => `<button class="goalc" type="button" data-d="${x.d}" data-k="${x.k}" aria-pressed="${A.dk === x.k}"><b>${x.n}</b><span>${esc(fmtDate(x.d))}</span></button>`).join('')}
+          <label class="goalc dpick" aria-pressed="${A.dk === 'otra'}"><b>Otra fecha</b><input type="date" data-date min="${addDays(today(), 1)}" value="${A.date}"></label></div>
+          <p class="muted small">Faltan <b>${plural(Math.max(0, daysBetween(today(), A.date)), 'día', 'días')}</b>. Las fechas son estimadas: confirma la oficial en demre.cl y ajústala aquí cuando quieras.</p>` + footer('Continuar', !A.date || A.date <= today());
+      } else if (s === 'tiempo') {
+        const hrs = Math.round(A.mins * A.days.length / 6) / 10;
+        h = bubble('¿Cuánto tiempo puedes estudiar al día?') + `<div class="seg big" data-mins>${[[15, '15 min'], [30, '30 min'], [45, '45 min'], [60, '1 hora'], [90, '1,5 horas'], [120, '2 horas']].map(([m, n]) => `<button type="button" data-v="${m}" aria-pressed="${A.mins === m}">${n}</button>`).join('')}</div>
+          <div class="sub"><b>¿Qué días?</b><div class="seg days" data-days>${[1, 2, 3, 4, 5, 6, 0].map(d => `<button type="button" data-v="${d}" aria-pressed="${A.days.includes(d)}">${WD[d]}</button>`).join('')}</div></div>
+          <p class="muted small">≈ <b>${String(hrs).replace('.', ',')} horas</b> a la semana. Mejor poco todos los días que mucho de vez en cuando.</p>` + footer('Continuar', !A.days.length);
+      } else if (s === 'nivel') {
+        h = bubble('¿Cómo te va en cada prueba? Sé honesto: así el plan te da más tiempo donde más lo necesitas.') +
+          `<div class="lvls">${tests().map(id => { const v = A.lvl[id] || 3; return `<div class="lvr"><b>${I(testInfo(id).ic)}${esc(testInfo(id).n)}</b><div class="seg lv" data-lv="${id}">${[1, 2, 3, 4, 5].map(k => `<button type="button" data-v="${k}" aria-pressed="${v === k}" aria-label="${LV[k - 1]}">${k}</button>`).join('')}</div><small>${LV[v - 1]}</small></div>`; }).join('')}</div>` + footer('Continuar');
+      } else if (s === 'meta') {
+        h = bubble('¿Qué puntaje quieres lograr? Si ya sabes qué carrera quieres, cuéntame.') + `<div class="seg big" data-target>${[600, 700, 800, 900].map(p => `<button type="button" data-v="${p}" aria-pressed="${A.target === p}">${p}</button>`).join('')}</div>
+          <label class="field"><span>Carrera o universidad (opcional)</span><input type="text" data-career maxlength="60" placeholder="Ej.: Medicina, U. de Chile" value="${esc(A.career)}"></label>` + footer('Continuar');
+      } else if (s === 'estilo') {
+        h = bubble('¿Cómo prefieres estudiar cada tema?') + `<div class="goals">${[['video', 'Primero el video, después practico', 'Recomendado si el tema es nuevo'], ['practice', 'Practico directo', 'Y veo el video solo si me cuesta']].map(([k, n, d]) => `<button class="goalc col" type="button" data-st="${k}" aria-pressed="${A.style === k}"><b>${n}</b><span>${d}</span></button>`).join('')}</div>` + footer('Continuar');
+      } else if (s === 'diag') {
+        const nq = tests().length * 3;
+        h = bubble(`¿Hacemos un diagnóstico? Son ${nq} preguntas (unos ${Math.max(3, Math.round(nq * .6))} minutos) y así ajusto el plan a lo que ya sabes.`) +
+          `<div class="srv-f two"><button class="btn" type="button" data-diag>${I('target')}Hacer el diagnóstico</button><button class="btn ghost" type="button" data-next>Ahora no</button></div>`;
+      } else if (s === 'plan') {
+        const { P, tests: ts, st } = makePlan(A), left = daysBetween(today(), P.date);
+        h = bubble(`¡Listo! Tienes <b>${plural(st.sc.n, 'día', 'días')} de estudio</b> hasta la PAES. Así repartimos tu tiempo:`) +
+          `<div class="card pv-tests">${ts.map(id => { const p = st.per[id]; return `<div class="pvt"><b>${I(testInfo(id).ic)}${esc(testInfo(id).n)}</b><span>${Math.round(p.share * 100)}% del tiempo · alcanzas ${Math.round(p.cov * 100)}% del temario</span><i class="meter"><i style="width:${Math.round(p.cov * 100)}%"></i></i></div>`; }).join('')}</div>
+          <ul class="feat small"><li>${I('flame')}${P.mins} min, ${plural(P.days.length, 'día', 'días')} a la semana</li><li>${I('exam')}Un ensayo al final de cada semana</li><li>${I('replay')}${st.sc.f ? `Los últimos ${plural(st.sc.f, 'día', 'días')}: repaso final y ensayos` : 'Repaso inteligente todos los días'}</li><li>${I('target')}Faltan ${plural(Math.max(0, left), 'día', 'días')}</li></ul>
+          ${ts.some(id => st.per[id].cov < .98) ? `<p class="note warnn">${I('info')}No alcanzas a ver todo el temario: el plan prioriza lo más débil. Más minutos al día ayudan.</p>` : ''}
+          ${NAT() && NAT().remind ? `<label class="row remind"><span>Recordarme estudiar cada día<small>Un aviso si aún no terminas el plan de hoy</small></span><select data-rh>${[17, 18, 19, 20, 21].map(h => `<option value="${h}"${(S.set.rh || 19) === h ? ' selected' : ''}>${h}:00</option>`).join('')}</select><input class="sw" type="checkbox" data-rem ${S.set.remind ? 'checked' : ''}></label>` : ''}` + footer(first ? '¡Empezar!' : 'Guardar mi plan');
+      }
+      box.innerHTML = `<div class="srv-s" data-s="${s}">${h}</div>`;
+      const pe = $('.srv-pet .pet', box);
+      lima.pet = pe && RB.Pet ? new RB.Pet(pe) : null;
+      if (first) limaSay(s);
+      wire(s);
+    }
+    function wire(s) {
+      const nb = $('[data-next]', box);
+      if (nb) nb.onclick = () => { if (s === 'plan') return finish(); if (s === 'fecha') A.date = A.date || examDates()[0].d; next(); };
+      const set = (sel, fn) => { const el = $(sel, box); if (el) el.onclick = e => { const b = e.target.closest('button'); if (b) { fn(b); render(); } }; };
+      if (s === 'pruebas') {
+        $$('.pkc', box).forEach(b => { b.onclick = () => { const id = b.dataset.p; A.sel = A.sel.includes(id) ? A.sel.filter(x => x !== id) : A.sel.concat(id); render(); }; });
+        $('[data-all]', box).onclick = () => { A.sel = PICK.map(p => p.id); render(); };
+        set('[data-sci]', b => { A.sci = b.dataset.v || null; });
+      }
+      if (s === 'fecha') {
+        $$('[data-d]', box).forEach(b => { b.onclick = () => { A.date = b.dataset.d; A.dk = b.dataset.k; render(); }; });
+        $('[data-date]', box).onchange = e => { if (e.target.value && e.target.value > today()) { A.date = e.target.value; A.dk = 'otra'; render(); } };
+      }
+      if (s === 'tiempo') {
+        set('[data-mins]', b => { A.mins = +b.dataset.v; });
+        set('[data-days]', b => { const d = +b.dataset.v; A.days = A.days.includes(d) ? A.days.filter(x => x !== d) : A.days.concat(d); });
+      }
+      if (s === 'nivel') $$('[data-lv]', box).forEach(g => { g.onclick = e => { const b = e.target.closest('button'); if (b) { A.lvl[g.dataset.lv] = +b.dataset.v; render(); } }; });
+      if (s === 'meta') { set('[data-target]', b => { A.target = +b.dataset.v; }); $('[data-career]', box).oninput = e => { A.career = e.target.value; }; }
+      if (s === 'estilo') $$('[data-st]', box).forEach(b => { b.onclick = () => { A.style = b.dataset.st; render(); }; });
+      if (s === 'plan' && $('[data-rem]', box)) { $('[data-rem]', box).onchange = e => { S.set.remind = e.target.checked; save(); }; $('[data-rh]', box).onchange = e => { S.set.rh = +e.target.value; save(); }; }
+      if (s === 'diag') $('[data-diag]', box).onclick = () => {
+        commit();
+        startDiag(() => { const L = S.plan.lvl || {}; Object.assign(A.lvl, L); hist.push(cur); cur = steps.indexOf('plan'); render(); });
+      };
+    }
+    function commit() {
+      const { P, tests: ts } = makePlan(A);
+      S.plan = P; S.sel = ts;
+      if (!ts.includes(S.test)) S.test = ts[0];
+      S.goal = goalFor(P.mins);
+      S.today = null;
+      save();
+    }
+    function finish() {
+      const lv = S.plan && S.plan.diag === today() ? S.plan.lvl : null;
+      commit();
+      if (lv) { S.plan.lvl = Object.assign(S.plan.lvl, lv); S.plan.diag = today(); save(); }
+      finished = true;
+      syncReminder();
+      closeLayer(() => { go.scrolled = false; go('aprender'); window.scrollTo(0, 0); toast(`${I('check')}<span>${first ? '¡Tu plan está listo! Empieza por el plan de hoy.' : 'Plan actualizado'}</span>`, 2800); });
+    }
+    render();
   }
 
   // La app Android avisa cuando pasa a segundo plano: se pausa el video y se calla la voz.
@@ -1222,7 +1658,7 @@
   RB.tts.rate = S.set.rate;
   RB.tts.setPref(S.set.vname);
   go((location.hash || '').slice(1) || 'aprender');
-  if (!S.test) onboarding();
+  if (!S.plan) survey(); else syncReminder();
   // Dentro de la app Android: sin barras de desplazamiento ni menú contextual del navegador.
   if (NAT()) {
     D.documentElement.classList.add('app');
@@ -1231,5 +1667,5 @@
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !NAT()) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
   }
-  RB.app = { state: () => S, session: () => curSes };
+  RB.app = { state: () => S, session: () => curSes, openVideo, go };
 })();

@@ -71,6 +71,11 @@ for (const t of RB.tests) {
   byTest[t.id] = n; total += n;
 }
 // Videos
+const guion = require('./guion.js');
+const narr = {};
+const actx = { RB: { vaudio: (id, d) => { narr[id] = d; } } };
+vm.createContext(actx);
+if (fs.existsSync(path.join(root, 'audio'))) fs.readdirSync(path.join(root, 'audio')).filter(f => /^v-.*\.js$/.test(f)).forEach(f => vm.runInContext(fs.readFileSync(path.join(root, 'audio', f), 'utf8'), actx));
 const vrows = [];
 for (const id in RB.videos) {
   const v = RB.videos[id];
@@ -91,9 +96,16 @@ for (const id in RB.videos) {
     });
     s.forEach(t => { words += (String(t).match(/\S+/g) || []).length; if (/\*\*|==/.test(t)) E(`${id}/${i + 1}`, 'la narración no debe llevar marcas'); });
   });
-  const secs = RB.videoSecs(id);
-  if (secs < 240) W(id, `video corto: ${Math.round(secs / 6) / 10} min`);
-  if (secs > 420) W(id, `video largo: ${Math.round(secs / 6) / 10} min`);
+  // Narración grabada (tools/voz.py): que exista, que esté al día con el guion y que dure lo razonable.
+  const rec = narr[id];
+  if (!rec) W(id, 'sin narración grabada (correr tools/voz.py): se verá con la voz del teléfono');
+  else {
+    if (!fs.existsSync(path.join(root, 'audio', id + '.webm'))) E(id, 'falta audio/' + id + '.webm');
+    if (rec.h !== guion.huella(guion.scripts.find(x => x.id === id))) W(id, 'la narración grabada no coincide con el guion actual: volver a correr tools/voz.py');
+  }
+  const secs = rec ? rec.d : RB.videoSecs(id);
+  if (secs < 210) W(id, `video corto: ${Math.round(secs / 6) / 10} min`);
+  if (secs > 450) W(id, `video largo: ${Math.round(secs / 6) / 10} min`);
   if (quizzes < 2) W(id, `solo ${quizzes} preguntas dentro del video`);
   vrows.push([id, (secs / 60).toFixed(1) + ' min', words + ' palabras', quizzes + ' preguntas', v.sc.length + ' escenas']);
 }

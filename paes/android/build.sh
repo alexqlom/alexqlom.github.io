@@ -33,10 +33,13 @@ cp "$WEB/icons/icon-192.png" "$OUT/res/mipmap-xxxhdpi/ic_launcher.png"
 # App web completa, sin herramientas, sin la carpeta android ni el service worker (no se usa dentro del APK).
 for f in index.html app.css app.js icons.js video.js manifest.webmanifest; do cp "$WEB/$f" "$OUT/assets/www/"; done
 cp -R "$WEB/data" "$WEB/icons" "$OUT/assets/www/"
+# Narración de los videos (Opus) y sus tiempos; el audio va sin comprimir en el APK para leerlo y saltar rápido.
+mkdir -p "$OUT/assets/www/audio"
+cp "$WEB"/audio/*.webm "$WEB"/audio/*.js "$OUT/assets/www/audio/"
 
 "$SDK/aapt2" compile --dir "$OUT/res" -o "$OUT/res.zip"
 "$SDK/aapt2" link -o "$OUT/base.apk" -I "$SDK/android-framework.jar" --manifest "$HERE/AndroidManifest.xml" -A "$OUT/assets" \
-  --min-sdk-version 24 --target-sdk-version 34 --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" "$OUT/res.zip"
+  --min-sdk-version 24 --target-sdk-version 34 --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" -0 webm "$OUT/res.zip"
 
 javac -nowarn -proc:none --release 8 -cp "$SDK/android-all.jar" -d "$OUT/classes" $(find "$HERE/src" -name '*.java')
 java -cp "$SDK/dalvik-dx.jar" com.android.dx.command.Main --dex --min-sdk-version=24 --output="$OUT/dex/classes.dex" "$OUT/classes"

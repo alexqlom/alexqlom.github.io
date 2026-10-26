@@ -6,7 +6,9 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -61,13 +63,18 @@ public class MainActivity extends Activity {
         Window w = getWindow();
         w.setStatusBarColor(Color.BLACK);
         w.setNavigationBarColor(Color.BLACK);
+        // Los botones de volumen controlan el sonido de los videos aunque en ese momento no suene nada.
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         web = new WebView(this);
-        web.setBackgroundColor(Color.BLACK);
+        // Transparente al partir: se ve el ícono de arranque (fondo de la ventana) hasta que la página se dibuja.
+        web.setBackgroundColor(Color.TRANSPARENT);
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
+        // La página (file:///android_asset) lee el audio de los videos como archivo para poder saltar a cualquier punto.
+        s.setAllowFileAccessFromFileURLs(true);
         // Como app: sin zoom, sin rebote al llegar al borde y sin barras de desplazamiento.
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
@@ -82,6 +89,12 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new Bridge(), "PaesNative");
 
         web.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                view.setBackgroundColor(Color.BLACK);
+                getWindow().setBackgroundDrawableResource(android.R.color.black);
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
                 Uri url = req.getUrl();
@@ -153,6 +166,7 @@ public class MainActivity extends Activity {
 
         setContentView(web);
         web.loadUrl(HOME);
+        Reminder.schedule(this);
 
         SharedPreferences p = getSharedPreferences("paes", MODE_PRIVATE);
         wantVoice = p.getString("voice", "");
@@ -257,17 +271,18 @@ public class MainActivity extends Activity {
         super.onActivityResult(request, result, data);
     }
 
-    // El botón Atrás lo decide la app: cierra la pantalla abierta, vuelve a Aprender o sale.
+    // El botón Atrás lo decide la app: cierra la pantalla abierta, retrocede en la encuesta o vuelve a Aprender.
+    // Al salir, la app queda en segundo plano (como cualquier app) y al volver sigue donde estaba.
     @Override
     public void onBackPressed() {
         if (web == null) {
-            super.onBackPressed();
+            moveTaskToBack(true);
             return;
         }
         web.evaluateJavascript("window.PaesBack ? PaesBack() : 'exit'", new ValueCallback<String>() {
             @Override
             public void onReceiveValue(String value) {
-                if (value == null || !value.contains("handled")) MainActivity.super.onBackPressed();
+                if (value == null || !value.contains("handled")) moveTaskToBack(true);
             }
         });
     }
@@ -363,6 +378,35 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+
+        /** Recordatorio diario del plan: activo, hora, minuto, título, texto y días de estudio ("1,2,3", domingo = 0). */
+        @JavascriptInterface
+        public void remind(boolean on, int hour, int minute, String title, String text, String days) {
+            Reminder.prefs(MainActivity.this).edit()
+                .putBoolean("remind", on)
+                .putInt("rh", Math.max(0, Math.min(hour, 23)))
+                .putInt("rm", Math.max(0, Math.min(minute, 59)))
+                .putString("rtitle", title == null ? "" : title)
+                .putString("rtext", text == null ? "" : text)
+                .putString("days", days == null ? "" : days)
+                .apply();
+            if (on && Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 9);
+                    }
+                });
+            }
+            Reminder.schedule(MainActivity.this);
+        }
+
+        /** La página avisa que el plan de hoy está completo: ese día ya no se recuerda. */
+        @JavascriptInterface
+        public void planDone(String day) {
+            Reminder.prefs(MainActivity.this).edit().putString("doneDay", day == null ? "" : day).apply();
         }
 
         @JavascriptInterface

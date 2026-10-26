@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pantalla de arranque: fondo negro con el ícono al centro mientras carga la app. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/black" />
+    <item android:width="120dp" android:height="120dp" android:gravity="center">
+        <bitmap android:src="@mipmap/ic_launcher" android:gravity="fill" />
+    </item>
+</layer-list>
