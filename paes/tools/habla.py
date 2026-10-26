@@ -125,6 +125,7 @@ RESPELL = {
     'Avogadro': 'Avogadro', 'Mercalli': 'Mercali', 'Valech': 'Valech', 'Bachelet': 'Bacheléth', 'Pinochet': 'Pinoché',
     'Kennedy': 'Kénedi', 'Churchill': 'Chérchil', 'Hitler': 'Jítler', 'Wall': 'Uol', 'Street': 'Strit', 'Marshall': 'Márshal',
     'Thatcher': 'Táchet', 'o’higginistas': 'ojiguinistas', "o'higginistas": 'ojiguinistas', 'Brønsted': 'Brónsted', 'boys': 'bóis', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
+    'habeas': 'ábeas', 'corpus': 'córpus', 'solis': 'sólis', 'sanguinis': 'sanguínis', 'Lobby': 'Lóbi', 'Apruebo': 'Apruebo',
     'Schneider': 'Shnáider', 'Tomic': 'Tómic', 'Tanquetazo': 'Tanquetazo',
     'Marmaduke': 'Mármaduk', 'Grove': 'Grov', 'Klein-Saks': 'Kláin Saks', 'Huachipato': 'Huachipato',
     'Prebisch': 'Prébish', 'Batista': 'Batista', 'glasnost': 'glásnost', 'perestroika': 'perestróika', 'Apolo': 'Apolo',
