@@ -1164,7 +1164,11 @@
   const NS = 'http://www.w3.org/2000/svg';
   const svgEl = (tag, attrs, parent) => { const e = D.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
   const niceStep = span => span <= 12 ? 1 : span <= 24 ? 2 : span <= 60 ? 5 : span <= 120 ? 10 : span <= 300 ? 25 : 50;
-  const numTxt = v => (Math.round(v * 100) / 100).toString().replace('.', ',').replace('-', '−');
+  // Número como se escribe en Chile: 1.500 · 0,25 · −3.
+  const numTxt = v => {
+    const r = Math.round(v * 1000) / 1000, [i, d] = Math.abs(r).toString().split('.');
+    return (r < 0 ? '−' : '') + (i.length > 3 ? i.replace(/\B(?=(\d{3})+$)/g, '.') : i) + (d ? ',' + d : '');
+  };
   // Expresión de una función: "x^2 - 4", "2*sin(x)", "log(x)" (log = base 10, ln = natural).
   const fnOf = expr => {
     const body = String(expr).replace(/\^/g, '**').replace(/π/g, 'PI').replace(/√/g, 'sqrt');
@@ -1180,7 +1184,7 @@
   Object.assign(T.TPL, {
     // Plano o figura: ejes opcionales, funciones, puntos, segmentos, vectores, polígonos, círculos, ángulos y rótulos.
     // { k: 'plot', x: [-5, 5], y: [-5, 5], eq: true (misma escala), axes, grid, xl, yl, box: [x, y, ancho, alto],
-    //   it: [['f', 'x^2-4', 'lime', 'rótulo', '@a'], ['p', 2, 0, 'A', '@b'], ['seg', x1, y1, x2, y2, 'red', '5 cm', '@c'],
+    //   it: [['f', 'x^2-4', 'lime', 'rótulo', '@a', xRótulo], ['p', 2, 0, 'A', '@b'], ['seg', x1, y1, x2, y2, 'red', '5 cm', '@c'],
     //        ['vec', ...], ['poly', '0,0 4,0 0,3', 'blue', 'rótulo'], ['circ', cx, cy, r, 'yel', 'rótulo'],
     //        ['ang', vx, vy, ax, ay, bx, by, 'org', 'α'], ['txt', x, y, 'texto', 'wht'], ['h', y, 'red', 'rótulo'], ['v', x, 'red', 'rótulo']] }
     // Recta numérica: { k: 'plot', nl: true, x: [-6, 6], top, it: [['p', -4, 0, '−4'], ['o', 3, 0], ['arc', -4, 5, 'lime', '+9'], ['seg', 3, 0, 6, 0, 'lime']] }
@@ -1233,7 +1237,7 @@
         const at = atOf(S, raw, prev); const t = at != null ? at : prev + .8; prev = t;
         const x = noAt(raw), kind = x[0];
         if (kind === 'f') {
-          const [, expr, col, label] = x, f = fnOf(expr); if (!f) return;
+          const [, expr, col, label, lxAt] = x, f = fnOf(expr); if (!f) return;
           let d = '', pen = false, lastY = null;
           const n = 220, ylo = y0 - (y1 - y0), yhi = y1 + (y1 - y0);
           for (let i = 0; i <= n; i++) {
@@ -1248,7 +1252,8 @@
           if (label) {
             // Rótulo junto a la curva: el punto visible más a la derecha que quede dentro del plano, con el texto a su lado.
             let lx = null, ly = null;
-            for (const fr of [.8, .7, .9, .6, .5, .4, .3, .2]) { const xv = x0 + (x1 - x0) * fr; let yv; try { yv = callFn(f, xv); } catch (e) { yv = NaN; } if (Number.isFinite(yv) && yv < y1 - (y1 - y0) * .08 && yv > y0 + (y1 - y0) * .08) { lx = xv; ly = yv; break; } }
+            if (typeof lxAt === 'number') { lx = lxAt; try { ly = callFn(f, lx); } catch (e) { ly = null; } if (!Number.isFinite(ly)) lx = ly = null; }
+            if (lx == null) for (const fr of [.8, .7, .9, .6, .5, .4, .3, .2]) { const xv = x0 + (x1 - x0) * fr; let yv; try { yv = callFn(f, xv); } catch (e) { yv = NaN; } if (Number.isFinite(yv) && yv < y1 - (y1 - y0) * .08 && yv > y0 + (y1 - y0) * .08) { lx = xv; ly = yv; break; } }
             if (lx == null) { lx = (x0 + x1) / 2; ly = (y0 + y1) / 2; }
             const px = X(lx), right = px < W0 - 120;
             const e = svgText(top, right ? px + 12 : px - 12, Y(ly) + 5, label, 'tx', mcol(col || 'lime'), right ? 'start' : 'end'); fadeIn(A, e, t + 1.1); }
