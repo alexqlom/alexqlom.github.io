@@ -376,7 +376,7 @@ def envelope(y, fps=25):
 def encode(y, path):
     p = subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'f32le', '-ar', str(SR), '-ac', '1',
                         '-i', 'pipe:0', '-c:a', 'libopus', '-b:a', '20k', '-vbr', 'on', '-compression_level', '10',
-                        '-application', 'audio', path], input=y.astype(np.float32).tobytes(), capture_output=True)
+                        '-application', 'audio', '-fflags', '+bitexact', '-flags:a', '+bitexact', path], input=y.astype(np.float32).tobytes(), capture_output=True)
     if p.returncode:
         raise RuntimeError(p.stderr.decode())
 
