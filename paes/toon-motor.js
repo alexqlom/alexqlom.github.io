@@ -1032,6 +1032,9 @@
         const ico = ic && iconOf(ic);
         const icon = ico ? `<span class="ic"><svg viewBox="0 0 ${ico[0]} ${ico[1]}">${ico[2]}</svg></span>` : '';
         const row = div('ttl-i', `<i class="dot"></i><b class="yr">${esc(yr)}</b><span class="tx">${esc(text || '')}</span>${icon}`, `top:${r1(top + i * gap - 18)}px`);
+        // Rangos de años largos (1881–1883): letra más chica para que la etiqueta no se salga por la izquierda.
+        const yl = String(yr).length;
+        if (yl > 5) { const ye = row.querySelector('.yr'); ye.style.fontSize = (yl > 8 ? 11 : 13) + 'px'; if (yl > 8) ye.style.padding = '3px 4px'; }
         hud.appendChild(row);
         A.add(row.querySelector('.dot'), [{ transform: 'scale(0)' }, { transform: 'scale(1.5)', offset: .6 }, { transform: 'scale(1)' }], tt, .35, 'ease-out');
         A.add(row.querySelector('.yr'), [{ opacity: 0, transform: 'translateX(-20px)' }, { opacity: 1, transform: 'none' }], tt + .05, .35, RB.vkit.EASE.back);
