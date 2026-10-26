@@ -42,6 +42,7 @@ const PLACES = {
   atacama: [-69.5, -24.5], tarapaca: [-69.5, -20.0], loa: [-70.1, -21.43], biobio: [-73.1, -36.8], tolten: [-73.2, -39.2], magallanes: [-70.0, -53.5], cabodehornos: [-67.27, -55.98],
   hiroshima: [132.46, 34.39], nagasaki: [129.87, 32.75], tokio: [139.69, 35.69], pekin: [116.4, 39.9], pearlharbor: [-157.95, 21.36], delhi: [77.2, 28.6], saigon: [106.7, 10.8],
   corea: [127.0, 37.5], cairo: [31.24, 30.04], ciudaddelcabo: [18.42, -33.92], argel: [3.06, 36.75], congo: [15.3, -4.3], suez: [32.55, 29.97], estambul: [28.98, 41.0],
+  rapanui: [-109.35, -27.12], antartica: [-62.0, -72.0], quintero: [-71.53, -32.78], chaiten: [-72.65, -42.83], vina: [-71.55, -33.02],
   berlinoeste: [13.3, 52.5], cuba: [-79.5, 21.8], vietnam: [106.0, 16.0], indochina: [104.0, 14.0], india: [78.0, 22.0], sudafrica: [24.0, -29.0], argelia: [3.0, 28.0],
 };
 // Regiones históricas o administrativas: un rectángulo (longitudes y latitudes) que se recorta con la tierra de un país.
