@@ -32,8 +32,8 @@
         s: 'Es como si te pagaran con fichas de las maquinitas del mall, que solo sirven en una tienda… ¡y esa tienda te cobra el doble por el pan!',
         c: ['ch=chica l @pagaran', 'fi=+coin x150 y250 pop @fichas t=FICHA', 've=vendedor r @tienda', 'br=+bread x260 y250 s.6 pop @pan', 'T "¡EL DOBLE!" @doble', 'ch mood shock @doble', 'ch emote ! @doble', 've mood smug @doble'] },
       { ch: 'Las críticas', set: 'parliament',
-        s: 'Algunos miembros de la élite también lo criticaron. En 1900, Enrique Mac Iver habló de una crisis moral de la República, y lo resumió así: el país es rico, pero no somos felices.',
-        c: ['Y 1900 @1900', 'mi=diputado c @Enrique "Enrique Mac Iver"', 'T "CRISIS MORAL" @crisis', 'mb=+moneybag x290 y250 s.7 pop @rico', 'mi say "¡No somos felices!" @felices', 'mi mood sad @felices'] },
+        s: 'Algunos miembros de la élite también lo criticaron. En 1900, Enrique Mac-Iver habló de una crisis moral de la República, y lo resumió así: el país es rico, pero no somos felices.',
+        c: ['Y 1900 @1900', 'mi=diputado c @Enrique "Enrique Mac-Iver"', 'T "CRISIS MORAL" @crisis', 'mb=+moneybag x290 y250 s.7 pop @rico', 'mi say "¡No somos felices!" @felices', 'mi mood sad @felices'] },
       { set: 'paper',
         s: 'Y en 1910, en pleno Centenario, Alejandro Venegas publicó Sinceridad, Chile íntimo en 1910. Firmó con un nombre falso, el doctor Valdés Cange, como una cuenta anónima, y denunció el lujo de la élite frente a la miseria del pueblo.',
         c: ['Y 1910 @1910', 've=filosofo/hr=side:#2b1d14/fh=mus:#2b1d14/top=suit:#2a2a2a/acc=shades/hold=none l @Venegas "Alejandro Venegas"', 'bk=+books c y250 s.8 pop @Sinceridad t=SINCERIDAD', 'L "Dr. Valdés Cange" x84 y200 @falso', 've emote ? @anonima', 'd=dama rc @lujo', 'ob=obrero/hat=none rr @miseria', 'd mood happy @lujo', 'ob mood sad @miseria'] },
@@ -44,8 +44,8 @@
         s: 'Y esta: ¿por qué las enfermedades se propagaban tan rápido en los conventillos?',
         e: 'Por el hacinamiento y la falta de agua potable y alcantarillado.' },
       { k: 'recap', set: 'stage', ch: 'Para recordar',
-        s: 'Resumen: la cuestión social fue el conjunto de problemas de los sectores populares. Llegaron del campo a la ciudad, vivieron en conventillos, con enfermedades y altísima mortalidad infantil. En las salitreras se pagaba con fichas para la pulpería. Y críticos como Mac Iver y Venegas lo denunciaron. ¡A practicar!',
-        it: [['people', 'Cuestión social', '@cuestion'], ['conventillo', 'Conventillos', '@conventillos'], ['germ', 'Enfermedades y mortalidad', '@enfermedades'], ['coin', 'Fichas y pulpería', '@fichas'], ['books', 'Mac Iver y Venegas', '@Venegas']] },
+        s: 'Resumen: la cuestión social fue el conjunto de problemas de los sectores populares. Llegaron del campo a la ciudad, vivieron en conventillos, con enfermedades y altísima mortalidad infantil. En las salitreras se pagaba con fichas para la pulpería. Y críticos como Mac-Iver y Venegas lo denunciaron. ¡A practicar!',
+        it: [['people', 'Cuestión social', '@cuestion'], ['conventillo', 'Conventillos', '@conventillos'], ['germ', 'Enfermedades y mortalidad', '@enfermedades'], ['coin', 'Fichas y pulpería', '@fichas'], ['books', 'Mac-Iver y Venegas', '@Venegas']] },
     ],
   });
 
