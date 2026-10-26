@@ -31,7 +31,8 @@ cp -R "$HERE/res/." "$OUT/res/"
 cp "$WEB/icons/icon-192.png" "$OUT/res/mipmap-xxxhdpi/ic_launcher.png"
 
 # App web completa, sin herramientas, sin la carpeta android ni el service worker (no se usa dentro del APK).
-for f in index.html app.css app.js icons.js video.js manifest.webmanifest; do cp "$WEB/$f" "$OUT/assets/www/"; done
+for f in index.html app.css manifest.webmanifest; do cp "$WEB/$f" "$OUT/assets/www/"; done
+cp "$WEB"/*.js "$OUT/assets/www/" && rm -f "$OUT/assets/www/sw.js"
 cp -R "$WEB/data" "$WEB/icons" "$OUT/assets/www/"
 # Narración de los videos (Opus) y sus tiempos; el audio va sin comprimir en el APK para leerlo y saltar rápido.
 mkdir -p "$OUT/assets/www/audio"

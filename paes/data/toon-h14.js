@@ -99,7 +99,7 @@
         s: 'Todo parte con la iniciativa. Si el proyecto lo presenta el Presidente, se llama mensaje. Si lo presentan diputados o senadores, se llama moción.',
         c: ['pr=presidente x70 @Presidente', 'm=+doc x70 y240 s.6 pop @mensaje t=MENSAJE', 'd=diputado/hat=none x290 @diputados', 'mo=+doc x290 y240 s.6 pop @mocion t=MOCIÓN', 'T "MENSAJE O MOCIÓN" @mocion'] },
       { k: 'chain', set: 'plain', top: 120,
-        s: 'Luego, el proyecto pasa por la cámara de origen y por la cámara revisora. Si no coinciden, se forma una comisión mixta. Después, el Presidente lo promulga y se publica en el Diario Oficial. ¡Y ya es ley!',
+        s: 'Luego, el proyecto pasa por la cámara de origen y por la cámara revisora. Si no coinciden, se forma una comisión mixta. Después, el Presidente lo promulga y se publica en el Diario Oficial. ¡Y listo: ya es una ley!',
         it: [['doc', 'Mensaje o moción', '@proyecto'], ['congreso', 'Cámara de origen', '@origen'], ['congreso', 'Cámara revisora', '@revisora'], ['handshake', 'Comisión mixta (si hace falta)', '@mixta'], ['newspaper', 'Promulgación y Diario Oficial', '@Diario']] },
       { set: 'office',
         s: 'Y si al Presidente no le gusta lo que aprobó el Congreso, puede hacerle observaciones: es el veto presidencial. Pero el Congreso puede insistir, con dos tercios de sus miembros.',
