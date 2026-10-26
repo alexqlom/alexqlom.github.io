@@ -100,7 +100,7 @@
         c: ['T "CLASE MEDIA" @media', 'pf=profe l @profesores', 'em=empresario/top=suit:#5a5a5a c @empleados', 'md=medico r @profesionales', 'sc=+school x290 y220 s.4 pop @educacion', 'L "Partido Radical" x180 y560 @Radical'] },
       { ch: 'Las mujeres y el voto', set: 'street',
         s: 'Las mujeres lucharon por sus derechos. Elena Caffarena y Amanda Labarca fueron grandes líderes, y el MEMCH, el Movimiento Pro Emancipación de las Mujeres de Chile, fue clave.',
-        c: ['ec=sufragista/hr=bob:#2b1d14/hold=sign:¡VOTO_YA! l @Caffarena "Elena Caffarena"', 'al=dama/hr=bun:#8a8a8a/top=dress:#3a3a6a/acc=glasses r @Labarca "Amanda Labarca"', 'T "MEMCH" @MEMCH', 'ec pose fist @clave', 'al pose cheer @clave'] },
+        c: ['ec=sufragista/hr=bob:#2b1d14/hold=none l @Caffarena "Elena Caffarena"', 'sg=+sign c y500 s.75 pop @Caffarena+0.3 t=¡VOTO_YA!', 'al=dama/hr=bun:#8a8a8a/top=dress:#3a3a6a/acc=glasses r @Labarca "Amanda Labarca"', 'T "MEMCH" @MEMCH', 'ec pose fist @clave', 'al pose cheer @clave'] },
       { set: 'parliament',
         s: 'Primero, desde 1934, pudieron votar en elecciones municipales. En 1949 obtuvieron el voto pleno, para presidenciales y parlamentarias. Y en 1952 votaron por primera vez en una elección presidencial.',
         c: ['Y 1934 @1934', 'm1=vecina l @votar', 'bx=+ballotbox x180 y330 s.7 pop @votar', 'm1 pose vote @municipales', 'Y 1949 @1949', 'T "VOTO PLENO" @pleno', 'm2=sufragista/hold=none r @pleno', 'm2 pose cheer @parlamentarias', 'Y 1952 @1952', 'fx confetti @primera'] },
