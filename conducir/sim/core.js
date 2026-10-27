@@ -40,6 +40,7 @@
     const up = e => { if (e.pointerId !== o.id) return; o.id = null; el.classList.remove('on'); end(); };
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    el.addEventListener('lostpointercapture', up);
   };
   // Pedal o palanca analógica: más abajo en el pedal = más presión. Al soltar vuelve a cero.
   function pedal(host, label, opt = {}) {
@@ -93,7 +94,8 @@
     };
     return o;
   }
-  // Botón: momentáneo o con estado (encendido/apagado).
+  // Botón: momentáneo o con estado (encendido/apagado). Actúa al apoyar el dedo: con otro dedo ya en la pantalla
+  // (por ejemplo, pisando el freno) el navegador no genera "click", así que no se puede depender de él.
   function btn(host, label, opt = {}) {
     const el = mk('button', 'sp-btn ' + (opt.cls || ''), `${opt.ic ? RB.icon(opt.ic) : ''}<span>${esc(label)}</span>`);
     el.type = 'button';
@@ -104,10 +106,10 @@
     o.setOn = v => { o.on = !!v; paint(); };
     o.label = t => { el.querySelector('span').textContent = t; };
     if (opt.holdKey) o.holdKey = true;
-    el.addEventListener('pointerdown', e => { o.hold = true; if (opt.onDown) opt.onDown(o); e.preventDefault(); });
+    el.addEventListener('pointerdown', e => { if (e.button > 0) return; e.preventDefault(); o.hold = true; if (opt.onDown) opt.onDown(o); o.press(); });
     const up = () => { o.hold = false; };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
-    el.addEventListener('click', () => o.press());
+    el.addEventListener('click', e => { if (e.detail === 0) o.press(); }); // teclado o lector de pantalla
     paint();
     return o;
   }
@@ -127,7 +129,8 @@
     const paint = () => el.querySelectorAll('.sp-g').forEach(b => b.classList.toggle('act', b.dataset.g === o.v));
     o.go = g => { if (g === o.v) return; if (!opt.onTry || opt.onTry(g, o.v) !== false) { o.v = g; paint(); } };
     o.force = g => { o.v = g; paint(); };
-    el.addEventListener('click', e => { const b = e.target.closest('.sp-g'); if (b) o.go(b.dataset.g); });
+    el.addEventListener('pointerdown', e => { const b = e.target.closest('.sp-g'); if (!b || e.button > 0) return; e.preventDefault(); o.go(b.dataset.g); });
+    el.addEventListener('click', e => { const b = e.target.closest('.sp-g'); if (b && e.detail === 0) o.go(b.dataset.g); });
     o.keymap = opt.keys || {};
     paint();
     return o;
