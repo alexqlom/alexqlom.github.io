@@ -22,7 +22,7 @@
   const DEF = () => ({
     v: 1, lic: null, goal: 20, xp: 0, days: {}, streak: 0, best: 0, last: null, hearts: 5, hAt: Date.now(),
     done: {}, stars: {}, q: {}, exams: [], ach: {}, seen: {}, lics: {}, cards: 0, revs: 0, perf: 0, goals: 0, goalDay: null,
-    haz: {}, hazBest: 0, blitz: 0, set: { sound: true, vib: true, voice: false, inf: false, theme: 'dark' },
+    haz: {}, hazBest: 0, blitz: 0, sim: {}, set: { sound: true, vib: true, voice: false, inf: false, theme: 'dark' },
   });
   let S = DEF();
   const load = raw => { const o = JSON.parse(raw); return Object.assign(DEF(), o, { set: Object.assign(DEF().set, o.set || {}) }); };
@@ -145,7 +145,7 @@
       history.pushState({ ov: OV.length }, '');
       if (ent.ask && !ent.asking) {
         ent.asking = true;
-        ask(ent.ask).then(ok => { ent.asking = false; if (ok) { ent.guard = null; closeLayer(); } });
+        ask(ent.ask).then(ok => { ent.asking = false; if (ok) { ent.guard = null; closeLayer(); } else if (ent.onStay) ent.onStay(); });
       }
       return;
     }
@@ -210,6 +210,8 @@
     { id: 'exam38', n: 'Puntaje perfecto', d: 'Saca puntaje máximo en un simulacro', ic: 'trophy', ok: () => S.exams.some(e => e.score === e.max) },
     { id: 'haz', n: 'Ojo de halcón', d: 'Saca 5 de 5 en percepción de riesgos', ic: 'eye', ok: () => Object.values(S.haz).some(v => v >= 5) },
     { id: 'cine', n: 'Cinéfilo', d: 'Mira 10 videos completos', ic: 'play', ok: () => Object.keys(S.seen).length >= 10 },
+    { id: 'sim1', n: 'Al volante', d: 'Cumple una misión en un simulador', ic: 'wheel', ok: () => Object.keys(S.sim || {}).length >= 1 },
+    { id: 'sim5', n: 'Todoterreno', d: 'Cumple misiones en 5 simuladores distintos', ic: 'joy', ok: () => Object.keys(S.sim || {}).length >= 5 },
     { id: 'cards', n: 'Señalero', d: 'Completa una ronda de tarjetas de señales', ic: 'sign', ok: () => S.cards >= 1 },
     { id: 'review', n: 'Repaso al día', d: 'Completa un repaso inteligente', ic: 'replay', ok: () => S.revs >= 1 },
     { id: 'multi', n: 'Todo terreno', d: 'Practica con 3 clases de licencia', ic: 'truck', ok: () => Object.keys(S.lics).length >= 3 },
@@ -950,6 +952,9 @@
     });
   }
 
+  // ---------- Simular (juegos en sim/*.js) ----------
+  VIEWS.simular = v => { if (RB.simView) RB.simView(v); };
+
   // ---------- Practicar ----------
   VIEWS.practicar = v => {
     const due = dueItems().length, last = S.exams.find(e => e.lic === S.lic), c = course();
@@ -1357,5 +1362,12 @@
   if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.RutaNative) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
   }
-  RB.app = { state: () => S, session: () => curSes };
+  // Lo que usan los simuladores (sim/*.js) para abrir pantallas, guardar y sumar XP.
+  RB.app = {
+    state: () => S, session: () => curSes,
+    ui: {
+      openLayer, closeLayer, ask, toast, save, state: () => S, buzz, SFX,
+      award(xp) { bumpStreak(); const goalHit = addXP(xp); S.lics[S.lic] = 1; save(); header(); checkAch(); if (goalHit) toast(`${I('target')}<span>¡Meta diaria cumplida!</span>`); },
+    },
+  };
 })();

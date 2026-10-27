@@ -1,6 +1,6 @@
 // Cache propio de Ruta (alcance /conducir/): la app abre sin conexión y no toca el cache de otras apps del sitio.
-const CACHE = 'ruta-v3';
-const SHELL = ['./', './index.html', './app.css', './app.js', './signs.js', './scenes.js', './data/comun.js', './data/especificas.js', './data/mas-comun.js', './data/mas-comun2.js', './data/mas-especificas.js', './data/mas-examen.js', './data/courses.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'ruta-v4';
+const SHELL = ['./', './index.html', './app.css', './app.js', './signs.js', './scenes.js', './data/comun.js', './data/especificas.js', './data/mas-comun.js', './data/mas-comun2.js', './data/mas-especificas.js', './data/mas-examen.js', './data/courses.js', './sim/core.js', './sim/auto.js', './sim/estacionar.js', './sim/moto.js', './sim/bus.js', './sim/camion.js', './sim/maquinas.js', './sim/carreta.js', './sim/emergencia.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });

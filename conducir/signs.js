@@ -238,6 +238,10 @@
     car: 'M5 13l1.6-5h10.8L19 13M3 13h18v5H3zM6 18v2M18 18v2M6.5 15.5h1M16.5 15.5h1',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
     cc: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10.5 10.2a2.2 2.2 0 1 0 0 3.6M17 10.2a2.2 2.2 0 1 0 0 3.6"/>',
+    wheel: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M3.3 10.8h6.5M14.2 10.8h6.5M12 14.2v6.6"/>',
+    joy: '<circle cx="12" cy="5" r="2.4"/><path d="M12 7.4V13M6 13h12l1.5 4.5V20h-15v-2.5z"/>',
+    dig: '<rect x="2" y="17" width="12" height="4" rx="2"/><path d="M4 17v-5h5l1.5 5M9 12l5-6.5 5 3.5M19 9l1.5 4-3 .5"/>',
+    fork: '<path d="M3 18V10h5l3 4.5V18M8 10V6H5M15 3v15M15 16h6"/><circle cx="6" cy="19.5" r="1.5"/><circle cx="11" cy="19.5" r="1.5"/>',
   };
   RB.icon = (name, cls = '') => {
     const d = P[name] || P.info;

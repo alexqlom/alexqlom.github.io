@@ -20,7 +20,7 @@ cp "$WEB/icons/icon-192.png" "$OUT/res/mipmap-xxxhdpi/ic_launcher.png"
 
 # App web completa, sin la carpeta android ni el service worker (no se usa dentro del APK).
 for f in index.html app.css app.js signs.js scenes.js manifest.webmanifest; do cp "$WEB/$f" "$OUT/assets/www/"; done
-cp -R "$WEB/data" "$WEB/icons" "$OUT/assets/www/"
+cp -R "$WEB/data" "$WEB/icons" "$WEB/sim" "$OUT/assets/www/"
 
 "$AAPT2" compile --dir "$OUT/res" -o "$OUT/res.zip"
 "$AAPT2" link -o "$OUT/base.apk" -I "$JAR" --manifest "$HERE/AndroidManifest.xml" -A "$OUT/assets" \
