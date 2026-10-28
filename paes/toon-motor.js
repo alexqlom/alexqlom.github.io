@@ -1270,7 +1270,8 @@
           const g = svgEl('g', { class: 'pt' }, top);
           const c = svgEl('circle', { cx: r1(X(px)), cy: r1(Y(py)), r: nl ? 8 : 6.5 }, g);
           if (kind === 'o') { c.style.fill = '#111'; c.style.stroke = mcol(col || 'yel'); c.style.strokeWidth = '3.5'; } else c.style.fill = mcol(col || 'yel');
-          if (label) svgText(g, X(px) + 10, Y(py) - 11, label, 'tx', null, 'start');
+          // Rótulo arriba a la derecha del punto; si está cerca del borde derecho, a la izquierda.
+          if (label) { const right = X(px) > W0 - 70; svgText(g, X(px) + (right ? -10 : 10), Y(py) - 11, label, 'tx', null, right ? 'end' : 'start'); }
           popIn(A, g, t); ctx.sfx(t, 'pop');
         } else if (kind === 'seg' || kind === 'vec') {
           const [, ax1, ay1, ax2, ay2, col, label] = x, c = mcol(col || (kind === 'vec' ? 'yel' : 'wht'));
