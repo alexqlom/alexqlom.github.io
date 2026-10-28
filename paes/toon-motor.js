@@ -1082,7 +1082,8 @@
         const x = k ? 270 : 90;
         const tt = atOf(S, [title], prev);
         const t0 = tt != null ? tt : S.t0 + .2 + k * 1.2;
-        const h = div('tvs-h' + (k ? ' r' : ''), esc(String(title).replace(/\s*@\S+/, '')), `left:${x}px`);
+        const tTxt = String(title).replace(/\s*@\S+/, '');
+        const h = div('tvs-h' + (k ? ' r' : '') + (tTxt.length > 15 ? ' sm' : ''), esc(tTxt), `left:${x}px`);
         hud.appendChild(h);
         A.add(h, [{ opacity: 0, transform: `translate(-50%,0) translateX(${k ? 40 : -40}px)` }, { opacity: 1, transform: 'translate(-50%,0)' }], t0, .4, RB.vkit.EASE.back);
         if (who) synth(ctx, 'vs' + k, String(who), x, 330, .8, 'hop', t0 + .1);

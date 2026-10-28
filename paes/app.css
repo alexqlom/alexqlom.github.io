@@ -1035,6 +1035,7 @@ b.hl { font-weight: 800; }
 .tvs-v { position: absolute; left: 50%; top: 300px; color: var(--acc); font: 900 34px/1 var(--f); text-shadow: 0 4px 0 #000; }
 .tvs-h { position: absolute; top: 140px; transform: translateX(-50%); padding: 6px 12px; border-radius: 12px; background: #fff; color: #111; font: 900 16px/1.1 var(--f); text-transform: uppercase; white-space: nowrap; }
 .tvs-h.r { background: var(--acc); }
+.tvs-h.sm { font-size: 12px; padding: 7px 10px; }
 .tvs-i { position: absolute; width: 162px; transform: translateX(-50%); padding: 7px 9px; border-radius: 12px; background: rgba(18, 18, 18, .92); border: 1.5px solid #3a3a3a; color: #fff; font: 800 13px/1.18 var(--f); text-align: center; }
 .tvs-i.r { border-color: var(--accd); }
 .tch-i { position: absolute; left: 50%; width: 280px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 18px; background: rgba(18, 18, 18, .92); border: 2px solid #333; }
