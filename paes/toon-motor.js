@@ -1324,7 +1324,7 @@
           const [, val, col, label] = x, c = mcol(col || 'red');
           const d = kind === 'h' ? `M${r1(X(x0))} ${r1(Y(val))} L${r1(X(x1))} ${r1(Y(val))}` : `M${r1(X(val))} ${r1(Y(y0))} L${r1(X(val))} ${r1(Y(y1))}`;
           const l = svgEl('path', { d, class: 'dl' }, top); l.style.stroke = c; fadeIn(A, l, t, .4);
-          if (label) { const e = kind === 'h' ? svgText(top, X(x0) + 6, Y(val) - 8, label, 'tx', c, 'start') : svgText(top, X(val) + 6, Y(y1) + 16, label, 'tx', c, 'start'); fadeIn(A, e, t + .2); }
+          if (label) { const right = X(val) > W0 / 2; const e = kind === 'h' ? svgText(top, X(x0) + 6, Y(val) - 8, label, 'tx', c, 'start') : svgText(top, X(val) + (right ? -6 : 6), Y(y1) + 16, label, 'tx', c, right ? 'end' : 'start'); fadeIn(A, e, t + .2); }
         }
       });
     },
