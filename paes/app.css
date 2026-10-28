@@ -1057,6 +1057,7 @@ b.hl { font-weight: 800; }
 .ttf { position: absolute; left: 50%; transform: translate(-50%, -50%); padding: 8px 18px 9px; border-radius: 14px; background: rgba(14, 14, 14, .88); border: 2px solid rgba(255, 255, 255, .16); color: #fff; font: 700 32px/1.18 'Noto Serif', Cambria, 'Times New Roman', serif; white-space: nowrap; text-align: center; letter-spacing: .01em; box-shadow: 0 6px 0 rgba(0, 0, 0, .35); }
 .ttf.wrap { white-space: normal; width: 320px; }
 .ttf .hl { color: var(--acc); }
+.ttf sup { font-size: .58em; line-height: 0; vertical-align: .85em; }
 .ts.light .ttf { background: rgba(20, 20, 20, .9); }
 .tplot { position: absolute; left: 0; top: 0; width: 360px; height: 640px; overflow: visible; pointer-events: none; }
 .tplot .gr { stroke: rgba(255, 255, 255, .09); stroke-width: 1; }

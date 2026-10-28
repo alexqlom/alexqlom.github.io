@@ -718,13 +718,15 @@
     } else if (kind === 'F') {
       // Fórmula: conserva mayúsculas y símbolos; [[…]] marca una parte en color. x= y y= la ubican (centro, por defecto).
       // Reemplaza a la fórmula anterior en el mismo lugar.
-      const y = e.kv.y ? +e.kv.y : 300, n = text.replace(/\[\[|\]\]/g, '').length;
+      // Largo visible: sin las marcas, y los exponentes ^(…) cuentan la mitad (se ven chicos).
+      const y = e.kv.y ? +e.kv.y : 300, n = text.replace(/\[\[|\]\]/g, '').replace(/\^\(([^()]*)\)/g, (m, g) => g.slice(0, Math.ceil(g.length / 2))).length;
       d.className = 'ttf' + (n > 26 ? ' wrap' : '');
       d.style.top = y + 'px';
       if (e.kv.x) d.style.left = (XP[e.kv.x] != null ? XP[e.kv.x] : +e.kv.x) + 'px';
       d.style.fontSize = (n <= 12 ? 36 : n <= 18 ? 30 : n <= 26 ? 25 : 21) + 'px';
       if (e.kv.c) d.style.color = mcol(e.kv.c);
-      d.innerHTML = esc(text).replace(/\[\[(.+?)\]\]/g, '<span class="hl">$1</span>');
+      // ^(…) se dibuja como exponente: 8^(2/3) → 8 con 2/3 arriba.
+      d.innerHTML = esc(text).replace(/\[\[(.+?)\]\]/g, '<span class="hl">$1</span>').replace(/\^\(([^()]*)\)/g, '<sup>$1</sup>');
       hud.appendChild(d);
       A.add(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.08)', offset: .7 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], t, .38, 'ease-out');
       ctx.lastF = ctx.lastF || {};
