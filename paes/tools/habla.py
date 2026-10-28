@@ -130,6 +130,7 @@ RESPELL = {
     'Thatcher': 'Táchet', 'o’higginistas': 'ojiguinistas', "o'higginistas": 'ojiguinistas', 'Brønsted': 'Brónsted', 'boys': 'bóis', 'Reagan': 'Réigan', 'Nixon': 'Níxon', 'Kissinger': 'Kísinyer', 'Freud': 'Froid',
     'Nazca': 'Nazca', 'Chaitén': 'Chaitén', 'Puchuncaví': 'Puchuncaví',
     'tissue': 'tisú', 'palta': 'palta',
+    'Seattle': 'Siátol', 'lead': 'lid', 'tablets': 'táblets', 'varroa': 'varróa',
     'habeas': 'ábeas', 'corpus': 'córpus', 'solis': 'sólis', 'sanguinis': 'sanguínis', 'Lobby': 'Lóbi', 'Apruebo': 'Apruebo',
     'Schneider': 'Shnáider', 'Tomic': 'Tómic', 'Tanquetazo': 'Tanquetazo',
     'Marmaduke': 'Mármaduk', 'Grove': 'Grov', 'Klein-Saks': 'Kláin Saks', 'Huachipato': 'Huachipato',
