@@ -1173,7 +1173,9 @@
   };
   // Expresión de una función: "x^2 - 4", "2*sin(x)", "log(x)" (log = base 10, ln = natural).
   const fnOf = expr => {
-    const body = String(expr).replace(/\^/g, '**').replace(/π/g, 'PI').replace(/√/g, 'sqrt');
+    // En JavaScript "-x**2" es un error: un menos al comienzo se escribe -(x**2), que es lo que significa.
+    const body = String(expr).replace(/\^/g, '**').replace(/π/g, 'PI').replace(/√/g, 'sqrt')
+      .replace(/(^|[(,+\-*/]\s*)-\s*([\w.]+(?:\([^()]*\))?|\([^()]*\))\s*\*\*\s*([\w.]+|\([^()]*\))/g, '$1-($2**$3)');
     try { return new Function('x', 'sin', 'cos', 'tan', 'sqrt', 'log', 'ln', 'exp', 'abs', 'PI', 'E', 'floor', `return (${body});`); } catch (e) { return null; }
   };
   const callFn = (f, x) => f(x, Math.sin, Math.cos, Math.tan, Math.sqrt, Math.log10, Math.log, Math.exp, Math.abs, Math.PI, Math.E, Math.floor);
