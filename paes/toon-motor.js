@@ -1323,7 +1323,8 @@
       const { sh, S, A, hud } = ctx;
       const its = sh.it || [], vals = its.map(x => +noAt(x)[1]);
       const max = sh.max || Math.max(1, ...vals) * 1.15;
-      const ax = 44, aw = 290, base = sh.base || 470, ah = sh.bh || 280;
+      // El eje se corre a la derecha si sus números son largos (240.000), para que no se corten.
+      const ax = Math.max(44, 16 + numTxt(max).length * 7.2), aw = 334 - ax, base = sh.base || 470, ah = sh.bh || 280;
       const svg = svgEl('svg', { class: 'tplot', viewBox: `0 0 ${W0} ${H0}` }, hud);
       const g0 = svgEl('g', {}, svg);
       svgEl('line', { x1: ax, y1: base, x2: ax + aw, y2: base, class: 'axl' }, g0);
