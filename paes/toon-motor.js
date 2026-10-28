@@ -716,19 +716,21 @@
       A.add(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], t, .3, RB.vkit.EASE.back);
       if (e.kv.until) A.add(d, [{ opacity: 1 }, { opacity: 0 }], anchorT(S, e.kv.until, t) || t + 3, .25, 'ease-in', { fill: 'forwards' });
     } else if (kind === 'F') {
-      // Fórmula: conserva mayúsculas y símbolos; [[…]] marca una parte en color. Reemplaza a la fórmula anterior a la misma altura.
+      // Fórmula: conserva mayúsculas y símbolos; [[…]] marca una parte en color. x= y y= la ubican (centro, por defecto).
+      // Reemplaza a la fórmula anterior en el mismo lugar.
       const y = e.kv.y ? +e.kv.y : 300, n = text.replace(/\[\[|\]\]/g, '').length;
       d.className = 'ttf' + (n > 26 ? ' wrap' : '');
       d.style.top = y + 'px';
+      if (e.kv.x) d.style.left = (XP[e.kv.x] != null ? XP[e.kv.x] : +e.kv.x) + 'px';
       d.style.fontSize = (n <= 12 ? 36 : n <= 18 ? 30 : n <= 26 ? 25 : 21) + 'px';
       if (e.kv.c) d.style.color = mcol(e.kv.c);
       d.innerHTML = esc(text).replace(/\[\[(.+?)\]\]/g, '<span class="hl">$1</span>');
       hud.appendChild(d);
       A.add(d, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(.6)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.08)', offset: .7 }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], t, .38, 'ease-out');
       ctx.lastF = ctx.lastF || {};
-      const old = ctx.lastF[y];
+      const key = (e.kv.x || 'c') + ':' + y, old = ctx.lastF[key];
       if (old) A.add(old, [{ opacity: 1 }, { opacity: 0, transform: 'translate(-50%,-50%) scale(.9)' }], t - .05, .2, 'ease-in', { fill: 'forwards' });
-      ctx.lastF[y] = d;
+      ctx.lastF[key] = d;
       ctx.sfx(t, 'pop');
     } else if (kind === 'S') {
       d.className = 'tts';
@@ -1194,7 +1196,9 @@
       const nl = !!sh.nl;
       const [x0, x1] = sh.x || [-5, 5], [y0, y1] = nl ? [-1, 1.6] : sh.y || [-5, 5];
       // box: [x, y, ancho, alto] o 'top' (deja abajo espacio para personajes).
-      const box = nl ? [26, sh.top || 210, 308, 156] : sh.box === 'top' ? [34, 104, 296, 236] : sh.box || [34, 150, 296, 300];
+      const box = (nl ? [26, sh.top || 210, 308, 156] : sh.box === 'top' ? [34, 104, 296, 236] : sh.box || [34, 150, 296, 300]).slice();
+      // Si los números del eje y son largos (1.200), el plano se corre a la derecha para que no se corten.
+      if (!nl && sh.axes !== false) { const pad = Math.max(0, (Math.max(numTxt(y0).length, numTxt(y1).length) - 3) * 7); box[0] += pad; box[2] -= pad; }
       let sx = box[2] / (x1 - x0), sy = box[3] / (y1 - y0), bx = box[0], by = box[1];
       if (sh.eq) { const k = Math.min(sx, sy); bx += (box[2] - k * (x1 - x0)) / 2; by += (box[3] - k * (y1 - y0)) / 2; sx = sy = k; }
       const X = x => bx + (x - x0) * sx, Y = y => by + (y1 - y) * sy;
@@ -1215,18 +1219,19 @@
         fadeIn(A, g, t0, .45);
       } else if (sh.axes !== false) {
         const g = svgEl('g', { class: 'tpl-ax' }, svg);
-        const step = sh.step || niceStep(Math.max(x1 - x0, y1 - y0));
+        // step y lab valen para ambos ejes; ystep e ylab, si el eje y tiene otra escala (litros contra minutos).
+        const step = sh.step || niceStep(Math.max(x1 - x0, y1 - y0)), stepY = sh.ystep || (sh.step ? step : niceStep(y1 - y0));
         if (sh.grid !== false) {
           for (let x = Math.ceil(x0 / step) * step; x <= x1 + 1e-9; x += step) svgEl('line', { x1: r1(X(x)), y1: r1(Y(y0)), x2: r1(X(x)), y2: r1(Y(y1)), class: 'gr' }, g);
-          for (let y = Math.ceil(y0 / step) * step; y <= y1 + 1e-9; y += step) svgEl('line', { x1: r1(X(x0)), y1: r1(Y(y)), x2: r1(X(x1)), y2: r1(Y(y)), class: 'gr' }, g);
+          for (let y = Math.ceil(y0 / stepY) * stepY; y <= y1 + 1e-9; y += stepY) svgEl('line', { x1: r1(X(x0)), y1: r1(Y(y)), x2: r1(X(x1)), y2: r1(Y(y)), class: 'gr' }, g);
         }
         const ax = y0 <= 0 && y1 >= 0 ? 0 : y0, ay = x0 <= 0 && x1 >= 0 ? 0 : x0;
         svgEl('line', { x1: r1(X(x0)), y1: r1(Y(ax)), x2: r1(X(x1) + 8), y2: r1(Y(ax)), class: 'axl' }, g);
         svgEl('line', { x1: r1(X(ay)), y1: r1(Y(y0)), x2: r1(X(ay)), y2: r1(Y(y1) - 8), class: 'axl' }, g);
         svgEl('path', { d: `M${r1(X(x1) + 12)} ${r1(Y(ax))} l-9 -5 l0 10Z M${r1(X(ay))} ${r1(Y(y1) - 12)} l-5 9 l10 0Z`, class: 'axh' }, g);
-        const lab = sh.lab || step * (Math.max(x1 - x0, y1 - y0) > 16 && step === 1 ? 2 : 1);
+        const lab = sh.lab || step * (Math.max(x1 - x0, y1 - y0) > 16 && step === 1 ? 2 : 1), labY = sh.ylab || (sh.ystep ? stepY : lab);
         for (let x = Math.ceil(x0 / lab) * lab; x <= x1 + 1e-9; x += lab) if (Math.abs(x - ay) > 1e-9) svgText(g, X(x), Y(ax) + 16, numTxt(x), 'tk');
-        for (let y = Math.ceil(y0 / lab) * lab; y <= y1 + 1e-9; y += lab) if (Math.abs(y - ax) > 1e-9) svgText(g, X(ay) - 7, Y(y) + 4, numTxt(y), 'tk', null, 'end');
+        for (let y = Math.ceil(y0 / labY) * labY; y <= y1 + 1e-9; y += labY) if (Math.abs(y - ax) > 1e-9) svgText(g, X(ay) - 7, Y(y) + 4, numTxt(y), 'tk', null, 'end');
         svgText(g, X(x1) + 10, Y(ax) - 9, sh.xl || 'x', 'tkn', null, 'end');
         svgText(g, X(ay) + 9, Y(y1) - 4, sh.yl || 'y', 'tkn', null, 'start');
         fadeIn(A, g, t0, .45);
@@ -1314,7 +1319,7 @@
           const [, val, col, label] = x, c = mcol(col || 'red');
           const d = kind === 'h' ? `M${r1(X(x0))} ${r1(Y(val))} L${r1(X(x1))} ${r1(Y(val))}` : `M${r1(X(val))} ${r1(Y(y0))} L${r1(X(val))} ${r1(Y(y1))}`;
           const l = svgEl('path', { d, class: 'dl' }, top); l.style.stroke = c; fadeIn(A, l, t, .4);
-          if (label) { const e = kind === 'h' ? svgText(top, X(x1) - 4, Y(val) - 8, label, 'tx', c, 'end') : svgText(top, X(val) + 6, Y(y1) + 16, label, 'tx', c, 'start'); fadeIn(A, e, t + .2); }
+          if (label) { const e = kind === 'h' ? svgText(top, X(x0) + 6, Y(val) - 8, label, 'tx', c, 'start') : svgText(top, X(val) + 6, Y(y1) + 16, label, 'tx', c, 'start'); fadeIn(A, e, t + .2); }
         }
       });
     },
@@ -1348,7 +1353,8 @@
         const lv = sh.line.find(y => typeof y === 'number'), lab = sh.line.find(y => typeof y === 'string' && y[0] !== '@' && !MCOL[y]), lc = mcol(sh.line.find(y => MCOL[y]) || 'red');
         const t = atOf(S, sh.line, prev) || prev + .6, yy = base - lv / max * ah;
         const l = svgEl('path', { d: `M${ax} ${r1(yy)} L${ax + aw} ${r1(yy)}`, class: 'dl' }, svg); l.style.stroke = lc; drawIn(A, l, t, .6);
-        if (lab) { const e = svgText(svg, ax + aw, yy - 8, lab, 'tx', lc, 'end'); fadeIn(A, e, t + .4); }
+        // El rótulo va como leyenda arriba del gráfico, para no chocar con los números de las barras.
+        if (lab) { const e = svgText(svg, ax + aw, base - ah - 16, '- - ' + lab, 'tx', lc, 'end'); fadeIn(A, e, t + .4); }
       }
     },
     // Tabla: { k: 'table', cols: ['x', 'f'], it: [['1', '3', '@a'], ...], mark: [[fila, '@b', 'lime'], ...], top }
