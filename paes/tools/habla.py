@@ -132,6 +132,7 @@ RESPELL = {
     'tissue': 'tisú', 'palta': 'palta',
     'Seattle': 'Siátol', 'lead': 'lid', 'tablets': 'táblets', 'varroa': 'varróa',
     'newton': 'níuton', 'newtons': 'níutons', 'airbag': 'érbag', 'airbags': 'érbags', 'Isaac': 'Áisac',
+    'joule': 'yul', 'joules': 'yuls', 'watt': 'uat', 'watts': 'uats', 'kilowatt': 'kilouát',
     'habeas': 'ábeas', 'corpus': 'córpus', 'solis': 'sólis', 'sanguinis': 'sanguínis', 'Lobby': 'Lóbi', 'Apruebo': 'Apruebo',
     'Schneider': 'Shnáider', 'Tomic': 'Tómic', 'Tanquetazo': 'Tanquetazo',
     'Marmaduke': 'Mármaduk', 'Grove': 'Grov', 'Klein-Saks': 'Kláin Saks', 'Huachipato': 'Huachipato',
