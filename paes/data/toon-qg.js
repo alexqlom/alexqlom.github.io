@@ -1,0 +1,67 @@
+// Química en dibujos · Unidad 7: Ácidos, bases y redox.
+(function () {
+  const RB = window.RB;
+
+  RB.toon('qg-1', {
+    u: 'qg', l: 0, title: 'Ácidos, bases y pH', desc: 'Las teorías de Arrhenius y Brønsted-Lowry, la escala de pH, por qué cada unidad es un factor diez, la neutralización, los indicadores y la lluvia ácida.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Ácidos, bases y pH', sub: 'Química · Unidad 7', em: ['phscale', 'testtube'],
+        s: 'El limón es ácido y el jabón es básico. Pero ¿qué significa eso en química? Hoy vemos los ácidos, las bases y la escala de pH.' },
+      { ch: 'Dos definiciones', k: 'vs', set: 'plain',
+        s: 'Según Arrhenius, un ácido libera iones hache más en agua, y una base libera o hache menos. Según Brønsted y Lowry, un ácido dona un protón, hache más, y una base lo acepta, como el amoníaco.',
+        l: ['Arrhenius @Arrhenius', 'cientifico', 'Ácido: libera H⁺ @libera', 'Base: libera OH⁻ @base'],
+        r: ['Brønsted-Lowry @Lowry', 'profe', 'Ácido: dona H⁺ @dona', 'Base: acepta H⁺ @acepta'] },
+      { ch: 'La escala de pH', set: 'plain',
+        s: 'La escala de pH va de cero a catorce. Menos de siete es ácido, como el jugo de limón, el vinagre o una bebida cola. Siete es neutro, como el agua pura. Y más de siete es básico, como el jabón o el cloro doméstico.',
+        c: ['ph=+phscale x180 y300 s2 pop @escala', 'F "< 7 [[ácido]] · 7 neutro · > 7 [[básico]]" @neutro y=150', 'L "limón" x70 y400 @limon', 'L "agua" x180 y400 @agua', 'L "jabón" x290 y400 @jabon'] },
+      { ch: 'Cada número cuenta diez', set: 'class',
+        s: 'El pH es menos el logaritmo de la concentración de hache más. Si la concentración es diez a la menos cuatro, el pH es cuatro. Y ojo: cada unidad de pH es un factor diez. Si el pH baja de cinco a tres, la acidez aumenta cien veces.',
+        c: ['pr=profe l s.85 @logaritmo', 'F "pH = −log [H⁺]" @logaritmo y=135', 'F "[H⁺] = 10^(−4) → pH = [[4]]" @cuatro#2 y=200', 'F "pH 5 → 3: acidez × [[100]]" @cien y=265'] },
+      { ch: 'La neutralización', set: 'lab',
+        s: 'Cuando un ácido reacciona con una base, se neutralizan, y forman una sal y agua. El ácido clorhídrico con hidróxido de sodio da cloruro de sodio, la sal común, y agua.',
+        c: ['t1=+testtube x100 y380 s1.3 pop @acido', 't2=+testtube x260 y380 s1.3 pop @base', 'F "ácido + base → [[sal + agua]]" @agua y=160', 'F "HCl + NaOH → NaCl + H₂O" @clorhidrico y=230'] },
+      { ch: 'Indicadores y lluvia ácida', set: 'city',
+        s: 'Los indicadores cambian de color según el pH: el papel tornasol se pone rojo en ácido y azul en base, y la fenolftaleína se pone fucsia en base. Y la lluvia ácida se forma cuando óxidos de azufre y nitrógeno, de quemar combustibles, reaccionan con el agua del aire.',
+        c: ['F "tornasol: [[rojo]] ácido · azul base" @tornasol y=150', 'F "fenolftaleína: fucsia en base" @fucsia y=215', 'ra=+rain x180 y330 s1.4 pop @lluvia', 'sm=+smoke x290 y420 s1 pop @combustibles'] },
+      { k: 'quiz', q: 'Una disolución con pH 3 es:', o: ['Ácida', 'Neutra', 'Básica'], a: 0,
+        s: 'Pregunta: ¿cómo es una disolución de pH tres?',
+        e: 'Ácida: su pH es menor que siete.' },
+      { k: 'quiz', q: 'Si el pH de una disolución baja de 5 a 3, su acidez:', o: ['Aumenta 2 veces', 'Aumenta 100 veces', 'Disminuye'], a: 1,
+        s: 'Y esta: ¿cuánto aumenta la acidez?',
+        e: 'Cien veces: cada unidad de pH es un factor diez.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: para Arrhenius, el ácido libera hache más y la base, o hache menos; para Brønsted y Lowry, el ácido dona protones y la base los acepta. pH menor que siete es ácido, siete neutro, mayor que siete básico, y cada unidad es un factor diez. Ácido más base da sal y agua. ¡A practicar!',
+        it: [['testtube', 'Ácido: H⁺ · base: OH⁻', '@protones'], ['phscale', 'pH: 7 es neutro', '@neutro'], ['calculator', 'Cada unidad × 10', '@factor'], ['drop', 'Neutralización', '@sal']] },
+    ],
+  });
+
+  RB.toon('qg-2', {
+    u: 'qg', l: 1, title: 'Óxido-reducción', desc: 'Oxidarse es perder electrones y reducirse es ganarlos, quién es el agente oxidante, los estados de oxidación, la corrosión y las pilas.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Óxido-reducción', sub: 'Química · Unidad 7', em: ['battery', 'ion'],
+        s: 'Un clavo que se oxida y una pila que da energía tienen algo en común: electrones que pasan de una sustancia a otra. Son las reacciones redox.' },
+      { ch: 'Perder y ganar', k: 'vs', set: 'plain',
+        s: 'Oxidarse es perder electrones: el estado de oxidación sube. Reducirse es ganar electrones: el estado de oxidación baja. Y siempre ocurren juntas: los electrones que uno pierde, otro los gana.',
+        l: ['Oxidación @Oxidarse', 'chico', 'Pierde electrones @perder', 'Estado sube @sube'],
+        r: ['Reducción @Reducirse', 'chica', 'Gana electrones @ganar', 'Estado baja @baja'] },
+      { ch: 'Un ejemplo', set: 'class',
+        s: 'En la reacción del zinc con el ion cobre: el zinc pasa de cero a más dos, pierde dos electrones y se oxida. El cobre gana esos electrones y se reduce. El que provoca la oxidación, el ion cobre, es el agente oxidante: y él mismo se reduce.',
+        c: ['pr=profe l s.85 @zinc', 'F "Zn + Cu²⁺ → Zn²⁺ + Cu" @reaccion y=135', 'F "Zn: 0 → +2: se [[oxida]]" @oxida y=200', 'F "agente oxidante: [[Cu²⁺]]" @oxidante y=265'] },
+      { ch: 'Estados de oxidación', set: 'plain',
+        s: 'Algunas reglas. Un elemento libre, como el oxígeno gaseoso o el hierro, tiene estado cero. El oxígeno en compuestos suele ser menos dos, y el hidrógeno, más uno. En el ácido sulfúrico, la suma debe dar cero: el azufre es más seis.',
+        c: ['F "elemento libre: [[0]]" @libre y=140', 'F "O: −2 · H: +1" @hidrogeno y=205', 'F "H₂SO₄: 2(+1) + S + 4(−2) = 0" @sulfurico y=270', 'F "S = [[+6]]" @seis y=335'] },
+      { ch: 'Corrosión y pilas', set: 'factory',
+        s: 'La corrosión del hierro es una oxidación: el hierro pierde electrones frente al oxígeno y se forma el óxido. Y una pila produce electricidad gracias a una reacción redox espontánea: los electrones viajan por el circuito.',
+        c: ['F "corrosión = [[oxidación]]" @corrosion y=150', 'ba=+battery x180 y380 s1.6 pop @pila', 'F "pila: redox → [[electricidad]]" @electricidad y=230'] },
+      { k: 'quiz', q: 'En Zn + Cu²⁺ → Zn²⁺ + Cu, ¿qué especie se oxida?', o: ['El Cu²⁺', 'El Zn', 'El Cu'], a: 1,
+        s: 'Pregunta: ¿qué se oxida en esta reacción?',
+        e: 'El zinc: pasa de cero a más dos, pierde electrones.' },
+      { k: 'quiz', q: 'El estado de oxidación de un elemento libre, como O₂ o Fe, es:', o: ['0', '−2', '+1'], a: 0,
+        s: 'Y esta: ¿qué estado de oxidación tiene un elemento libre?',
+        e: 'Cero: no ha ganado ni perdido electrones.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: oxidarse es perder electrones y reducirse es ganarlos, y siempre ocurren juntas. El agente oxidante se reduce y el reductor se oxida. Un elemento libre tiene estado cero, y el oxígeno suele ser menos dos. Y la corrosión y las pilas son reacciones redox. ¡A practicar!',
+        it: [['ion', 'Oxidar = perder e⁻', '@perder'], ['battery', 'Oxidante se reduce', '@oxidante'], ['gear', 'Libre: 0 · O: −2', '@libre'], ['bulb', 'Corrosión y pilas', '@pilas']] },
+    ],
+  });
+})();
