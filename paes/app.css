@@ -1084,3 +1084,16 @@ b.hl { font-weight: 800; }
 .trd p { margin: 0; font: 600 16.5px/1.45 'Noto Serif', Georgia, serif; }
 .trd.small p { font-size: 14.5px; }
 .trd mark { color: inherit; background: none; background-repeat: no-repeat; background-size: 0% 100%; border-radius: 4px; padding: 0 2px; }
+
+/* Videos en estilo corto: subtítulos abajo (sobre el suelo, que siempre está despejado), sin globo, palabra por palabra y la palabra dicha marcada. */
+.corto .vp-cap, .corto .vp-cap.wide { left: 16px; right: 16px; bottom: calc(9% + env(safe-area-inset-bottom)); justify-content: center; }
+.corto .vp-pet { display: none; }
+.vp.ui-on.corto .vp-cap, .corto .vp.ui-on .vp-cap { transform: none; }
+.corto .vp-cap .cl { padding: 0; border: 0; background: none; box-shadow: none; text-align: center; color: #fff; font-size: clamp(22px, 6.6vw, 28px); font-weight: 900; line-height: 1.2;
+  text-shadow: 0 2px 0 #000, 0 0 3px #000, 0 0 12px rgba(0, 0, 0, .75); -webkit-text-stroke: .6px rgba(0, 0, 0, .55); }
+.corto .vp-cap .cl::before { display: none; }
+.corto .vp-cap .cw { display: inline-block; transition: none; }
+.corto .vp-cap .cw.yet { display: none; }
+.corto .vp-cap .cw.said { color: #fff; }
+.corto .vp-cap .cw.now { color: #fff; padding: 0 5px; margin: 0 -2px; border-radius: 6px; background: var(--acc); color: #10140a; text-shadow: none; -webkit-text-stroke: 0; animation: cw-pop .16s ease-out; }
+@keyframes cw-pop { from { transform: scale(1.25); } to { transform: scale(1); } }

@@ -678,6 +678,7 @@
       this.toon = this.v.kind === 'toon';
       this.tl = d => this.toon ? RB.toonKit.timeline(this.v, d) : timeline(this.v, d);
       this.T = this.tl(data);
+      this.root.classList.toggle('corto', !!this.T.corto);
       this.mode = 'clock';
       if (data) {
         const src = await srcFor(`audio/${this.id}.webm`);
@@ -895,6 +896,8 @@
     // Subtítulos al estilo de los videos cortos: frases de pocas palabras y la palabra dicha en lima.
     captions(t) {
       if (!this.cc) return;
+      // En estilo corto, las preguntas ya están escritas en pantalla: sin subtítulos.
+      if (this.T.corto && this.v.sc[this.sceneAt(t)].k === 'quiz') { if (this.capKey !== '') { this.capKey = ''; this.capEl.innerHTML = ''; } return; }
       if (this.waitQuiz) { if (this.capKey !== 'hint') { this.capKey = 'hint'; this.capEl.innerHTML = '<span class="cl hint">Elige una alternativa</span>'; } return; }
       const L = this.T.lines;
       let lo = 0, hi = L.length - 1, idx = -1;
@@ -903,10 +906,12 @@
       if (!l || t > l.t1 + .45 || (this.waitQuiz && l.cue.kind !== 'q')) { if (this.capKey !== '') { this.capKey = ''; this.capEl.innerHTML = ''; } return; }
       const ws = (l.text || '').split(/\s+/).filter(Boolean);
       const wt = l.w && l.w.length === ws.length ? l.w : ws.map((_, j) => l.t0 + (l.t1 - l.t0) * j / ws.length);
+      // Estilo corto: trozos de hasta 4 palabras que se van escribiendo a medida que se dicen.
+      const corto = this.T.corto, MAXW = corto ? 4 : 8, MINW = corto ? 1 : 3;
       if (!l.chunks) {
         l.chunks = [];
         let cur = [];
-        ws.forEach((w, j) => { cur.push(j); const br = /[,;:.!?]$/.test(w) && cur.length >= 3; if (cur.length >= 8 || br) { l.chunks.push(cur); cur = []; } });
+        ws.forEach((w, j) => { cur.push(j); const br = /[,;:.!?]$/.test(w) && cur.length >= MINW; if (cur.length >= MAXW || br) { l.chunks.push(cur); cur = []; } });
         if (cur.length) { if (cur.length < 3 && l.chunks.length) l.chunks[l.chunks.length - 1].push(...cur); else l.chunks.push(cur); }
       }
       let wi = 0; while (wi + 1 < ws.length && wt[wi + 1] <= t) wi++;
@@ -918,7 +923,7 @@
         this.capW = [...this.capEl.querySelectorAll('.cw')];
         this.capWi = -1;
       }
-      if (this.capWi !== wi) { this.capWi = wi; this.capW.forEach(s => { const j = +s.dataset.j; s.className = 'cw' + (j < wi ? ' said' : j === wi ? ' now' : ''); }); }
+      if (this.capWi !== wi) { this.capWi = wi; this.capW.forEach(s => { const j = +s.dataset.j; s.className = 'cw' + (j < wi ? ' said' : j === wi ? ' now' : corto ? ' yet' : ''); }); }
     }
     ui() {
       const T = this.T, t = this.t, p = clamp(t / T.d, 0, 1);

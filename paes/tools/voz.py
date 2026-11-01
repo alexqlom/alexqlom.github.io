@@ -24,13 +24,21 @@ PERFIL = {
                     gap=dict(start=.9, sentence=.28, cue=.5, quiz=.6, scene=1.0, end=1.6)),
     'toon': dict(sr=48000, voice=2, steps=10, speed=1.15, tempo=1.0, kbps='24k', brillo=True,
                  gap=dict(start=.35, sentence=.12, cue=.18, quiz=2.6, scene=.32, end=.9)),
+    # "corto": como los videos cortos de redes. Voz masculina M1 (tono y rango parecidos a un narrador de
+    # TikTok), unas 3,5 palabras por segundo y casi sin aire entre frases.
+    'corto': dict(sr=48000, voice=5, steps=10, speed=1.3, tempo=1.0, kbps='24k', brillo=True,
+                  gap=dict(start=.2, sentence=.05, cue=.08, quiz=2.6, scene=.14, end=.7)),
 }
+# Perfil de los videos en dibujos (PAES_PERFIL=corto para probar el estilo de videos cortos).
+TOON = os.environ.get('PAES_PERFIL', 'toon')
 SR = VOICE = STEPS = SPEED = TEMPO = KBPS = BRILLO = GAP = None
+ESTILO = ''
 
 
 def usar(nombre):
-    global SR, VOICE, STEPS, SPEED, TEMPO, KBPS, BRILLO, GAP
+    global SR, VOICE, STEPS, SPEED, TEMPO, KBPS, BRILLO, GAP, ESTILO
     p = PERFIL[nombre]
+    ESTILO = nombre
     SR, VOICE, STEPS, SPEED, TEMPO, KBPS, BRILLO, GAP = p['sr'], p['voice'], p['steps'], p['speed'], p['tempo'], p['kbps'], p['brillo'], p['gap']
 
 
@@ -390,6 +398,8 @@ def build_video(v, voice, outdir):
     base = os.path.join(outdir, v['id'])
     encode(y, base + '.webm')
     data = dict(d=round(len(y) / SR, 2), h=huella(v), sc=scs, c=cues, e=env)
+    if ESTILO == 'corto':
+        data['st'] = 'corto'  # el reproductor usa la edición de videos cortos
     with open(base + '.js', 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio(%s,%s);\n' % (json.dumps(v['id']), json.dumps(data, ensure_ascii=False, separators=(',', ':'))))
     worst.sort(key=lambda x: -x[0])
@@ -419,11 +429,15 @@ def loudness(y, target_db=-19.0):
     return y.astype(np.float32)
 
 
-# Espectro promedio de la voz F3 (velocidad 1,15) en tercios de octava, relativo a 500 Hz, y el del habla natural
+# Espectro promedio de cada voz (F3 a velocidad 1,15) en tercios de octava, relativo a 500 Hz, y el del habla natural
 # (ANSI S3.5) con un poco más de presencia para los parlantes de teléfono. La diferencia se corrige con un
 # filtro de fase mínima: menos graves retumbantes, más presencia y el silbido de las eses (8 kHz) controlado.
-F3_LTAS = {160: 3.5, 200: 4.8, 250: 3.9, 315: .9, 400: .3, 500: 0, 630: -1.3, 800: -4.7, 1000: -9.1, 1250: -9.4, 1600: -11.0,
+LTAS = {}
+LTAS[2] = {160: 3.5, 200: 4.8, 250: 3.9, 315: .9, 400: .3, 500: 0, 630: -1.3, 800: -4.7, 1000: -9.1, 1250: -9.4, 1600: -11.0,
            2000: -12.9, 2500: -17.3, 3150: -17.4, 4000: -23.0, 5000: -17.2, 6300: -12.3, 8000: 2.5, 10000: -4.2, 12500: -15.3, 16000: -16.6}
+# M1 (velocidad 1,3), medido igual.
+LTAS[5] = {160: -7.0, 200: -8.9, 250: -5.3, 315: -3.9, 400: -1.9, 500: 0, 630: -3.0, 800: -8.8, 1000: -9.5, 1250: -7.2, 1600: -8.1,
+           2000: -11.6, 2500: -11.2, 3150: -13.3, 4000: -18.7, 5000: -21.5, 6300: -20.8, 8000: -23.6, 10000: -25.1, 12500: -30.7, 16000: -36.0}
 HABLA = {160: -6.8, 200: -3.8, 250: -2.5, 315: -2.3, 400: -.65, 500: 0, 630: -1.2, 800: -3.9, 1000: -6.3, 1250: -7.3, 1600: -9.1,
          2000: -10.9, 2500: -14.1, 3150: -14.7, 4000: -15.9, 5000: -19.0, 6300: -20.7, 8000: -21.1, 10000: -23, 12500: -26, 16000: -30}
 PRESENCIA = {160: -1.5, 200: -1.2, 250: -1, 1250: 1, 1600: 2, 2000: 2, 2500: 2, 3150: 2, 4000: 2.5, 5000: 4, 6300: 5, 8000: 4, 10000: 3, 12500: 2}
@@ -431,17 +445,18 @@ _eq = {}
 
 
 def eq_taps(sr):
-    if sr not in _eq:
+    k = (sr, VOICE)
+    if k not in _eq:
         from scipy.signal import firwin2, minimum_phase
         fcs = sorted(HABLA)
-        g = np.array([np.clip(HABLA[f] + PRESENCIA.get(f, 0) - F3_LTAS[f], -26, 9) for f in fcs])
+        g = np.array([np.clip(HABLA[f] + PRESENCIA.get(f, 0) - LTAS[VOICE][f], -26, 9) for f in fcs])
         g -= g[fcs.index(1000)]
         grid = np.linspace(0, sr / 2, 1025)
         lg = np.interp(np.log10(np.maximum(grid, 20)), np.log10(np.array(fcs, float)), g)
         lg[grid < 110] = -24
         # minimum_phase devuelve la raíz de la magnitud: se diseña con la magnitud al cuadrado.
-        _eq[sr] = minimum_phase(firwin2(2047, grid / (sr / 2), (10 ** (lg / 20)) ** 2), method='homomorphic', n_fft=2 ** 16)
-    return _eq[sr]
+        _eq[k] = minimum_phase(firwin2(2047, grid / (sr / 2), (10 ** (lg / 20)) ** 2), method='homomorphic', n_fft=2 ** 16)
+    return _eq[k]
 
 
 def ff(y, filtros, extra=None):
@@ -539,7 +554,7 @@ def main():
     for v in (g[::-1] if a.reverso else g):
         if only and v['id'] not in only:
             continue
-        usar('toon' if v.get('kind') == 'toon' else 'clasico')
+        usar(TOON if v.get('kind') == 'toon' else 'clasico')
         t0 = time.time()
         d, worst = build_video(v, voice, a.salida)
         total += d

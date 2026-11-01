@@ -51,7 +51,7 @@
   // ---------- Línea de tiempo ----------
   T.timeline = (v, data) => {
     const { sentences, estSecs } = RB.vkit;
-    const TT = { d: 0, rec: !!data, sc: [], cues: [], lines: [], quiz: [], env: (data && data.e) || '', toon: true, tq: [], chs: [] };
+    const TT = { d: 0, rec: !!data, sc: [], cues: [], lines: [], quiz: [], env: (data && data.e) || '', toon: true, tq: [], chs: [], corto: !!(data && data.st === 'corto') };
     let starts = [];
     if (data) {
       TT.d = data.d;
@@ -86,7 +86,7 @@
       const cues = TT.cues.filter(c => c.si === si);
       const W = [];
       cues.forEach(c => c.lines.forEach(l => { if (l.text) l.text.split(/\s+/).forEach((w, j) => { const k = key(w); if (k) W.push([k, l.w && l.w[j] != null ? l.w[j] : l.t0]); }); }));
-      TT.sc.push({ si, t0, t1, cues, W, k: sc.k || '', blockT: [], title: false, intro: null });
+      TT.sc.push({ si, t0, t1, cues, W, k: sc.k || '', blockT: [], title: false, intro: null, corto: TT.corto });
       if (sc.k === 'quiz') {
         const q = cues.find(c => c.kind === 'q'), e = cues.find(c => c.kind === 'e');
         TT.tq.push({ si, t0: q ? q.t0 : t0, tq: q ? q.t1 + .08 : t0 + 2, te: e ? e.t0 : t1 - 2, a: sc.a || 0, n: (sc.o || []).length, answered: null });
@@ -325,6 +325,28 @@
   const TRANS = ['iris', 'slide', 'zoom', 'slideup', 'iris', 'slide', 'pop', 'slideup'];
   const transOf = (v, si) => { const sc = v.sc[si]; if (!sc) return 'cut'; if (sc.tr) return sc.tr; if (si === 0) return 'fade'; return TRANS[(hashN(v.id + ':' + si) >>> 3) % TRANS.length]; };
 
+  // Edición de video corto: la cámara cambia de encuadre de golpe al empezar cada frase o cláusula
+  // (cada 1,5 a 3 s), y entre golpes se acerca despacio, como los videos de redes. amp < 1 en plantillas.
+  const FRAMES = [[1, 180, 330], [1.13, 180, 390], [1.06, 150, 300], [1.18, 205, 360], [1.04, 180, 330], [1.12, 165, 420]];
+  function punches(ctx, amp) {
+    const S = ctx.S, cam = (z, x, y) => `translate(${r1(180 - z * x)}px,${r1(330 - z * y)}px) scale(${z.toFixed(3)})`;
+    const cuts = [S.t0];
+    S.cues.forEach(c => c.lines.forEach(l => {
+      const ws = (l.text || '').split(/\s+/);
+      cuts.push(l.t0);
+      ws.forEach((w, j) => { if (j + 1 < ws.length && /[,;:]$/.test(w) && l.w) cuts.push(l.w[j + 1]); });
+    }));
+    const keep = [];
+    cuts.sort((a, b) => a - b).forEach(t => { if (t < S.t1 - .9 && (!keep.length || t - keep[keep.length - 1] >= 1.5)) keep.push(t); });
+    const f = i => { const [z, x, y] = FRAMES[(i + (ctx.S.si % 2) * 2) % FRAMES.length]; return [1 + (z - 1) * amp, 180 + (x - 180) * amp, 330 + (y - 330) * amp]; };
+    ctx.camT.to(S.t0 - .6, cam(...f(0)), .01);
+    keep.forEach((t, i) => {
+      const [z, x, y] = f(i), t2 = i + 1 < keep.length ? keep[i + 1] : S.t1;
+      if (i) ctx.camT.to(t, cam(z, x, y), .2, RB.vkit.EASE.out);
+      ctx.camT.to(t + (i ? .2 : 0), cam(z + .035 * amp, x, y), Math.max(.3, t2 - t - .22), 'linear');
+    });
+  }
+
   // Posición base y caja de cada actor.
   function geom(it) {
     if (it.prop) {
@@ -365,7 +387,8 @@
     const sfx = (t, n) => ctx.fx.push([t, n]);
     ctx.sfx = sfx;
     // Transición de entrada del plano y salida hacia el siguiente.
-    const tr = transOf(v, si), trN = transOf(v, si + 1);
+    // Edición de video corto: corte seco con golpe de zoom en vez de cortinas.
+    const tr = S.corto && si > 0 ? 'punch' : transOf(v, si), trN = S.corto ? 'cut' : transOf(v, si + 1);
     const tIn = S.t0 - .2;
     const root = new Track(el, 'transform', 'none'), rootO = new Track(el, 'opacity', '1'), clip = new Track(el, 'clipPath', 'circle(150% at 50% 45%)');
     if (tr === 'fade') { rootO.v0 = rootO.v = '0'; rootO.to(Math.max(0, tIn), '1', .45); }
@@ -373,6 +396,7 @@
     else if (tr === 'slide') { root.v0 = root.v = 'translateX(100%)'; root.to(tIn, 'translateX(0%)', .45, EASE.inout); }
     else if (tr === 'slideup') { root.v0 = root.v = 'translateY(100%)'; root.to(tIn, 'translateY(0%)', .45, EASE.inout); }
     else if (tr === 'zoom') { root.v0 = root.v = 'scale(1.35)'; rootO.v0 = rootO.v = '0'; root.to(tIn, 'scale(1)', .42, EASE.out); rootO.to(tIn, '1', .25); }
+    else if (tr === 'punch') { root.v0 = root.v = 'scale(1.16)'; rootO.v0 = rootO.v = '0'; rootO.to(S.t0 - .06, '1', .04); root.to(S.t0 - .06, 'scale(1)', .32, EASE.out); }
     else if (tr === 'pop') { root.v0 = root.v = 'scale(.6)'; rootO.v0 = rootO.v = '0'; root.to(tIn, 'scale(1)', .42, EASE.back); rootO.to(tIn, '1', .2); }
     if (si + 1 < v.sc.length) {
       const tOut = S.t1 - .2;
@@ -380,7 +404,7 @@
       else if (trN === 'slideup') root.to(tOut, 'translateY(-30%)', .45, EASE.inout);
       else if (trN === 'zoom' || trN === 'pop') { root.to(tOut, 'scale(.92)', .45, EASE.inout); rootO.to(tOut + .1, '.3', .35); }
     }
-    if (tr !== 'cut' && si > 0) sfx(tIn, 'whoosh');
+    if (tr !== 'cut' && si > 0) sfx(tr === 'punch' ? S.t0 - .12 : tIn, 'whoosh');
     ctx.tracks.push(root, rootO, clip);
     // Cámara: acercamiento lento por defecto, o los movimientos que pida el plano.
     const camT = new Track(cam, 'transform', 'translate(0px,0px) scale(1)');
@@ -402,7 +426,9 @@
     let lastT = S.t0 + .4;
     evs.forEach(e => { if (e.t == null) e.t = lastT + .35; lastT = e.t; });
     evs.slice().sort((a, b) => a.t - b.t).forEach(e => runEvent(ctx, e));
-    if ((!sh.k || sh.k === 'map') && !ctx.camUsed && !evs.some(e => e.type === 'cam' || (e.type === 'map' && e.a === 'zoom'))) camT.to(S.t0, 'translate(0px,0px) scale(1)', .01).to(S.t0 + .02, 'translate(-7.2px,-13.6px) scale(1.04)', Math.max(.5, S.t1 - S.t0), 'ease-in-out');
+    const camFree = !ctx.camUsed && !evs.some(e => e.type === 'cam' || (e.type === 'map' && e.a === 'zoom'));
+    if (S.corto && camFree && sh.k !== 'quiz' && sh.k !== 'title') punches(ctx, !sh.k || sh.k === 'map' ? 1 : .4);
+    else if ((!sh.k || sh.k === 'map') && camFree) camT.to(S.t0, 'translate(0px,0px) scale(1)', .01).to(S.t0 + .02, 'translate(-7.2px,-13.6px) scale(1.04)', Math.max(.5, S.t1 - S.t0), 'ease-in-out');
     // Todo listo: se crean las animaciones.
     Object.values(ctx.actors).forEach(a => { closeBubbles(ctx, a); autoGestures(ctx, a); });
     ctx.tracks.forEach(t => t.build(A, T0, T1));
@@ -936,7 +962,7 @@
     const sh = P.v.sc[S.si];
     const W = P.stage.clientWidth, H = P.stage.clientHeight;
     const POS = { c: { x: W / 2 - 66, y: H - 300, s: 1.3 }, lb: { x: 4, y: H - 190, s: .8 }, rb: { x: W - 136, y: H - 190, s: .8 }, low: { x: W / 2 - 66, y: H - 230, s: 1.05 } };
-    let where = sh.k === 'title' ? 'c' : sh.k === 'quiz' ? 'lb' : sh.k === 'recap' ? 'low' : null;
+    let where = sh.k === 'title' ? (S.corto ? null : 'c') : sh.k === 'quiz' ? 'lb' : sh.k === 'recap' ? 'low' : null;
     const rec = P.built[S.si];
     if (rec && rec.lima) rec.lima.forEach(([tt, w]) => { if (t >= tt) where = w === 'off' ? null : w; });
     if (sh.lima) where = sh.lima;
