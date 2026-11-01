@@ -42,7 +42,7 @@
       { ch: 'Materia sí, energía no', k: 'vs', set: 'plain',
         s: 'La diferencia clave: la materia se recicla, gracias a los descomponedores, que devuelven los nutrientes al suelo. La energía, en cambio, no se recicla: entra como luz y sale como calor.',
         l: ['Materia @materia', 'campesino', 'Se recicla @recicla', 'Descomponedores @descomponedores'],
-        r: ['Energía @energia#2', 'cientifico', 'No se recicla @No', 'Sale como calor @calor'] },
+        r: ['Energía @energia', 'cientifico', 'No se recicla @No', 'Sale como calor @calor'] },
       { k: 'quiz', q: 'Aproximadamente, ¿qué porcentaje de la energía pasa de un nivel trófico al siguiente?', o: ['90 %', '50 %', '10 %'], a: 2,
         s: 'Pregunta: ¿cuánta energía pasa al siguiente nivel?',
         e: 'Cerca del diez por ciento; el resto se pierde como calor.' },
