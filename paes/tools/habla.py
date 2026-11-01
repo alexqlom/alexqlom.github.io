@@ -133,7 +133,7 @@ RESPELL = {
     'Seattle': 'Siátol', 'lead': 'lid', 'tablets': 'táblets', 'varroa': 'varróa',
     'newton': 'níuton', 'newtons': 'níutons', 'airbag': 'érbag', 'airbags': 'érbags', 'Isaac': 'Áisac',
     'joule': 'yul', 'joules': 'yuls', 'watt': 'uat', 'watts': 'uats', 'kilowatt': 'kilouát',
-    'Richter': 'Ríjter', 'London': 'Lóndon', 'Bang': 'Beng', 'ampere': 'ampér', 'amperes': 'ampéres', 'coulomb': 'culómb', 'ohm': 'om', 'ohms': 'oms', 'volts': 'volts',
+    'Virchow': 'Fírjof', 'crossing': 'crósin', 'over': 'óver', 'Schwann': 'Shvan', 'Schleiden': 'Shláiden', 'Richter': 'Ríjter', 'London': 'Lóndon', 'Bang': 'Beng', 'ampere': 'ampér', 'amperes': 'ampéres', 'coulomb': 'culómb', 'ohm': 'om', 'ohms': 'oms', 'volts': 'volts',
     'habeas': 'ábeas', 'corpus': 'córpus', 'solis': 'sólis', 'sanguinis': 'sanguínis', 'Lobby': 'Lóbi', 'Apruebo': 'Apruebo',
     'Schneider': 'Shnáider', 'Tomic': 'Tómic', 'Tanquetazo': 'Tanquetazo',
     'Marmaduke': 'Mármaduk', 'Grove': 'Grov', 'Klein-Saks': 'Kláin Saks', 'Huachipato': 'Huachipato',

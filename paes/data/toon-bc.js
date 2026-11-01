@@ -1,0 +1,86 @@
+// Biología en dibujos · Unidad 3: ADN y división celular.
+(function () {
+  const RB = window.RB;
+
+  RB.toon('bc-1', {
+    u: 'bc', l: 0, title: 'ADN, genes y cromosomas', desc: 'La doble hélice, las bases complementarias, cómo calcular porcentajes de bases, qué es un gen y cuántos cromosomas tenemos.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'ADN, genes y cromosomas', sub: 'Biología · Unidad 3', em: ['dna', 'chromosome'],
+        s: 'En cada una de tus células hay un manual de instrucciones: el ADN. Veamos cómo está escrito y cómo se ordena.' },
+      { ch: 'La doble hélice', set: 'plain',
+        s: 'El ADN es una doble hélice formada por nucleótidos: cada uno tiene un fosfato, un azúcar llamado desoxirribosa y una base. Las bases se aparean siempre igual: adenina con timina, y citosina con guanina.',
+        c: ['dn=+dna x90 y350 s1.6 pop @helice', 'F "A — T" @timina y=170', 'F "C — G" @guanina y=240', 'F "nucleótido: fosfato + azúcar + base" @base y=440'] },
+      { ch: 'La hebra complementaria', set: 'class',
+        s: 'Si una hebra dice A T G C, la complementaria dice T A C G. Y un cálculo típico: si el treinta por ciento de las bases es adenina, la timina también es treinta. Suman sesenta, y el cuarenta restante se reparte: veinte de guanina y veinte de citosina.',
+        c: ['pr=profe l s.85 @hebra', 'F "ATGC → [[TACG]]" @complementaria y=135', 'F "A = T = 30 %" @timina y=200', 'F "G = C = [[20 %]]" @veinte y=265'] },
+      { ch: 'Genes y cromosomas', set: 'lab',
+        s: 'Un gen es un segmento de ADN con la información para fabricar una proteína. El ADN se enrolla y forma los cromosomas. Las células del cuerpo humano tienen cuarenta y seis cromosomas, en veintitrés pares. Los gametos, la mitad: veintitrés.',
+        c: ['ch=+chromosome x110 y380 s1.5 pop @cromosomas', 'F "gen = trozo de ADN → [[proteína]]" @proteina y=150', 'F "cuerpo: 46 · gametos: [[23]]" @gametos y=225'] },
+      { k: 'quiz', q: 'Si una hebra de ADN tiene la secuencia ATGC, su hebra complementaria es:', o: ['TACG', 'ATGC', 'GCAT'], a: 0,
+        s: 'Pregunta: ¿cuál es la hebra complementaria de A T G C?',
+        e: 'T A C G: A con T y C con G.' },
+      { k: 'quiz', q: 'Si el 30 % de las bases de un ADN es adenina, ¿qué porcentaje es guanina?', o: ['30 %', '20 %', '70 %'], a: 1,
+        s: 'Y esta: ¿qué porcentaje es guanina?',
+        e: 'Veinte por ciento: adenina y timina suman sesenta; guanina y citosina, cuarenta.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: el ADN es una doble hélice de nucleótidos, con adenina frente a timina y citosina frente a guanina. Un gen es un trozo de ADN con la receta de una proteína. El ADN se ordena en cromosomas: cuarenta y seis en el cuerpo y veintitrés en los gametos. ¡A practicar!',
+        it: [['dna', 'Doble hélice', '@helice'], ['gear', 'A–T y C–G', '@guanina'], ['scroll', 'Gen → proteína', '@gen'], ['chromosome', '46 y 23', '@gametos']] },
+    ],
+  });
+
+  RB.toon('bc-2', {
+    u: 'bc', l: 1, title: 'Ciclo celular y mitosis', desc: 'La interfase y la duplicación del ADN, las cuatro fases de la mitosis y para qué sirve: crecer y reparar.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Ciclo celular y mitosis', sub: 'Biología · Unidad 3', em: ['cell', 'chromosome'],
+        s: 'Para crecer y reparar heridas, tus células se dividen. Antes, tienen que copiar todo su ADN. Veamos cómo.' },
+      { ch: 'El ciclo celular', k: 'chain', set: 'plain', top: 120,
+        s: 'El ciclo tiene dos grandes etapas. La interfase: en ge uno la célula crece; en la fase ese duplica su ADN; y en ge dos se prepara. Después viene la fase eme: la mitosis y la citocinesis, que divide el citoplasma.',
+        it: [['sprout', 'G1: crece', '@crece'], ['dna', 'S: duplica el ADN', '@duplica'], ['gear', 'G2: se prepara', '@prepara'], ['cell', 'M: mitosis y citocinesis', '@citocinesis']] },
+      { ch: 'PMAT', k: 'table', set: 'plain', cols: ['Fase', 'Qué pasa'], top: 150, cw: 160, rh: 54,
+        s: 'La mitosis tiene cuatro fases, y un truco para recordarlas: pe eme a te. Profase: los cromosomas se condensan. Metafase: se alinean al centro. Anafase: las cromátidas se separan hacia los polos. Y telofase: se forman dos núcleos.',
+        it: [['Profase', 'se condensan', '@Profase'], ['Metafase', 'se alinean al centro', '@Metafase'], ['Anafase', 'se separan a los polos', '@Anafase'], ['Telofase', 'dos núcleos', '@telofase']] },
+      { ch: 'Copias idénticas', set: 'clinic',
+        s: 'La mitosis forma dos células idénticas a la madre, con el mismo número de cromosomas. Una célula de cuarenta y seis cromosomas da dos de cuarenta y seis. Sirve para crecer y para reparar tejidos, como cuando cicatriza una herida.',
+        c: ['c1=+cell x180 y330 s1.4 pop @celulas', 'c1 to x100 d=.6 @dos', 'c2=+cell x260 y330 s1.4 pop @dos', 'F "46 → [[46 + 46]]" @cuarenta#2 y=170', 'F "crecer y reparar" @reparar y=450'] },
+      { k: 'quiz', q: '¿En qué etapa del ciclo celular se duplica el ADN?', o: ['En la mitosis', 'En la fase S de la interfase', 'En la citocinesis'], a: 1,
+        s: 'Pregunta: ¿cuándo se duplica el ADN?',
+        e: 'En la fase ese de la interfase: ese de síntesis.' },
+      { k: 'quiz', q: 'En la metafase, los cromosomas:', o: ['Se separan', 'Se alinean en el centro de la célula', 'Se descondensan'], a: 1,
+        s: 'Y esta: ¿qué hacen los cromosomas en la metafase?',
+        e: 'Se alinean en el centro.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: en la interfase la célula crece y duplica su ADN en la fase ese. La mitosis tiene cuatro fases: profase, metafase, anafase y telofase. Y forma dos células idénticas a la madre, para crecer y reparar. ¡A practicar!',
+        it: [['dna', 'Fase S: copia el ADN', '@duplica'], ['scroll', 'Profase, meta, ana, telo', '@telofase'], ['cell', '2 células idénticas', '@identicas'], ['sprout', 'Crecer y reparar', '@reparar']] },
+    ],
+  });
+
+  RB.toon('bc-3', {
+    u: 'bc', l: 2, title: 'Meiosis y mutaciones', desc: 'Cómo la meiosis forma gametos haploides, el crossing-over, la diferencia con la mitosis, las mutaciones y el cáncer.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Meiosis y mutaciones', sub: 'Biología · Unidad 3', em: ['ovum', 'sperm'],
+        s: '¿Por qué los hermanos no son idénticos? Por la meiosis, la división que forma los gametos. Y a veces, el ADN cambia: son las mutaciones.' },
+      { ch: 'La meiosis', set: 'plain',
+        s: 'La meiosis parte de una célula diploide, dos ene, y forma cuatro células haploides, ene, distintas entre sí: los gametos. Si una especie tiene dos ene igual a ocho, sus gametos tienen cuatro cromosomas. Un perro, con setenta y ocho, tiene espermatozoides de treinta y nueve.',
+        c: ['F "2n → [[4 células n]]" @haploides y=150', 'F "2n = 8 → n = 4" @cuatro#2 y=215', 'F "perro: 78 → [[39]]" @nueve y=280', 'sp=+sperm x180 y430 s1.2 pop @espermatozoides'] },
+      { ch: 'El crossing-over', set: 'lab',
+        s: 'En la primera división, en la profase uno, los cromosomas homólogos intercambian trozos: es el crossing-over. Así se forman combinaciones nuevas de genes, y por eso cada gameto es único.',
+        c: ['c1=+chromosome x120 y360 s1.3 pop @homologos', 'c2=+chromosome x240 y360 s1.3 pop @homologos+0.3', 'c1 to x160 d=.5 @intercambian', 'c2 to x200 d=.5 @intercambian', 'F "[[crossing-over]]: nuevas combinaciones" @combinaciones y=170'] },
+      { ch: 'Mitosis o meiosis', k: 'vs', set: 'plain',
+        s: 'Compáralas. La mitosis forma dos células idénticas, con el mismo número de cromosomas, para crecer y reparar. La meiosis forma cuatro células distintas, con la mitad de los cromosomas, para reproducirse.',
+        l: ['Mitosis @mitosis', 'chico', '2 idénticas @identicas', 'Crecer y reparar @reparar'],
+        r: ['Meiosis @meiosis', 'chica', '4 distintas, la mitad @mitad', 'Gametos @reproducirse'] },
+      { ch: 'Mutaciones', set: 'clinic',
+        s: 'Una mutación es un cambio en el ADN. Puede ser espontánea o causada por radiación o sustancias químicas. Si se acumulan mutaciones en los genes que controlan la división, las células se dividen sin control: es el cáncer.',
+        c: ['dn=+dna x110 y380 s1.4 pop @ADN', 'dn shake @mutacion', 'F "mutación = [[cambio en el ADN]]" @cambio y=150', 'F "división sin control → cáncer" @cancer y=220', 'md=medico r s.85 @radiacion'] },
+      { k: 'quiz', q: 'La meiosis produce:', o: ['2 células idénticas', '4 células haploides distintas entre sí', '4 células diploides'], a: 1,
+        s: 'Pregunta: ¿qué produce la meiosis?',
+        e: 'Cuatro células haploides, distintas entre sí: los gametos.' },
+      { k: 'quiz', q: 'Un perro tiene 78 cromosomas en sus células somáticas. ¿Cuántos tiene un espermatozoide de perro?', o: ['78', '39', '156'], a: 1,
+        s: 'Y esta: ¿cuántos cromosomas tiene un espermatozoide de perro?',
+        e: 'Treinta y nueve: los gametos tienen la mitad.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: la meiosis forma cuatro gametos haploides y distintos. El crossing-over crea combinaciones nuevas. La mitosis copia; la meiosis mezcla y reduce a la mitad. Y una mutación es un cambio en el ADN; si afecta el control de la división, puede causar cáncer. ¡A practicar!',
+        it: [['sperm', '4 gametos n', '@gametos'], ['chromosome', 'Crossing-over', '@crossing'], ['cell', 'Mitosis ≠ meiosis', '@meiosis'], ['dna', 'Mutaciones', '@mutacion']] },
+    ],
+  });
+})();
