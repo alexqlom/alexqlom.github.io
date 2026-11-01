@@ -1,0 +1,85 @@
+// Biología en dibujos · Unidad 8: Hormonas y homeostasis.
+(function () {
+  const RB = window.RB;
+
+  RB.toon('bh-1', {
+    u: 'bh', l: 0, title: 'Glándulas y hormonas', desc: 'Qué es una hormona y cómo llega a sus células blanco, el hipotálamo y la hipófisis, las principales glándulas y la retroalimentación negativa.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Glándulas y hormonas', sub: 'Biología · Unidad 8', em: ['envelope', 'drop'],
+        s: 'Además del sistema nervioso, el cuerpo se comunica con mensajes químicos: las hormonas. Son más lentas, pero su efecto dura más.' },
+      { ch: 'Mensajeros por la sangre', set: 'plain',
+        s: 'Las hormonas son mensajeros químicos que fabrican las glándulas y viajan por la sangre. Solo actúan en sus células blanco, las que tienen receptores para ellas, como una carta que solo abre su destinatario.',
+        c: ['en=+envelope x90 y330 s1.4 pop @mensajeros', 'en to x270 y330 d=1.5 @viajan', 'F "viajan por la [[sangre]]" @sangre y=160', 'F "solo en células blanco" @blanco y=225'] },
+      { ch: 'Las glándulas', k: 'table', set: 'plain', cols: ['Glándula', 'Hormona'], top: 120, cw: 160, rh: 46,
+        s: 'El hipotálamo controla a la hipófisis, la glándula maestra, que regula a muchas otras. La tiroides produce tiroxina; las suprarrenales, adrenalina; el páncreas, insulina; y la hipófisis, la hormona del crecimiento.',
+        it: [['Hipotálamo → hipófisis', 'glándula maestra', '@maestra'], ['Tiroides', 'tiroxina', '@tiroxina'], ['Suprarrenales', 'adrenalina', '@adrenalina'], ['Páncreas', 'insulina', '@insulina'], ['Hipófisis', 'crecimiento', '@crecimiento']] },
+      { ch: 'Retroalimentación negativa', k: 'chain', set: 'plain', top: 140,
+        s: 'La mayoría de las hormonas se regulan por retroalimentación negativa, como un termostato: cuando una hormona sube demasiado, se frena su producción, y cuando baja, se activa. Así todo se mantiene en equilibrio.',
+        it: [['chartup', 'La hormona sube', '@sube'], ['cross', 'Se frena la producción', '@frena'], ['scale', 'Vuelve al equilibrio', '@equilibrio']] },
+      { k: 'quiz', q: 'Las hormonas viajan hasta sus células blanco a través de:', o: ['Los nervios', 'La sangre', 'El aire'], a: 1,
+        s: 'Pregunta: ¿por dónde viajan las hormonas?',
+        e: 'Por la sangre.' },
+      { k: 'quiz', q: 'La glándula que regula a muchas otras, llamada glándula maestra, es:', o: ['La tiroides', 'La hipófisis', 'El páncreas'], a: 1,
+        s: 'Y esta: ¿cuál es la glándula maestra?',
+        e: 'La hipófisis, controlada por el hipotálamo.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: las hormonas son mensajeros químicos que viajan por la sangre hasta sus células blanco. El hipotálamo controla a la hipófisis, la glándula maestra. Tiroides, suprarrenales y páncreas producen tiroxina, adrenalina e insulina. Y la retroalimentación negativa mantiene el equilibrio. ¡A practicar!',
+        it: [['envelope', 'Mensajeros por la sangre', '@sangre'], ['brain', 'Hipófisis: maestra', '@maestra'], ['drop', 'Tiroxina, adrenalina, insulina', '@insulina'], ['scale', 'Retroalimentación negativa', '@negativa']] },
+    ],
+  });
+
+  RB.toon('bh-2', {
+    u: 'bh', l: 1, title: 'Glicemia y diabetes', desc: 'Cómo la insulina y el glucagón regulan el azúcar en la sangre, y las diferencias entre la diabetes tipo 1 y tipo 2.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Glicemia y diabetes', sub: 'Biología · Unidad 8', em: ['drop', 'apple'],
+        s: 'La glicemia es la cantidad de glucosa en la sangre. Tu cuerpo la mantiene casi constante, comas o no comas. ¿Cómo lo hace?' },
+      { ch: 'Insulina y glucagón', k: 'vs', set: 'plain',
+        s: 'Después de comer, la glicemia sube y el páncreas libera insulina: las células captan la glucosa y el hígado la guarda como glucógeno. En ayuno, la glicemia baja y el páncreas libera glucagón: el hígado libera glucosa a la sangre.',
+        l: ['Insulina @insulina', 'chico', 'Después de comer @comer', 'Baja la glicemia @guarda'],
+        r: ['Glucagón @glucagon', 'chica', 'En ayuno @ayuno', 'Sube la glicemia @libera#2'] },
+      { ch: 'Un sube y baja', k: 'plot', set: 'plain', x: [0, 10], y: [60, 160], step: 1, ystep: 20, lab: 20, ylab: 20, xl: 'horas', yl: 'mg/dL', box: 'top',
+        s: 'Mira la glicemia durante el día: sube después de comer, y la insulina la vuelve a bajar. Baja en ayuno, y el glucagón la sube. Así se mantiene cerca de noventa.',
+        it: [['h', 90, 'gry', 'normal', '@noventa'], ['f', '90+50*exp(-((x-2)^2))+40*exp(-((x-7)^2))', 'lime', '', '@comer'], ['p', 2, 140, 'insulina', 'yel', '@insulina'], ['p', 4.6, 90, 'glucagón', 'blue', '@glucagon']] },
+      { ch: 'La diabetes', k: 'vs', set: 'clinic',
+        s: 'En la diabetes, la glicemia queda alta. En la tipo uno, el páncreas no produce insulina: suele aparecer en la infancia y se trata con insulina. En la tipo dos, las células no responden bien a la insulina: se asocia al sedentarismo y la obesidad, y se previene con dieta y ejercicio.',
+        l: ['Tipo 1 @uno', 'chico', 'No hay insulina @produce', 'Se trata con insulina @trata'],
+        r: ['Tipo 2 @dos', 'vecino', 'No responden a la insulina @responden', 'Dieta y ejercicio @ejercicio'] },
+      { k: 'quiz', q: 'Después de varias horas de ayuno, el páncreas libera:', o: ['Insulina', 'Glucagón, que eleva la glicemia', 'Adrenalina'], a: 1,
+        s: 'Pregunta: ¿qué libera el páncreas en ayuno?',
+        e: 'Glucagón: el hígado libera glucosa.' },
+      { k: 'quiz', q: 'La diabetes tipo 1 se debe a que:', o: ['El páncreas no produce insulina', 'Se come demasiado azúcar', 'El hígado no guarda glucógeno'], a: 0,
+        s: 'Y esta: ¿por qué ocurre la diabetes tipo uno?',
+        e: 'El páncreas no produce insulina.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: la insulina baja la glicemia después de comer; el glucagón la sube en ayuno. Ambas las produce el páncreas. En la diabetes tipo uno falta insulina; en la tipo dos, las células no le responden. ¡A practicar!',
+        it: [['drop', 'Insulina: baja', '@insulina'], ['apple', 'Glucagón: sube', '@glucagon'], ['syringe', 'Diabetes tipo 1', '@falta'], ['heart', 'Diabetes tipo 2', '@responden']] },
+    ],
+  });
+
+  RB.toon('bh-3', {
+    u: 'bh', l: 2, title: 'Temperatura, agua y estrés', desc: 'La homeostasis, cómo el hipotálamo regula la temperatura, cómo el cuerpo ahorra agua con la ADH y la respuesta al estrés con adrenalina y cortisol.',
+    shots: [
+      { k: 'title', set: 'lab', t: 'Temperatura, agua y estrés', sub: 'Biología · Unidad 8', em: ['thermometer', 'drop'],
+        s: 'Haga frío o calor, tomes mucha o poca agua, tu cuerpo se mantiene estable. Eso es la homeostasis.' },
+      { ch: 'El termostato del cuerpo', k: 'vs', set: 'plain',
+        s: 'El hipotálamo funciona como un termostato. Si hace frío, aparecen los escalofríos, que generan calor, y los vasos de la piel se contraen para conservarlo. Si hace calor, sudas, y al evaporarse el sudor te enfría, y los vasos de la piel se dilatan.',
+        l: ['Frío @frio', 'chico', 'Escalofríos @escalofrios', 'Vasos se contraen @contraen'],
+        r: ['Calor @calor#2', 'jugador', 'Sudor @sudas', 'Vasos se dilatan @dilatan'] },
+      { ch: 'Ahorrar agua', set: 'desert',
+        s: 'Si te falta agua, la hipófisis libera la hormona antidiurética: los riñones recuperan más agua, y la orina sale más concentrada. Si tomas mucha agua, se libera menos, y orinas más.',
+        c: ['F "falta agua → [[ADH]] ↑" @antidiuretica y=150', 'F "riñón recupera agua" @recuperan y=215', 'ki=+kidney x180 y400 s1.4 pop @riñones', 'ch=chico r s.8 @tomas'] },
+      { ch: 'El estrés', set: 'class',
+        s: 'Ante un susto o un peligro, las glándulas suprarrenales liberan adrenalina: el corazón se acelera, sube la glicemia y respiras más rápido, listo para reaccionar. Si el estrés dura mucho, el cortisol alto puede dañar la salud.',
+        c: ['es=estudiante l s.85 @susto', 'es mood shock @susto', 'F "susto → [[adrenalina]]" @adrenalina y=150', 'F "corazón y glicemia ↑" @glicemia y=215', 'F "estrés largo: cortisol" @cortisol y=280'] },
+      { k: 'quiz', q: 'Al bajar la temperatura del ambiente, el cuerpo responde con:', o: ['Sudor y vasodilatación', 'Escalofríos y vasoconstricción de la piel', 'Más orina'], a: 1,
+        s: 'Pregunta: ¿cómo responde el cuerpo al frío?',
+        e: 'Escalofríos y vasoconstricción: genera calor y lo conserva.' },
+      { k: 'quiz', q: 'La homeostasis es:', o: ['La mantención de un medio interno estable', 'La producción de hormonas', 'El crecimiento del cuerpo'], a: 0,
+        s: 'Y esta: ¿qué es la homeostasis?',
+        e: 'Mantener estable el medio interno.' },
+      { k: 'recap', set: 'stage', ch: 'Para recordar',
+        s: 'Resumen: la homeostasis mantiene estable el medio interno. El hipotálamo regula la temperatura: escalofríos con frío, sudor con calor. La hormona antidiurética ayuda a ahorrar agua. Y ante el estrés, la adrenalina prepara al cuerpo para reaccionar. ¡A practicar!',
+        it: [['scale', 'Homeostasis', '@homeostasis'], ['thermometer', 'Frío y calor', '@sudor'], ['kidney', 'ADH: ahorrar agua', '@agua'], ['lightning', 'Adrenalina', '@adrenalina']] },
+    ],
+  });
+})();
