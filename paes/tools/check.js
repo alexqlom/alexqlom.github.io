@@ -12,6 +12,9 @@ files.forEach(f => run('data/' + f));
 const RB = ctx.window.RB;
 const errs = [], warns = [];
 const E = (w, m) => errs.push(`${w}: ${m}`), W = (w, m) => warns.push(`${w}: ${m}`);
+// La app solo ve los archivos que index.html carga (lo mantiene tools/sync.js).
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+files.forEach(f => { if (!html.includes(`src="data/${f}"`)) E(f, 'no está en index.html: corre node tools/sync.js'); });
 const TYPES = new Set(['mc', 'tf', 'fill', 'order', 'match', 'sort', 'multi', 'num', 'info', 'build']);
 const stars = s => ((String(s).match(/\*\*/g) || []).length % 2 === 0) && ((String(s).match(/==/g) || []).length % 2 === 0);
 const seenQ = new Map();
