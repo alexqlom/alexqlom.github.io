@@ -51,7 +51,7 @@
   // ---------- Línea de tiempo ----------
   T.timeline = (v, data) => {
     const { sentences, estSecs } = RB.vkit;
-    const TT = { d: 0, rec: !!data, sc: [], cues: [], lines: [], quiz: [], env: (data && data.e) || '', toon: true, tq: [], chs: [], corto: !!(data && data.st === 'corto') };
+    const TT = { d: 0, rec: !!data, sc: [], cues: [], lines: [], quiz: [], env: (data && data.e) || '', toon: true, tq: [], chs: [], corto: !!(data && data.st), estilo: (data && data.st) || '' };
     let starts = [];
     if (data) {
       TT.d = data.d;
@@ -86,7 +86,7 @@
       const cues = TT.cues.filter(c => c.si === si);
       const W = [];
       cues.forEach(c => c.lines.forEach(l => { if (l.text) l.text.split(/\s+/).forEach((w, j) => { const k = key(w); if (k) W.push([k, l.w && l.w[j] != null ? l.w[j] : l.t0]); }); }));
-      TT.sc.push({ si, t0, t1, cues, W, k: sc.k || '', blockT: [], title: false, intro: null, corto: TT.corto });
+      TT.sc.push({ si, t0, t1, cues, W, k: sc.k || '', blockT: [], title: false, intro: null, corto: TT.corto, estilo: TT.estilo });
       if (sc.k === 'quiz') {
         const q = cues.find(c => c.kind === 'q'), e = cues.find(c => c.kind === 'e');
         TT.tq.push({ si, t0: q ? q.t0 : t0, tq: q ? q.t1 + .08 : t0 + 2, te: e ? e.t0 : t1 - 2, a: sc.a || 0, n: (sc.o || []).length, answered: null });
@@ -347,6 +347,41 @@
     });
   }
 
+  // Estilo "relato": la cámara se desliza hacia lo que acaba de aparecer o moverse, sin golpes,
+  // como en los videos de redes que cuentan una historia en un solo escenario.
+  function follow(ctx, evs) {
+    const S = ctx.S, cam = (z, x, y) => `translate(${r1(180 - z * x)}px,${r1(330 - z * y)}px) scale(${z.toFixed(3)})`;
+    const keys = [];
+    Object.values(ctx.actors).forEach(a => { const g = a.g; if (g && a.te != null) keys.push([a.te, g.x - g.w * g.ax + g.w / 2, g.y - g.h * g.ay + g.h / 2]); });
+    evs.forEach(e => {
+      const a = e.type === 'do' && /^(to|walk|run)$/.test(e.what) && ctx.actors[e.id];
+      if (!a) return;
+      const arg = e.args[0], y1 = e.args[1];
+      const tx = XP[arg] != null ? XP[arg] : /^x/.test(arg || '') ? +arg.slice(1) : a.x;
+      const ty = y1 && YP[y1] != null ? YP[y1] : y1 && /^y/.test(y1) ? +y1.slice(1) : a.y;
+      keys.push([e.t + .3, tx, ty - a.g.h * .4]);
+    });
+    keys.sort((a, b) => a[0] - b[0]);
+    const pick = [];
+    keys.forEach(k => { if (k[0] >= S.t0 - .2 && k[0] < S.t1 - 1 && (!pick.length || k[0] - pick[pick.length - 1][0] >= 1.4)) pick.push(k); });
+    const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+    // Encuadre: todo lo que ya está en escena cabe (con margen); se acerca solo si sobra espacio,
+    // y se inclina hacia lo último que apareció o se movió.
+    const acts = Object.values(ctx.actors).filter(a => a.g && a.te != null);
+    const frameAt = (t, fx, fy) => {
+      let L = fx - 40, R = fx + 40, T = fy - 60, B = fy + 60;
+      acts.forEach(a => { if (a.te > t + .05) return; const g = a.g, x0 = g.x - g.w * g.ax, y0 = g.y - g.h * g.ay; L = Math.min(L, x0); R = Math.max(R, x0 + g.w); T = Math.min(T, y0); B = Math.max(B, y0 + g.h); });
+      const z = cl(Math.min(320 / (R - L + 30), 560 / (B - T + 60)), 1, 1.15);
+      const hw = 180 / z;
+      const cx = cl((L + R) / 2 * .6 + fx * .4, hw, 360 - hw), cy = cl((T + B) / 2 * .6 + fy * .4, 300, 400);
+      return [z, cx, cy];
+    };
+    ctx.camT.to(S.t0 - .6, cam(1.02, 180, 330), .01);
+    pick.forEach(([t, x, y]) => ctx.camT.to(Math.max(S.t0, t - .15), cam(...frameAt(t, x, y)), 1.1, RB.vkit.EASE.inout));
+    if (pick.length) ctx.camT.to(Math.max(S.t0 + 1, S.t1 - 1.6), cam(1.02, 180, 330), 1.3, RB.vkit.EASE.inout);
+    else ctx.camT.to(S.t0, cam(1.0, 180, 330), .01).to(S.t0 + .02, cam(1.08, 180, 360), Math.max(.5, S.t1 - S.t0), 'ease-in-out');
+  }
+
   // Posición base y caja de cada actor.
   function geom(it) {
     if (it.prop) {
@@ -388,7 +423,10 @@
     ctx.sfx = sfx;
     // Transición de entrada del plano y salida hacia el siguiente.
     // Edición de video corto: corte seco con golpe de zoom en vez de cortinas.
-    const tr = S.corto && si > 0 ? 'punch' : transOf(v, si), trN = S.corto ? 'cut' : transOf(v, si + 1);
+    // Estilo "relato": si el plano sigue en el mismo lugar, fundido corto (es el mismo mundo); si cambia, zoom.
+    const relTr = i => !v.sc[i] ? 'cut' : i === 0 ? 'fade' : v.sc[i].k === 'quiz' || v.sc[i - 1].k === 'quiz' ? 'fade' : (v.sc[i].set || 'plain') === (v.sc[i - 1].set || 'plain') ? 'fade' : 'zoom';
+    const tr = S.estilo === 'relato' ? relTr(si) : S.corto && si > 0 ? 'punch' : transOf(v, si);
+    const trN = S.estilo === 'relato' ? relTr(si + 1) : S.corto ? 'cut' : transOf(v, si + 1);
     const tIn = S.t0 - .2;
     const root = new Track(el, 'transform', 'none'), rootO = new Track(el, 'opacity', '1'), clip = new Track(el, 'clipPath', 'circle(150% at 50% 45%)');
     if (tr === 'fade') { rootO.v0 = rootO.v = '0'; rootO.to(Math.max(0, tIn), '1', .45); }
@@ -404,7 +442,7 @@
       else if (trN === 'slideup') root.to(tOut, 'translateY(-30%)', .45, EASE.inout);
       else if (trN === 'zoom' || trN === 'pop') { root.to(tOut, 'scale(.92)', .45, EASE.inout); rootO.to(tOut + .1, '.3', .35); }
     }
-    if (tr !== 'cut' && si > 0) sfx(tr === 'punch' ? S.t0 - .12 : tIn, 'whoosh');
+    if (tr !== 'cut' && si > 0 && !(S.estilo === 'relato' && tr === 'fade')) sfx(tr === 'punch' ? S.t0 - .12 : tIn, 'whoosh');
     ctx.tracks.push(root, rootO, clip);
     // Cámara: acercamiento lento por defecto, o los movimientos que pida el plano.
     const camT = new Track(cam, 'transform', 'translate(0px,0px) scale(1)');
@@ -427,7 +465,8 @@
     evs.forEach(e => { if (e.t == null) e.t = lastT + .35; lastT = e.t; });
     evs.slice().sort((a, b) => a.t - b.t).forEach(e => runEvent(ctx, e));
     const camFree = !ctx.camUsed && !evs.some(e => e.type === 'cam' || (e.type === 'map' && e.a === 'zoom'));
-    if (S.corto && camFree && sh.k !== 'quiz' && sh.k !== 'title') punches(ctx, !sh.k || sh.k === 'map' ? 1 : .4);
+    if (S.estilo === 'relato' && camFree && !sh.k) follow(ctx, evs);
+    else if (S.corto && S.estilo !== 'relato' && camFree && sh.k !== 'quiz' && sh.k !== 'title') punches(ctx, !sh.k || sh.k === 'map' ? 1 : .4);
     else if ((!sh.k || sh.k === 'map') && camFree) camT.to(S.t0, 'translate(0px,0px) scale(1)', .01).to(S.t0 + .02, 'translate(-7.2px,-13.6px) scale(1.04)', Math.max(.5, S.t1 - S.t0), 'ease-in-out');
     // Todo listo: se crean las animaciones.
     Object.values(ctx.actors).forEach(a => { closeBubbles(ctx, a); autoGestures(ctx, a); });

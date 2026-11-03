@@ -28,7 +28,13 @@ PERFIL = {
     # TikTok), unas 3,5 palabras por segundo y casi sin aire entre frases.
     'corto': dict(sr=48000, voice=5, steps=10, speed=1.3, tempo=1.0, kbps='24k', brillo=True,
                   gap=dict(start=.2, sentence=.05, cue=.08, quiz=2.6, scene=.14, end=.7)),
+    # "relato": como los videos de redes que narran una historia. Voz masculina (Bruno = M4) a velocidad
+    # natural, cada coma, dos puntos, punto y pregunta con su propia pausa (PAUSA), sin acelerar nada.
+    'relato': dict(sr=48000, voice=int(os.environ.get('PAES_VOZ', '8')), steps=16, speed=1.0, tempo=1.0, kbps='24k', brillo=True,
+                   gap=dict(start=.3, sentence=.55, cue=.5, quiz=2.6, scene=.45, end=1.2)),
 }
+# Pausa después de cada trozo hablado en el perfil "relato", según el signo con que termina.
+PAUSA = {',': .3, ';': .4, ':': .45, '—': .35, '.': .58, '?': .7, '!': .62, '…': .85}
 # Perfil de los videos en dibujos (PAES_PERFIL=corto para probar el estilo de videos cortos).
 TOON = os.environ.get('PAES_PERFIL', 'toon')
 SR = VOICE = STEPS = SPEED = TEMPO = KBPS = BRILLO = GAP = None
@@ -327,7 +333,11 @@ def cue_parts(text):
         return [(text, s, False) for s in habla.sentences(sp)], True
     parts = []
     for s in habla.sentences(text):
-        parts.append((s, habla.spoken(s), True))
+        # En "relato" cada trozo entre comas, dos puntos o punto y coma se graba aparte, con su pausa.
+        trozos = re.split(r'(?<=[,;:—])\s+', s) if ESTILO == 'relato' else [s]
+        for tz in trozos:
+            if tz.strip():
+                parts.append((tz, habla.spoken(tz), True))
     return parts, False
 
 
@@ -359,7 +369,7 @@ def build_video(v, voice, outdir):
             lines = []
             for pi, (disp, sp, linked) in enumerate(parts):
                 if pi:
-                    push(sil(GAP['sentence']))
+                    push(sil(PAUSA.get(parts[pi - 1][0].rstrip('»”" ')[-1:], GAP['sentence']) if ESTILO == 'relato' else GAP['sentence']))
                 probs = habla.problems(sp)
                 if probs:
                     log('  ojo, signos en la voz', v['id'], probs, sp)
@@ -398,8 +408,8 @@ def build_video(v, voice, outdir):
     base = os.path.join(outdir, v['id'])
     encode(y, base + '.webm')
     data = dict(d=round(len(y) / SR, 2), h=huella(v), sc=scs, c=cues, e=env)
-    if ESTILO == 'corto':
-        data['st'] = 'corto'  # el reproductor usa la edición de videos cortos
+    if ESTILO in ('corto', 'relato'):
+        data['st'] = ESTILO  # el reproductor usa la edición de videos de redes
     with open(base + '.js', 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio(%s,%s);\n' % (json.dumps(v['id']), json.dumps(data, ensure_ascii=False, separators=(',', ':'))))
     worst.sort(key=lambda x: -x[0])
@@ -438,6 +448,11 @@ LTAS[2] = {160: 3.5, 200: 4.8, 250: 3.9, 315: .9, 400: .3, 500: 0, 630: -1.3, 80
 # M1 (velocidad 1,3), medido igual.
 LTAS[5] = {160: -7.0, 200: -8.9, 250: -5.3, 315: -3.9, 400: -1.9, 500: 0, 630: -3.0, 800: -8.8, 1000: -9.5, 1250: -7.2, 1600: -8.1,
            2000: -11.6, 2500: -11.2, 3150: -13.3, 4000: -18.7, 5000: -21.5, 6300: -20.8, 8000: -23.6, 10000: -25.1, 12500: -30.7, 16000: -36.0}
+# M4 "Bruno" y M1 "Marco" a velocidad natural.
+LTAS[8] = {160: -0.5, 200: -3.5, 250: -1.3, 315: -4.3, 400: -2.3, 500: 0, 630: -2.2, 800: -8.4, 1000: -12.2, 1250: -11.0, 1600: -13.9,
+           2000: -18.3, 2500: -19.4, 3150: -23.4, 4000: -24.5, 5000: -17.1, 6300: -21.7, 8000: -26.4, 10000: -26.7, 12500: -37.1, 16000: -39.6}
+LTAS_M1_NATURAL = {160: -6.8, 200: -6.0, 250: -4.3, 315: -3.8, 400: -.9, 500: 0, 630: -2.1, 800: -6.9, 1000: -8.1, 1250: -6.6, 1600: -7.3,
+                   2000: -11.0, 2500: -10.5, 3150: -12.5, 4000: -18.8, 5000: -20.7, 6300: -19.6, 8000: -22.7, 10000: -24.0, 12500: -30.1, 16000: -35.6}
 HABLA = {160: -6.8, 200: -3.8, 250: -2.5, 315: -2.3, 400: -.65, 500: 0, 630: -1.2, 800: -3.9, 1000: -6.3, 1250: -7.3, 1600: -9.1,
          2000: -10.9, 2500: -14.1, 3150: -14.7, 4000: -15.9, 5000: -19.0, 6300: -20.7, 8000: -21.1, 10000: -23, 12500: -26, 16000: -30}
 PRESENCIA = {160: -1.5, 200: -1.2, 250: -1, 1250: 1, 1600: 2, 2000: 2, 2500: 2, 3150: 2, 4000: 2.5, 5000: 4, 6300: 5, 8000: 4, 10000: 3, 12500: 2}
@@ -445,11 +460,12 @@ _eq = {}
 
 
 def eq_taps(sr):
-    k = (sr, VOICE)
+    k = (sr, VOICE, SPEED)
     if k not in _eq:
         from scipy.signal import firwin2, minimum_phase
         fcs = sorted(HABLA)
-        g = np.array([np.clip(HABLA[f] + PRESENCIA.get(f, 0) - LTAS[VOICE][f], -26, 9) for f in fcs])
+        lt = LTAS_M1_NATURAL if (VOICE == 5 and SPEED == 1.0) else LTAS[VOICE]
+        g = np.array([np.clip(HABLA[f] + PRESENCIA.get(f, 0) - lt[f], -26, 9) for f in fcs])
         g -= g[fcs.index(1000)]
         grid = np.linspace(0, sr / 2, 1025)
         lg = np.interp(np.log10(np.maximum(grid, 20)), np.log10(np.array(fcs, float)), g)

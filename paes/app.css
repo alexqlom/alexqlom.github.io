@@ -1097,3 +1097,5 @@ b.hl { font-weight: 800; }
 .corto .vp-cap .cw.said { color: #fff; }
 .corto .vp-cap .cw.now { color: #fff; padding: 0 5px; margin: 0 -2px; border-radius: 6px; background: var(--acc); color: #10140a; text-shadow: none; -webkit-text-stroke: 0; animation: cw-pop .16s ease-out; }
 @keyframes cw-pop { from { transform: scale(1.25); } to { transform: scale(1); } }
+/* Estilo "relato": la palabra dicha en amarillo con contorno negro, sin recuadro. */
+.relato .vp-cap .cw.now { padding: 0; margin: 0; background: none; color: #ffd23f; text-shadow: 0 2px 0 #000, 0 0 3px #000, 0 0 12px rgba(0, 0, 0, .75); -webkit-text-stroke: .6px rgba(0, 0, 0, .55); animation: none; }

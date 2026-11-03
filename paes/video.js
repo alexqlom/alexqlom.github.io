@@ -679,6 +679,7 @@
       this.tl = d => this.toon ? RB.toonKit.timeline(this.v, d) : timeline(this.v, d);
       this.T = this.tl(data);
       this.root.classList.toggle('corto', !!this.T.corto);
+      this.root.classList.toggle('relato', this.T.estilo === 'relato');
       this.mode = 'clock';
       if (data) {
         const src = await srcFor(`audio/${this.id}.webm`);
