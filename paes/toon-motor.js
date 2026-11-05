@@ -305,10 +305,15 @@
     for (let i = 0; i < n; i++) { a.push(i % 2 ? '0' : '1'); b.push(i % 2 ? '1' : '0'); }
     tr.mt.steps(t, a, .13); tr.mm.steps(t, b, .13);
   }
-  function walkLegs(tr, t, d) {
-    const fr = [], fa = [], fb = [];
-    for (let s = .0; s < d - .05; s += .16) { const i = Math.round(s / .16); fr.push([s + .16, rot(i % 2 ? -17 : 17)]); fa.push([s + .16, rot(i % 2 ? 17 : -17)]); fb.push([s + .08, 'translateY(-3px)'], [s + .16, 'translateY(0px)']); }
+  function walkLegs(tr, t, d, arms) {
+    const fr = [], fa = [], fb = [], al = [], ar = [];
+    for (let s = .0; s < d - .05; s += .16) {
+      const i = Math.round(s / .16);
+      fr.push([s + .16, rot(i % 2 ? -17 : 17)]); fa.push([s + .16, rot(i % 2 ? 17 : -17)]); fb.push([s + .08, 'translateY(-3px)'], [s + .16, 'translateY(0px)']);
+      al.push([s + .16, rot(i % 2 ? 24 : -4)]); ar.push([s + .16, rot(i % 2 ? 4 : -24)]);
+    }
     tr.lL.hit(t, fr, 'ease-in-out', .1); tr.lR.hit(t, fa, 'ease-in-out', .1); tr.all.hit(t, fb, 'ease-in-out', .05);
+    if (arms) { tr.aL.hit(t, al, 'ease-in-out', .12); tr.aR.hit(t, ar, 'ease-in-out', .12); }
   }
 
   // ---------- Construcción de un plano ----------
@@ -659,7 +664,7 @@
       }
       case 'talk': if (c) talk(c, t, +(arg || 1.2)); break;
       case 'mood': if (c) setMood(c, t, arg); break;
-      case 'pose': if (c) setPose(c, t, arg); break;
+      case 'pose': if (c) { setPose(c, t, arg); a.posed = arg !== 'idle' && arg !== 'down'; } break;
       case 'jump': a.tj.hit(t, [[.16, 'translateY(-34px)'], [.34, 'translateY(0px) scaleY(.9)'], [.44, 'translateY(0px) scaleY(1)']], 'ease-out', .05); ctx.sfx(t, 'boing'); break;
       case 'bounce': a.tj.hit(t, [[.12, 'translateY(-14px)'], [.24, 'translateY(0px)'], [.36, 'translateY(-8px)'], [.48, 'translateY(0px)']], 'ease-out', .05); break;
       case 'shake': a.tj.hit(t, [[.06, 'translateX(-7px)'], [.12, 'translateX(7px)'], [.18, 'translateX(-6px)'], [.24, 'translateX(5px)'], [.3, 'translateX(-3px)'], [.36, 'translateX(0px)']], 'linear', .02); break;
@@ -676,7 +681,8 @@
         const d = e.kv.d ? +e.kv.d : e.what === 'to' ? clamp(dist / 300, .35, 1.2) : clamp(dist / (e.what === 'run' ? 300 : 150), .4, 2.4);
         a.dx = tx - a.x; a.dy = ty - a.y;
         a.tm.to(t, `translate(${r1(a.dx)}px,${r1(a.dy)}px)`, d, e.what === 'to' ? RB.vkit.EASE.inout : 'linear');
-        if (c && e.what !== 'to') walkLegs(c, t, d);
+        // Los personajes caminan también con "to" si el trayecto es largo (antes se deslizaban).
+        if (c && (e.what !== 'to' || dist > 40)) walkLegs(c, t, d, !a.posed);
         break;
       }
       case 'exit': {
@@ -684,7 +690,7 @@
         if (dir === 'l' || dir === 'r') {
           const tx = dir === 'l' ? -a.g.w : W0 + a.g.w, dist = Math.abs(tx - a.x - a.dx), d = clamp(dist / 190, .6, 2);
           a.dx = tx - a.x; a.tm.to(t, `translate(${r1(a.dx)}px,${r1(a.dy)}px)`, d, 'linear');
-          if (c) walkLegs(c, t, d);
+          if (c) walkLegs(c, t, d, !a.posed);
         } else if (dir === 'up') { a.tE.to(t, 'translateY(-700px)', .5, 'ease-in'); ctx.sfx(t, 'swish'); }
         else if (dir === 'down') { a.tE.to(t, 'translateY(420px)', .45, 'ease-in'); ctx.sfx(t, 'swish'); }
         else if (dir === 'fade') a.tO.to(t, '0', .4);
