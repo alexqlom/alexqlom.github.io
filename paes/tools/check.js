@@ -6,7 +6,7 @@ const ctx = { window: {}, document: { addEventListener() {}, removeEventListener
 ctx.window.window = ctx.window;
 vm.createContext(ctx);
 const run = f => vm.runInContext(`(function(window, document){${fs.readFileSync(path.join(root, f), 'utf8')}})(window, document);`, ctx, { filename: f });
-run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-mapas.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
+run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-escenas.js', 'toon-mapas.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
 const files = fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js') && f !== 'tests.js').sort();
 files.forEach(f => run('data/' + f));
 const RB = ctx.window.RB;
@@ -94,6 +94,18 @@ for (const id in RB.videos) {
       RB.toonKit.check(sc).forEach(m => E(`${id}/${i + 1}`, m));
       if (sc.set && !RB.toonKit.hasSet(sc.set)) E(`${id}/${i + 1}`, `escenario desconocido ${sc.set}`);
       if (sc.k === 'map' && !RB.toonKit.MAPS[sc.view || 'chile']) E(`${id}/${i + 1}`, `mapa desconocido ${sc.view}`);
+      // Banderas: toda bandera dice de qué país es, existe, y no se mezcla la de EE.UU. con la de Chile si el plano
+      // no habla de los dos. La bandera chilena actual es de 1817: en la Patria Vieja se usa f=chv.
+      const cmds = (sc.c || []).join(' '), flags = [...cmds.matchAll(/\bf=([a-z]+)/g)].map(m => m[1]).filter(f => RB.toonKit.FLAG[f] || f.length <= 4);
+      (sc.c || []).forEach(c => { if (/=\+(flag|bigflag)\b/.test(c) && !/\bf=/.test(c)) E(`${id}/${i + 1}`, `bandera sin país: ${c}`); });
+      flags.forEach(f => { if (!RB.toonKit.FLAG[f]) E(`${id}/${i + 1}`, `bandera desconocida f=${f}`); });
+      if (sc.flag && !RB.toonKit.FLAG[sc.flag]) E(`${id}/${i + 1}`, `bandera desconocida flag: ${sc.flag}`);
+      const said = RB.toonKit.cuesOf(sc).map(c => c.text).join(' ').toLowerCase();
+      const all = flags.concat(sc.flag ? [sc.flag] : []).concat(/flagcl/.test(cmds) ? ['cl'] : []);
+      if (all.includes('us') && all.includes('cl') && !(/estados unidos|ee\.? ?uu/.test(said) && /chile/.test(said))) E(`${id}/${i + 1}`, 'bandera de EE.UU. junto a la de Chile sin que la narración hable de ambos');
+      if (all.includes('us') && !/estados unidos|ee\.? ?uu|norteamerica|estadounidense|washington|roosevelt|kennedy|nixon|reagan|guerra fr[ií]a|occidente|potencias|aliados|bloque/.test(said + ' ' + cmds.toLowerCase())) W(`${id}/${i + 1}`, 'bandera de EE.UU. en un plano que no menciona a EE.UU.');
+      const yrs = [...said.matchAll(/\b(1[5-9]\d\d|20\d\d)\b/g)].map(m => +m[1]);
+      if (all.includes('cl') && yrs.length && Math.max(...yrs) < 1817) E(`${id}/${i + 1}`, 'bandera chilena actual antes de 1817 (usar f=chv o ninguna)');
       if (sc.k === 'quiz') { quizzes++; if (!sc.o || sc.o.length < 2 || !(sc.a >= 0 && sc.a < sc.o.length)) E(`${id}/${i + 1}`, 'pregunta mal armada'); }
       RB.toonKit.cuesOf(sc).forEach(c => { words += (c.text.match(/\S+/g) || []).length; if (!c.text) E(`${id}/${i + 1}`, 'plano sin narración'); });
     });

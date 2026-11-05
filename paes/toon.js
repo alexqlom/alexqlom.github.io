@@ -73,7 +73,7 @@
     none: () => '',
   };
   // Ropa: torso (de 70 a 122) y largo; devuelve el dibujo y los colores de mangas.
-  const TORSO = 'M34 77 C34 71 38 70 43 70 L57 70 C62 70 66 71 66 77 L68 121 C68 123 66.5 124 64.5 124 L35.5 124 C33.5 124 32 123 32 121 Z';
+  const TORSO = 'M31.5 81 C31.5 73.5 36.5 70.5 43 70.5 L57 70.5 C63.5 70.5 68.5 73.5 68.5 81 C68.5 92 66.2 100 65.8 108 C65.6 114 67.4 118 67.6 121.5 C67.6 123.2 66.4 124.5 64.6 124.5 L35.4 124.5 C33.6 124.5 32.4 123.2 32.4 121.5 C32.6 118 34.4 114 34.2 108 C33.8 100 31.5 92 31.5 81 Z';
   const TOP = {
     tee: c => ({ s: c, f: K.skin, d: `<path d="${TORSO}" fill="${c}"/><path d="M44 70 Q50 76 56 70" stroke="#000" stroke-opacity=".25" stroke-width="1.6" fill="none"/>` }),
     shirt: c => ({ s: c, d: `<path d="${TORSO}" fill="${c}"/><path d="M43 70 L50 78 L57 70 L54 70 L50 74 L46 70Z" fill="#fff" opacity=".85"/><g fill="#000" opacity=".3"><circle cx="50" cy="86" r="1.1"/><circle cx="50" cy="96" r="1.1"/><circle cx="50" cy="106" r="1.1"/></g>` }),
@@ -155,16 +155,16 @@
   // Elenco: tipos de personaje listos para usar. Se pueden modificar en el video: "rey+sad", "obrero color=red".
   const CAST = {
     rey: { sk: 'a', hr: 'long:#6b4a32', fh: 'mus:#6b4a32', top: 'robe:#6a2fb8', hat: 'crown', hold: 'scepter' },
-    reina: { sk: 'a', hr: 'bun:#c9a65a', top: 'gown:#8e2f6b', hat: 'crown', acc: 'pearls' },
+    reina: { fem: 1, sk: 'a', hr: 'bun:#c9a65a', top: 'gown:#8e2f6b', hat: 'crown', acc: 'pearls' },
     noble: { sk: 'a', hr: 'wig:#efefef', top: 'coat:#2f63c9', acc: 'monocle', pt: '#e9e4d8', shoe: '#1d1d1d' },
-    dama: { sk: 'a', hr: 'bun:#e8e2d6', top: 'gown:#d9709a', acc: 'pearls' },
+    dama: { fem: 1, sk: 'a', hr: 'bun:#e8e2d6', top: 'gown:#d9709a', acc: 'pearls' },
     cura: { sk: 'b', hr: 'bald:#5a4637', top: 'cassock', hat: 'zucchetto' },
     obispo: { sk: 'a', hr: 'bald:#ccc', top: 'cassock:#5a1f6e', hat: 'zucchetto:#6b1f86' },
     campesino: { sk: 'c', hr: 'short:#3b2a1d', fh: 'beard:#3b2a1d', top: 'peasant:#7a5a3c', hat: 'straw', pt: '#6b5a44' },
-    campesina: { sk: 'c', hr: 'braids:#2b1d14', top: 'dress:#7a5a3c', hat: 'none' },
+    campesina: { fem: 1, sk: 'c', hr: 'braids:#2b1d14', top: 'dress:#7a5a3c', hat: 'none' },
     burgues: { sk: 'a', hr: 'side:#3b2a1d', fh: 'mus:#3b2a1d', top: 'vest:#1d1d1d', hat: 'tophat', pt: '#2a2a2a', hold: 'cane' },
     obrero: { sk: 'b', hr: 'short:#2b1d14', fh: 'mus:#2b1d14', top: 'overall:#3f5fa8', hat: 'cap', pt: '#3f5fa8' },
-    obrera: { sk: 'b', hr: 'bun:#2b1d14', top: 'apron:#6a6f7a', hat: 'none' },
+    obrera: { fem: 1, sk: 'b', hr: 'bun:#2b1d14', top: 'apron:#6a6f7a', hat: 'none' },
     nino: { sk: 'b', hr: 'short:#3b2a1d', top: 'peasant:#6b5a44', hat: 'cap', k: .72, pt: '#5a4a38' },
     soldado: { sk: 'b', hr: 'short:#2b1d14', top: 'uniform:#2b4fa8', hat: 'kepi', pt: '#f2efe6', hold: 'musket' },
     patriota: { sk: 'b', hr: 'side:#2b1d14', fh: 'side:#2b1d14', top: 'general:#22305e', pt: '#f2efe6', shoe: '#111' },
@@ -174,7 +174,7 @@
     criollo: { sk: 'a', hr: 'side:#3b2a1d', fh: 'side:#3b2a1d', top: 'coat:#2a2a2a', pt: '#e9e4d8' },
     revolucionario: { sk: 'b', hr: 'short:#3b2a1d', top: 'peasant:#3a4a7a', hat: 'frigio', pt: '#e9e4d8', hold: 'flagfr' },
     mapuche: { sk: 'd', hr: 'long:#151515', top: 'poncho:#5a2a2a', hat: 'band:#b8323a', pt: '#3a3a3a' },
-    mapuchef: { sk: 'd', hr: 'braids:#151515', top: 'kepam', hat: 'band:#3a6ad6' },
+    mapuchef: { fem: 1, sk: 'd', hr: 'braids:#151515', top: 'kepam', hat: 'band:#3a6ad6' },
     minero: { sk: 'c', hr: 'short:#2b1d14', fh: 'mus:#2b1d14', top: 'peasant:#5a4a38', hat: 'miner', hold: 'pick', pt: '#4a3a2a' },
     pampino: { sk: 'c', hr: 'short:#2b1d14', fh: 'mus:#2b1d14', top: 'shirt:#a08a6a', hat: 'straw:#c9b07a', hold: 'shovel', pt: '#5a4a38' },
     huaso: { sk: 'b', hr: 'short:#2b1d14', fh: 'mus:#2b1d14', top: 'poncho:#a8323a', hat: 'huaso', pt: '#2a2a2a' },
@@ -183,24 +183,24 @@
     juez: { sk: 'a', hr: 'short:#d0d0d0', top: 'toga', hold: 'gavel' },
     profe: { sk: 'b', hr: 'bob:#5a3a22', top: 'shirt:#2ec4b6', acc: 'glasses', pt: '#2a2a2a', hold: 'chalk' },
     estudiante: { sk: 'b', hr: 'short:#2b1d14', top: 'school', pt: '#5b6370' },
-    estudianta: { sk: 'b', hr: 'pony:#3b2a1d', top: 'school', pt: '#5b6370' },
+    estudianta: { fem: 1, sk: 'b', hr: 'pony:#3b2a1d', top: 'school', pt: '#5b6370' },
     chico: { sk: 'b', hr: 'spiky:#2b1d14', top: 'hoodie:#ff9f43', pt: '#2b3f8f' },
-    chica: { sk: 'c', hr: 'long:#2b1d14', top: 'tee:#9b6bff', pt: '#262626' },
+    chica: { fem: 1, sk: 'c', hr: 'long:#2b1d14', top: 'tee:#9b6bff', pt: '#262626' },
     vecino: { sk: 'c', hr: 'curly:#2b1d14', top: 'shirt:#3ecf6e', pt: '#3a3a3a' },
-    vecina: { sk: 'a', hr: 'bob:#c97a3a', top: 'tee:#ff7eb6', pt: '#2b3f8f' },
-    abuelo: { sk: 'a', hr: 'bald:#d0d0d0', fh: 'mus:#d0d0d0', top: 'vest:#6b4a32', acc: 'glasses', pt: '#5a4a38', hold: 'cane' },
+    vecina: { fem: 1, sk: 'a', hr: 'bob:#c97a3a', top: 'tee:#ff7eb6', pt: '#2b3f8f' },
+    abuelo: { old: 1, sk: 'a', hr: 'bald:#d0d0d0', fh: 'mus:#d0d0d0', top: 'vest:#6b4a32', acc: 'glasses', pt: '#5a4a38', hold: 'cane' },
     vendedor: { sk: 'c', hr: 'short:#2b1d14', fh: 'mus:#2b1d14', top: 'apron:#3ecf6e', pt: '#3a3a3a' },
     cientifico: { sk: 'a', hr: 'afro:#e0e0e0', top: 'labcoat', acc: 'glasses', pt: '#333' },
     medico: { sk: 'b', hr: 'short:#2b1d14', top: 'labcoat:#2ec4b6', pt: '#333' },
-    enfermera: { sk: 'b', hr: 'bun:#2b1d14', top: 'dress:#f2f2f2', hat: 'nurse' },
-    sufragista: { sk: 'a', hr: 'bun:#5a3a22', top: 'dress:#5b2fb8', acc: 'scarfred', hold: 'sign' },
+    enfermera: { fem: 1, sk: 'b', hr: 'bun:#2b1d14', top: 'dress:#f2f2f2', hat: 'nurse' },
+    sufragista: { fem: 1, sk: 'a', hr: 'bun:#5a3a22', top: 'dress:#5b2fb8', acc: 'scarfred', hold: 'sign' },
     militar: { sk: 'b', hr: 'short:#2b1d14', top: 'uniform:#4a5a3a', hat: 'helmet', pt: '#4a5a3a', hold: 'rifle' },
     oficial: { sk: 'a', hr: 'short:#5a5a5a', fh: 'mus:#5a5a5a', top: 'general:#3f4a35', hat: 'officer', pt: '#3f4a35' },
     arbitro: { sk: 'b', hr: 'bald:#2b1d14', top: 'shirt:#1d1d1d', pt: '#1d1d1d', hold: 'whistle' },
     jugador: { sk: 'c', hr: 'spiky:#2b1d14', top: 'jersey:#d52b1e', pt: '#fff' },
     empresario: { sk: 'a', hr: 'side:#5a5a5a', top: 'suit:#2b3f8f', pt: '#2b3f8f', hold: 'briefcase' },
-    trabajadora: { sk: 'c', hr: 'pony:#2b1d14', top: 'shirt:#ff9f43', pt: '#2a2a2a', hat: 'hard' },
-    lima: { sk: 'b', hr: 'pony:#2b1d14', top: 'tee:#c6ff00', pt: '#1d1d1d' },
+    trabajadora: { fem: 1, sk: 'c', hr: 'pony:#2b1d14', top: 'shirt:#ff9f43', pt: '#2a2a2a', hat: 'hard' },
+    lima: { fem: 1, sk: 'b', hr: 'pony:#2b1d14', top: 'tee:#c6ff00', pt: '#1d1d1d' },
   };
   // "rey" · "obrero color=#f00 hold=sign:¡8 horas!" · { sk, hr, top, ... }
   function spec(s) {
@@ -213,15 +213,38 @@
     return o;
   }
   const split2 = (s, d) => { const i = String(s || '').indexOf(':'); return i < 0 ? [s || '', d] : [s.slice(0, i), s.slice(i + 1)]; };
+  // Oscurece un color #rrggbb (para sombras de la ropa y puños).
+  const shade = (c, f) => {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(c || ''));
+    if (!m) return c;
+    const n = parseInt(m[1], 16), ch = k => Math.max(0, Math.min(255, Math.round(((n >> k) & 255) * f)));
+    return '#' + [16, 8, 0].map(k => ch(k).toString(16).padStart(2, '0')).join('');
+  };
+  const LC = K.line;
+  // Mano: mitón con pulgar hacia adentro (dibujada con la muñeca en 0,0).
+  const HAND = (side, skin) => {
+    const sx = side === 'R' ? -1 : 1;
+    return `<path d="M-5.3 -2.2 C-5.6 -6.8 5.6 -6.8 5.3 -2.2 L5.1 3.2 C4.7 8.2 -4.7 8.2 -5.1 3.2Z" fill="${skin}" stroke="${LC}" stroke-width="1.3"/>` +
+      `<path d="M${sx * 4.6} -1.8 C${sx * 8.2} -2.8 ${sx * 9} 1.6 ${sx * 5.2} 2.8" fill="${skin}" stroke="${LC}" stroke-width="1.2" stroke-linejoin="round"/>` +
+      `<path d="M-2.6 4.6 L-2.6 6.4 M0.2 4.9 L0.2 6.8 M2.9 4.6 L2.9 6.4" stroke="${LC}" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round"/>`;
+  };
   const ARMSH = (side, sleeve, skin, hold, holdTxt) => {
     const [sx, sy] = SH[side], ey = sy + ARM, hy = ey + FORE;
     const h = hold && HOLD[hold] ? HOLD[hold].replace('{T}', esc(holdTxt || '')) : '';
-    return `<g class="a${side}" style="transform-origin:${sx}px ${sy}px"><path d="M${sx} ${sy} L${sx} ${ey}" stroke="${sleeve}" stroke-width="9.5" stroke-linecap="round"/>` +
-      `<g class="f${side}" style="transform-origin:${sx}px ${ey}px"><path d="M${sx} ${ey} L${sx} ${hy - 2}" stroke="${sleeve}" stroke-width="8.6" stroke-linecap="round"/>` +
-      `<g transform="translate(${sx} ${hy + 2})" class="h${side}">${side === 'R' ? h : ''}<circle r="5.3" fill="${skin}"/></g></g></g>`;
+    const cuff = shade(sleeve, .78);
+    // El contorno parte un poco bajo el hombro: arriba la manga se funde con el torso.
+    return `<g class="a${side}" style="transform-origin:${sx}px ${sy}px"><path d="M${sx} ${sy + 5} L${sx} ${ey}" stroke="${LC}" stroke-width="12.4" stroke-linecap="round"/><path d="M${sx} ${sy} L${sx} ${ey}" stroke="${sleeve}" stroke-width="9.6" stroke-linecap="round"/>` +
+      `<g class="f${side}" style="transform-origin:${sx}px ${ey}px"><path d="M${sx} ${ey} L${sx} ${hy - 2}" stroke="${LC}" stroke-width="11.4" stroke-linecap="round"/><path d="M${sx} ${ey} L${sx} ${hy - 2}" stroke="${sleeve}" stroke-width="8.6" stroke-linecap="round"/>` +
+      `<path d="M${sx} ${hy - 7} L${sx} ${hy - 3.4}" stroke="${cuff}" stroke-width="8.6"/>` +
+      `<g transform="translate(${sx} ${hy + 2})" class="h${side}">${side === 'R' ? h : ''}${HAND(side, skin)}</g></g></g>`;
   };
   // Dibujo completo de un personaje. Las clases (aL, fR, mm-*, eye, bL...) son las que anima el plano.
+  let UID = 0;
+  // Contorno para cada parte (pelo, sombrero, bigote): los hijos sin trazo propio lo heredan.
+  const ol = (svg, w = 1.5) => svg ? `<g stroke="${LC}" stroke-width="${w}" stroke-linejoin="round">${svg}</g>` : '';
+  const HAIRLIGHT = new Set(['short', 'side', 'spiky', 'long', 'bob', 'bun', 'pony', 'braids', 'wig', 'curly', 'afro']);
   function charSVG(sp) {
+    const u = 'k' + (++UID).toString(36);
     const [skin, skinD] = SKIN[sp.sk] || SKIN.b;
     const [hs, hc] = split2(sp.hr, '#2b1d14');
     const hair = (HAIR[hs] || HAIR.short)(col(hc));
@@ -236,42 +259,59 @@
     const pants = col(sp.pt) || '#333', shoe = col(sp.shoe) || '#1a1a1a';
     const long = /robe|cassock|toga|kepam|gown/.test(ts);
     const [hold, holdTxt] = split2(sp.hold, '');
-    const legs = (side, x) => `<g class="l${side}" style="transform-origin:${x}px 118px"><rect x="${x - 4.6}" y="116" width="9.2" height="48" rx="4.6" fill="${long ? shoe : pants}"/><rect x="${x - 7.5}" y="160" width="15" height="8.5" rx="4.2" fill="${shoe}"/></g>`;
+    const iris = col(sp.eye) || (sp.sk === 'a' && /#(c9|e8|ef|f2|d0|cc)/.test(hc || '') ? '#4a6a8a' : '#3b2516');
+    const fem = !!sp.fem, old = !!sp.old || (hs !== 'wig' && /#(d0d0d0|ccc|e0e0e0|efefef|f2f2f2|e8e2d6)/i.test(hc || ''));
+    // Piernas: pantalón con pliegue y zapato con suela y brillo.
+    const legs = (side, x) => `<g class="l${side}" style="transform-origin:${x}px 118px"><rect x="${x - 4.8}" y="116" width="9.6" height="47" rx="4.6" fill="${long ? shoe : pants}" stroke="${LC}" stroke-width="1.4"/>` +
+      `<rect x="${x + 1.2}" y="119" width="2.4" height="40" rx="1.2" fill="#000" opacity=".14"/>` +
+      `<path d="M${x - 8} 165 C${x - 8} 160.6 ${x - 4.4} 158.8 ${x} 158.8 C${x + 5} 158.8 ${x + 8.8} 160.8 ${x + 8.8} 164.8 L${x + 8.8} 166.8 C${x + 8.8} 168.2 ${x + 7.8} 169 ${x + 6.2} 169 L${x - 6.2} 169 C${x - 7.4} 169 ${x - 8} 168.2 ${x - 8} 166.8Z" fill="${shoe}" stroke="${LC}" stroke-width="1.3"/>` +
+      `<path d="M${x - 2} 161.4 Q${x + 2} 160.6 ${x + 5} 162.2" stroke="#fff" stroke-opacity=".28" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>`;
+    // Ropa: contorno en la silueta (el primer trazo de cada prenda) y luz y sombra recortadas a esa silueta.
+    const silD = (/<path d="([^"]+)"/.exec(top.d) || [])[1] || TORSO;
+    const topD = top.d.replace('<path ', `<path stroke="${LC}" stroke-width="1.8" stroke-linejoin="round" `);
+    const topShade = `<clipPath id="c${u}"><path d="${silD}"/></clipPath><g clip-path="url(#c${u})"><path d="M57 60 C64 70 70 84 71 100 L74 175 L58 175Z" fill="#000" opacity=".16"/><path d="M26 66 L42 66 C38 80 36 96 36 112 L34 175 L22 175Z" fill="#fff" opacity=".08"/><path d="M26 117 L74 117 L74 126 L26 126Z" fill="#000" opacity=".07"/></g>`;
     const brow = col(fc || hc) || '#2b1d14';
-    const lc = K.line;
+    const lc = LC;
+    const lid = (x, d) => `<path d="M${x - 4.6} ${45.2} Q${x} ${40.2} ${x + 4.6} ${45}" stroke="${lc}" stroke-width="1.9" fill="none" stroke-linecap="round"/>` + (fem ? `<path d="M${x + d * 4.4} 44.4 L${x + d * 6.8} 42.6" stroke="${lc}" stroke-width="1.4" stroke-linecap="round"/>` : '');
+    const eye = x => `<ellipse cx="${x}" cy="46.4" rx="4.3" ry="4.9" fill="#fff" stroke="${lc}" stroke-width="1.1"/><circle cx="${x + .5}" cy="47" r="3" fill="${iris}"/><circle cx="${x + .5}" cy="47" r="1.55" fill="#111"/><circle cx="${x + 1.6}" cy="45.4" r="1.1" fill="#fff"/>`;
+    const head = 'M50 23 C63 23 72.6 31.5 72.6 44.5 C72.6 51 71 56.5 67.5 61 C63.5 66 57.5 69 50 69 C42.5 69 36.5 66 32.5 61 C29 56.5 27.4 51 27.4 44.5 C27.4 31.5 37 23 50 23Z';
+    const hairLight = HAIRLIGHT.has(hs) ? `<path d="M37.5 28.5 Q44.5 23.2 53 23.8" stroke="#fff" stroke-opacity=".24" stroke-width="2.4" fill="none" stroke-linecap="round"/>` : '';
     return `<svg class="tc" viewBox="-30 -30 160 210" aria-hidden="true">
-      <ellipse class="shd" cx="50" cy="169" rx="25" ry="4.5" fill="#000" opacity=".45"/>
+      <ellipse class="shd" cx="50" cy="169" rx="26" ry="4.8" fill="#000" opacity=".42"/>
       <g class="all"><g class="sw" style="transform-origin:50px 168px"><g class="bob">
       ${long ? '' : legs('L', 44) + legs('R', 56)}
-      ${hair.b && hs !== 'afro' ? hair.b : ''}
+      ${hair.b && hs !== 'afro' ? ol(hair.b) : ''}
       ${long ? legs('L', 44) + legs('R', 56) : ''}
-      ${top.d}
-      ${sp.acc && /sash|medal|tie|pearls|scarfred|armband/.test(sp.acc) ? ACC[sp.acc] : ''}
+      ${topD}${topShade}
+      ${sp.acc && /sash|medal|tie|pearls|scarfred|armband/.test(sp.acc) ? ol(ACC[sp.acc], 1.1) : ''}
+      <path d="M44 60 L44 71.5 C47 73.6 53 73.6 56 71.5 L56 60Z" fill="${skinD}" stroke="${lc}" stroke-width="1.3"/>
       ${ARMSH('L', sleeve, skin, '', '')}${ARMSH('R', sleeve, skin, hold, holdTxt)}
-      <rect x="45" y="62" width="10" height="10" rx="3" fill="${skinD}"/>
       <g class="hd" style="transform-origin:50px 66px"><g class="ht" style="transform-origin:50px 66px">
-        ${hs === 'afro' ? hair.b : ''}
-        <circle cx="28.5" cy="49" r="4.3" fill="${skinD}"/><circle cx="71.5" cy="49" r="4.3" fill="${skinD}"/>
-        <circle cx="50" cy="46" r="22" fill="${skin}"/>
-        <g class="ck" opacity=".3"><circle cx="36.5" cy="54.5" r="3.8" fill="#ff6f7d"/><circle cx="63.5" cy="54.5" r="3.8" fill="#ff6f7d"/></g>
+        ${hs === 'afro' ? ol(hair.b) : ''}
+        <path d="M28.6 41.6 C22.8 40.2 21 46 22.6 50.2 C23.9 53.8 26.8 55.2 29.4 53.4Z" fill="${skin}" stroke="${lc}" stroke-width="1.5"/><path d="M26 45 C24.8 47.2 25.3 49.8 27.2 51.4" stroke="${skinD}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M71.4 41.6 C77.2 40.2 79 46 77.4 50.2 C76.1 53.8 73.2 55.2 70.6 53.4Z" fill="${skin}" stroke="${lc}" stroke-width="1.5"/><path d="M74 45 C75.2 47.2 74.7 49.8 72.8 51.4" stroke="${skinD}" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="${head}" fill="${skin}" stroke="${lc}" stroke-width="1.8"/>
+        <path d="M65.6 28.6 C70.4 33.2 72.6 38.6 72.6 44.5 C72.6 51 71 56.5 67.5 61 C63.5 66 57.5 69 50 69 C56.6 66.4 61.8 61.4 64.4 55 C66.6 49.4 67.4 40.2 65.6 28.6Z" fill="${skinD}" opacity=".5"/>
+        <ellipse cx="40" cy="32.5" rx="6" ry="3.2" fill="#fff" opacity=".16" transform="rotate(-18 40 32.5)"/>
+        ${old ? `<g stroke="${skinD}" stroke-width="1.15" fill="none" stroke-linecap="round" opacity=".9"><path d="M41 32 Q50 29.8 59 32"/><path d="M43 35.6 Q50 34 57 35.6"/><path d="M38.4 52 Q41.8 53.6 45 52.2"/><path d="M55 52.2 Q58.2 53.6 61.6 52"/><path d="M44.4 55.4 Q42.6 58 44 61"/><path d="M55.6 55.4 Q57.4 58 56 61"/></g>` : ''}
+        <g class="ck" opacity=".3"><ellipse cx="35.8" cy="55" rx="4.2" ry="2.7" fill="#ff6f7d"/><ellipse cx="64.2" cy="55" rx="4.2" ry="2.7" fill="#ff6f7d"/></g>
         <g class="eyes" style="transform-origin:50px 46px"><g class="eo" style="transform-origin:50px 46px">
-          <g fill="#161616"><ellipse cx="42" cy="46" rx="2.8" ry="3.6"/><ellipse cx="58" cy="46" rx="2.8" ry="3.6"/></g>
-          <g fill="#fff"><circle cx="42.9" cy="44.6" r="1"/><circle cx="58.9" cy="44.6" r="1"/></g></g>
-          <g class="ec" opacity="0" fill="none" stroke="#161616" stroke-width="2.2" stroke-linecap="round"><path d="M38.6 47 Q42 42.6 45.4 47"/><path d="M54.6 47 Q58 42.6 61.4 47"/></g></g>
-        <g stroke="${brow}" stroke-width="2.7" stroke-linecap="round"><path class="bL" style="transform-origin:41.3px 38.2px" d="M37.6 38.8 L45 37.6"/><path class="bR" style="transform-origin:58.7px 38.2px" d="M55 37.6 L62.4 38.8"/></g>
-        <path d="M48.6 50.5 Q50 52.4 51.4 50.5" stroke="${skinD}" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+          ${eye(42)}${eye(58)}${lid(42, -1)}${lid(58, 1)}</g>
+          <g class="ec" opacity="0" fill="none" stroke="${lc}" stroke-width="2.2" stroke-linecap="round"><path d="M38.2 47.2 Q42 42.6 45.8 47.2"/><path d="M54.2 47.2 Q58 42.6 61.8 47.2"/></g></g>
+        <g stroke="${brow}" stroke-width="2.8" stroke-linecap="round" fill="none"><path class="bL" style="transform-origin:41.3px 38.2px" d="M37.2 39.4 Q41.4 36.2 45.8 37.6"/><path class="bR" style="transform-origin:58.7px 38.2px" d="M54.2 37.6 Q58.6 36.2 62.8 39.4"/></g>
+        <path d="M50.4 47.4 C49 50.6 48.2 52.6 49.5 53.4 C50.6 54 52 53.6 52.8 52.8" stroke="${skinD}" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         <g class="mm">
-          <path class="m-n" d="M44.5 56.5 Q50 60.5 55.5 56.5" stroke="${lc}" stroke-width="2.3" fill="none" stroke-linecap="round"/>
-          <g class="m-h" opacity="0"><path d="M42.6 55.2 Q50 66.4 57.4 55.2 Z" fill="${K.mouth}"/><path d="M45.6 60.9 Q50 63.8 54.4 60.9 Q50 59.3 45.6 60.9Z" fill="#ff7b7b"/></g>
-          <path class="m-s" opacity="0" d="M44.5 61 Q50 55.6 55.5 61" stroke="${lc}" stroke-width="2.3" fill="none" stroke-linecap="round"/>
-          <ellipse class="m-o" opacity="0" cx="50" cy="59.5" rx="3.4" ry="4.4" fill="${K.mouth}"/>
-          <path class="m-a" opacity="0" d="M43.5 60.2 Q50 54.8 56.5 60.2 Q50 62.6 43.5 60.2Z" fill="${K.mouth}"/>
-          <path class="m-f" opacity="0" d="M45.5 58.5 L54.5 58.5" stroke="${lc}" stroke-width="2.3" stroke-linecap="round"/>
+          <path class="m-n" d="M45 57.6 Q50 61 55 57.6" stroke="${lc}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <g class="m-h" opacity="0"><path d="M43.2 56 Q50 67 56.8 56 Z" fill="${K.mouth}" stroke="${lc}" stroke-width="1.3" stroke-linejoin="round"/><path d="M44.6 56.7 Q50 58.4 55.4 56.7 L54.8 58.3 Q50 59.8 45.2 58.3Z" fill="#fff"/><path d="M46.4 62.2 Q50 64.8 53.6 62.2 Q50 60.6 46.4 62.2Z" fill="#ff7b7b"/></g>
+          <path class="m-s" opacity="0" d="M45 61.6 Q50 56.4 55 61.6" stroke="${lc}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <ellipse class="m-o" opacity="0" cx="50" cy="59.5" rx="3.5" ry="4.5" fill="${K.mouth}" stroke="${lc}" stroke-width="1.2"/>
+          <g class="m-a" opacity="0"><path d="M43.6 60.6 Q50 55 56.4 60.6 Q50 63.2 43.6 60.6Z" fill="${K.mouth}" stroke="${lc}" stroke-width="1.2"/><path d="M46 59.4 Q50 58.2 54 59.4" stroke="#fff" stroke-width="1.3" fill="none"/></g>
+          <path class="m-f" opacity="0" d="M45.6 58.6 L54.4 58.6" stroke="${lc}" stroke-width="2.2" stroke-linecap="round"/>
         </g>
-        <ellipse class="mt" opacity="0" cx="50" cy="58.6" rx="4.4" ry="3.6" fill="${K.mouth}"/>
-        ${fh}
-        ${hair.f || ''}
-        ${hat}
+        <ellipse class="mt" opacity="0" cx="50" cy="58.8" rx="4.4" ry="3.6" fill="${K.mouth}" stroke="${lc}" stroke-width="1.1"/>
+        ${ol(fh, 1.1)}
+        ${ol(hair.f || '')}${hairLight}
+        ${ol(hat, 1.4)}
         ${sp.acc && /glasses|shades|monocle/.test(sp.acc) ? ACC[sp.acc] : ''}
       </g></g></g></g></g></svg>`;
   }
@@ -281,7 +321,7 @@
   // Ángulos de hombro y codo de cada pose (izquierda / derecha). Positivo en el brazo izquierdo lo abre hacia la
   // izquierda; en el derecho, negativo lo abre hacia la derecha.
   const POSE = {
-    idle: [8, -6, -8, 6], down: [3, 0, -3, 0], wave: [10, -4, -150, -30], point: [8, -6, -92, -6], pointl: [92, 6, -8, 6],
+    idle: [11, -16, -11, 16], down: [3, 0, -3, 0], wave: [10, -4, -150, -30], point: [8, -6, -92, -6], pointl: [92, 6, -8, 6],
     up: [8, -6, -168, 0], cheer: [150, 22, -150, -22], shrug: [55, -95, -55, 95], hips: [42, -118, -42, 118],
     think: [10, -6, -18, -142], cross: [-28, -112, 28, 112], fist: [10, -6, -160, -28], hold: [10, -6, -22, -74],
     present: [62, -40, -62, 40], stop: [10, -6, -80, -80], bow: [6, 0, -6, 0], arms: [70, -10, -70, 10], facepalm: [10, -6, -25, -155],

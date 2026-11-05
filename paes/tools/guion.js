@@ -9,7 +9,7 @@ const ctx = { window: {}, document: { addEventListener() {}, removeEventListener
 ctx.window.window = ctx.window;
 vm.createContext(ctx);
 const run = f => vm.runInContext(`(function(window, document){${fs.readFileSync(path.join(root, f), 'utf8')}})(window, document);`, ctx, { filename: f });
-run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
+run('icons.js'); run('video.js'); ['toon.js', 'toon-arte.js', 'toon-escenas.js', 'toon-motor.js'].forEach(run); run('data/tests.js');
 fs.readdirSync(path.join(root, 'data')).filter(f => f.endsWith('.js') && f !== 'tests.js').sort().forEach(f => run('data/' + f));
 const RB = ctx.window.RB;
 const plain = s => String(s || '').replace(/\*\*|==/g, '').replace(/\s+/g, ' ').trim();

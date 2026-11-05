@@ -22,23 +22,15 @@
   // ---------- Estado ----------
   const KEY = 'paes-v1';
   const DEF = () => ({
-    v: 1, test: null, sel: [], plan: null, today: null, act: null, vpos: {}, goal: 30, xp: 0, days: {}, streak: 0, best: 0, last: null, hearts: 5, hAt: Date.now(),
+    v: 1, test: null, sel: [], plan: null, today: null, act: null, vpos: {}, goal: 30, xp: 0, days: {}, streak: 0, best: 0, last: null,
     done: {}, stars: {}, q: {}, exams: [], ach: {}, seen: {}, tests: {}, revs: 0, perf: 0, goals: 0, goalDay: null,
-    blitz: 0, vq: 0, set: { sound: true, vib: true, voice: true, cc: true, music: true, rate: 1, vname: '', inf: false, remind: true, rh: 19 },
+    blitz: 0, vq: 0, set: { sound: true, vib: true, voice: true, cc: true, music: true, rate: 1, vname: '', remind: true, rh: 19 },
   });
   let S = DEF();
   const load = raw => { const o = JSON.parse(raw); return Object.assign(DEF(), o, { set: Object.assign(DEF().set, o.set || {}) }); };
   try { const raw = localStorage.getItem(KEY); if (raw) S = load(raw); } catch (e) { /* sin almacenamiento: se juega igual */ }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* modo privado */ } };
 
-  const MAXH = 5, REGEN = 30 * 60 * 1000;
-  function regen() {
-    if (S.hearts >= MAXH) { S.hAt = Date.now(); return; }
-    const n = Math.floor((Date.now() - S.hAt) / REGEN);
-    if (n > 0) { S.hearts = Math.min(MAXH, S.hearts + n); S.hAt = S.hearts >= MAXH ? Date.now() : S.hAt + n * REGEN; save(); }
-  }
-  const nextHeartMin = () => Math.max(1, Math.ceil((REGEN - (Date.now() - S.hAt)) / 60000));
-  function loseHeart() { if (S.set.inf) return; if (S.hearts >= MAXH) S.hAt = Date.now(); S.hearts = Math.max(0, S.hearts - 1); save(); }
   const streakNow = () => (S.last === today() || S.last === addDays(today(), -1)) ? S.streak : 0;
   function bumpStreak() {
     const t = today();
@@ -257,11 +249,9 @@
 
   // ---------- Encabezado y pestañas ----------
   function header() {
-    regen();
     $('#hTest').textContent = testInfo().s;
     $('#hStreak').innerHTML = `${I('flame', S.last === today() ? 'on' : '')}<span>${streakNow()}</span>`;
     $('#hXp').innerHTML = `${I('bolt')}<span>${S.xp}</span>`;
-    $('#hHearts').innerHTML = `${I('heart')}<span>${S.set.inf ? '∞' : S.hearts}</span>`;
   }
   const VIEWS = {};
   let tab = 'aprender';
@@ -621,15 +611,11 @@
   };
 
   function startSession(cfg) {
-    regen();
-    const useHearts = (cfg.kind === 'lesson' || cfg.kind === 'practice') && !S.set.inf;
-    if (useHearts && S.hearts <= 0) return noHearts();
     const ses = {
-      cfg, useHearts, queue: cfg.items.map(it => ({ it, retry: false })), i: 0, total: cfg.items.length, resolved: 0,
+      cfg, queue: cfg.items.map(it => ({ it, retry: false })), i: 0, total: cfg.items.length, resolved: 0,
       firstOk: 0, graded: 0, combo: 0, t0: Date.now(), finished: false, dead: false,
     };
-    const lives = useHearts ? `<span class="ses-hp" title="Vidas">${I('heart')}<b>${S.hearts}</b></span>` : '';
-    const ent = openLayer('ses', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="pbar" role="progressbar" aria-label="Progreso" aria-valuemin="0" aria-valuemax="100"><i></i></div>${lives}</header>` +
+    const ent = openLayer('ses', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="pbar" role="progressbar" aria-label="Progreso" aria-valuemin="0" aria-valuemax="100"><i></i></div></header>` +
       `<main class="ses-b"></main><footer class="ses-f"><div class="fb" aria-live="polite"></div><button class="btn" type="button" data-go disabled>Comprobar</button></footer>`,
       () => { ses.dead = true; RB.hush(); if (curSes === ses) curSes = null; });
     ent.guard = () => ses.finished;
@@ -679,7 +665,6 @@
     if (ok) { ses.combo++; SFX.ok(); } else {
       ses.combo = 0; SFX.bad(); buzz(140);
       if (!soft) {
-        if (ses.useHearts) { loseHeart(); const hp = $('.ses-hp b', ses.el); if (hp) hp.textContent = S.hearts; }
         if (!q.retry && (kind === 'lesson' || kind === 'practice' || kind === 'review')) { ses.queue.push({ it, retry: true }); requeued = true; }
       }
     }
@@ -699,7 +684,6 @@
     goB.focus({ preventScroll: true });
   }
   function next(ses) {
-    if (ses.useHearts && S.hearts <= 0) return endSession(ses, 'hearts');
     if (++ses.i >= ses.queue.length) return endSession(ses, 'done');
     showItem(ses);
   }
@@ -713,14 +697,6 @@
     $('.fb', ses.el).innerHTML = '';
     goB.className = 'btn'; goB.disabled = false; goB.textContent = 'Continuar';
     goB.onclick = () => closeLayer(refresh);
-    if (why === 'hearts') {
-      body.innerHTML = `<div class="res"><div class="res-ic">${I('heart')}</div><h2>Te quedaste sin vidas</h2><p class="muted">Recuperas una vida cada 30 minutos (la próxima en ${nextHeartMin()} min). También puedes ganar una ahora con un repaso.</p>` +
-        `<button class="btn ghost" type="button" data-rev>${I('replay')}Repasar para ganar una vida</button></div>`;
-      $('[data-rev]', body).onclick = () => closeLayer(startReview);
-      goB.textContent = 'Volver';
-      save();
-      return;
-    }
     if (cfg.kind === 'diag') {
       const by = diagResult(ses);
       bumpStreak(); addXP(10); save(); SFX.done();
@@ -745,7 +721,6 @@
       if (first && u.lessons.every(l => S.done[l.id])) extra += `<p class="note">${I('trophy')}Terminaste la unidad «${esc(u.name)}»</p>`;
     } else if (cfg.kind === 'practice') { xp = 5 + (perfect ? 3 : 0); title = '¡Práctica completada!'; ic = 'target'; } else if (cfg.kind === 'review') {
       xp = 5 + (perfect ? 3 : 0); S.revs++; title = '¡Repaso completado!'; ic = 'replay';
-      if (!S.set.inf && S.hearts < MAXH) { S.hearts++; if (S.hearts >= MAXH) S.hAt = Date.now(); extra += `<p class="note">${I('heart')}Ganaste una vida</p>`; }
     }
     const streakUp = bumpStreak(), goalHit = addXP(xp);
     S.tests[S.test] = 1;
@@ -784,13 +759,6 @@
   function startMix() {
     const items = shuffle(cItems().filter(GRADED)).slice(0, 15);
     startSession({ kind: 'practice', items, tag: true, mix: true });
-  }
-  function noHearts() {
-    sheet(`<small class="kick">Sin vidas</small><h3>Descansa un momento</h3><p class="muted">Recuperas una vida cada 30 minutos (la próxima en ${nextHeartMin()} min). Haz un repaso para ganar una ahora, o desactiva las vidas en Perfil → Ajustes.</p>` +
-      `<button class="btn" data-rev>${I('replay')}Repasar y ganar una vida</button><button class="btn ghost" data-close>Volver</button>`, el => {
-      $('[data-rev]', el).onclick = () => closeLayer(startReview);
-      $('[data-close]', el).onclick = () => closeLayer();
-    });
   }
 
   // ---------- Ensayo PAES ----------
@@ -1151,7 +1119,6 @@
         ${RB.canSpeak ? `<button class="row" type="button" data-act="voice">${I('mic')}<span>Voz para leer las preguntas<small>${esc(S.set.vname || RB.tts.current() || 'Automática')} · los videos traen su propia narradora</small></span></button>` : ''}
         ${sw('sound', 'Sonidos')}${sw('vib', 'Vibración', 'Al equivocarte')}
         ${NAT() && NAT().remind ? `${sw('remind', 'Recordatorio diario', 'Aviso si aún no terminas el plan de hoy')}<div class="row"><span>Hora del recordatorio</span><div class="seg" data-rh>${[17, 18, 19, 20, 21].map(h => `<button type="button" data-v="${h}" aria-pressed="${(S.set.rh || 19) === h}">${h}:00</button>`).join('')}</div></div>` : ''}
-        ${sw('inf', 'Vidas ilimitadas', 'Practica sin perder vidas')}
         <button class="row" type="button" data-act="plan">${I('target')}<span>Mi plan de estudio<small>${S.plan && S.plan.date ? `PAES: ${esc(fmtDate(S.plan.date, { day: 'numeric', month: 'short', year: 'numeric' }))} · ${S.plan.mins} min al día · ${selTests().map(tShort).join(', ')}` : 'Responde la encuesta para armarlo'}</small></span></button>
         <button class="row" type="button" data-act="test">${I(T.ic)}<span>Prueba que estudias<small>${esc(T.n)}</small></span></button>
         <button class="row" type="button" data-act="export">${I('down')}<span>Exportar progreso<small>Guarda una copia en un archivo</small></span></button>

@@ -412,7 +412,7 @@
     const stW = P.stage.clientWidth || W0, stH = P.stage.clientHeight || H0;
     const k = Math.min(stW / W0, stH / H0);
     const ox = (stW - W0 * k) / 2, oy = Math.max(0, (stH - H0 * k) / 2 - (stH - H0 * k) * .08);
-    const set = (T.SETS[sh.set] || T.SETS.plain)();
+    const set = (T.SETS[sh.set] || T.SETS.plain)(sh) + (T.SETFX ? T.SETFX(sh.set || 'plain', String(v.id).replace(/\W/g, '') + 's' + si) : '');
     el.innerHTML = `<div class="ts-w" style="transform:translate(${r1(ox)}px,${r1(oy)}px) scale(${k.toFixed(4)})"><div class="ts-shk"><div class="ts-cam"><svg class="ts-set" viewBox="-200 -260 760 1160" preserveAspectRatio="none" aria-hidden="true">${set}</svg><div class="ts-act"></div><svg class="ts-ov" viewBox="0 0 ${W0} ${H0}" aria-hidden="true"></svg></div></div><div class="ts-hud"></div></div>`;
     P.scenesEl.appendChild(el);
     const setSvg = el.querySelector('.ts-set');
@@ -569,6 +569,8 @@
     loop('.shuttle', [{ transform: 'translateX(0px)' }, { transform: 'translateX(60px)' }], .6, { direction: 'alternate' });
     loop('.cw', [{ transform: 'translateY(0px)' }, { transform: 'translateY(-4px)' }], .5, { direction: 'alternate' });
     loop('.tw', [{ opacity: .15 }, { opacity: .95 }], 1.7, { direction: 'alternate' });
+    loop('.mote', [{ transform: 'translate(0px,0px)', opacity: .12 }, { transform: 'translate(7px,-16px)', opacity: .6 }], 3.4, { direction: 'alternate' });
+    loop('.bird', [{ transform: 'translate(-60px,10px)' }, { transform: 'translate(460px,-40px)' }], 16, { easing: 'linear' });
     loop('.spark', [{ opacity: 1, transform: 'scale(1)' }, { opacity: .4, transform: 'scale(1.5)' }], .18, { direction: 'alternate' });
     loop('.vote', [{ transform: 'translateY(-10px)', opacity: 0 }, { transform: 'translateY(0px)', opacity: 1, offset: .3 }, { transform: 'translateY(26px)', opacity: 1, offset: .8 }, { transform: 'translateY(30px)', opacity: 0 }], 1.6, { easing: 'linear' });
     svg.querySelectorAll('.cbar').forEach((n, i) => A.add(n, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], a.te + .2 + i * .12, .45, RB.vkit.EASE.back));
@@ -963,6 +965,13 @@
         add(`<b style="color:${c}">✦</b>`, [{ transform: `translate(${x}px,${y}px) scale(.3)`, opacity: 1 }, { transform: `translate(${r1(x + Math.cos(a) * d)}px,${r1(y + Math.sin(a) * d)}px) scale(1.1)`, opacity: 1, offset: .6 }, { transform: `translate(${r1(x + Math.cos(a) * d * 1.2)}px,${r1(y + Math.sin(a) * d * 1.2)}px) scale(.4)`, opacity: 0 }], t, .9, 'ease-out');
       }
       ctx.sfx(t, 'sparkle');
+    } else if (kind === 'splash') {
+      // Salpicadura: gotas azules que saltan y caen.
+      for (let i = 0; i < 12; i++) {
+        const a = Math.PI * (1.1 + r() * .8), d = 40 + r() * 50, c = i % 2 ? '#7cc4f4' : '#cfeaff';
+        add(`<i style="width:7px;height:9px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:${c}"></i>`, [{ transform: `translate(${x}px,${y}px) scale(.4)`, opacity: 1 }, { transform: `translate(${r1(x + Math.cos(a) * d)}px,${r1(y + Math.sin(a) * d)}px) scale(1)`, opacity: 1, offset: .45 }, { transform: `translate(${r1(x + Math.cos(a) * d * 1.3)}px,${r1(y + 30)}px) scale(.7)`, opacity: 0 }], t + r() * .1, .9, 'ease-out');
+      }
+      ctx.sfx(t, 'swish');
     } else if (kind === 'smoke') {
       for (let i = 0; i < 5; i++) add(`<i class="puff"></i>`, [{ transform: `translate(${r1(x + (r() - .5) * 20)}px,${y}px) scale(.3)`, opacity: .8 }, { transform: `translate(${r1(x + (r() - .5) * 70)}px,${r1(y - 30 - r() * 40)}px) scale(${r1(1 + r())})`, opacity: 0 }], t + i * .06, 1.2, 'ease-out');
     } else if (kind === 'boom') {

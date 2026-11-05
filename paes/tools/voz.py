@@ -410,6 +410,7 @@ def build_video(v, voice, outdir):
     data = dict(d=round(len(y) / SR, 2), h=huella(v), sc=scs, c=cues, e=env)
     if ESTILO in ('corto', 'relato'):
         data['st'] = ESTILO  # el reproductor usa la edición de videos de redes
+        data['v'] = VOICE  # qué voz grabó (para saber qué videos regrabar si se cambia)
     with open(base + '.js', 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio(%s,%s);\n' % (json.dumps(v['id']), json.dumps(data, ensure_ascii=False, separators=(',', ':'))))
     worst.sort(key=lambda x: -x[0])
