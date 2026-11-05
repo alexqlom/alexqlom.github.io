@@ -5,6 +5,9 @@
   RB.toon('h8-1', {
     u: 'h8', l: 0, title: 'El imperialismo', desc: 'Las potencias se reparten África y Asia: causas, la Conferencia de Berlín, la India, Japón, los bóxers, el gran garrote y el neocolonialismo.',
     shots: [
+      { ch: 'Solo dos libres', set: 'library',
+        s: 'En 1914, casi toda África estaba en manos europeas. Solo dos países seguían independientes: Etiopía y Liberia. ¿Cómo pasó algo así en apenas treinta años?',
+        c: ['gl=+globe c y300 big pop @Africa', 'gl shake @europeas', 'N 2 "países libres" @dos y=150', 'L "Etiopía" x90 y430 @Etiopia', 'L "Liberia" x270 y430 @Liberia', 'pr=profe l y560 small @treinta', 'pr pose point @treinta', 'T "¿CÓMO?" @paso box'] },
       { k: 'title', set: 'stage', t: 'El imperialismo', sub: 'Historia · Unidad 8 · 1870–1914', em: ['globe', 'crown'],
         s: 'A fines del siglo diecinueve, unas pocas potencias se repartieron el mundo como si fuera una torta. ¡Esto es el imperialismo!' },
       { ch: '¿Quiénes?', set: 'palace',
@@ -52,6 +55,9 @@
   RB.toon('h8-2', {
     u: 'h8', l: 1, title: 'La Primera Guerra Mundial', desc: 'Causas, alianzas, el atentado de Sarajevo, la guerra de trincheras, la guerra total y la entrada de Estados Unidos.',
     shots: [
+      { ch: 'Un giro equivocado', set: 'street',
+        s: 'Sarajevo, 28 de junio de 1914. El auto del heredero de Austria-Hungría dobla por una calle equivocada, y se detiene… justo frente a un joven armado. Un disparo, y empieza una guerra mundial.',
+        c: ['Y "28 JUN 1914" @28', 'au=+car x-60 y470 s.9 none @auto', 'au to x140 d=1.2 @dobla', 'au shake @detiene', 'jo=estudiante/top=coat:#2a2a2a x300 @joven', 'jo mood angry @armado', 'fx flash @disparo', 'cam shake @disparo', 'T "1914" @guerra box'] },
       { k: 'title', set: 'trench', t: 'La Primera Guerra Mundial', sub: 'Historia · Unidad 8 · 1914–1918', em: ['helmet', 'bomb'],
         s: 'Imperios rivales, nacionalismos furiosos, armas por montones y alianzas peligrosas. Solo faltaba una chispa… y llegó en 1914.' },
       { k: 'chain', set: 'plain', top: 130, ch: 'Las causas',
@@ -73,7 +79,7 @@
         s: 'Austria-Hungría le declaró la guerra a Serbia, y las alianzas hicieron el resto: un país arrastró a otro, como fichas de dominó. ¡En pocas semanas, media Europa estaba en guerra!',
         c: ['d1=+flag x50 y470 s.6 pop @Austria f=at', 'd2=+flag x115 y470 s.6 pop @Serbia f=rs', 'd3=+flag x180 y470 s.6 pop @alianzas f=ru', 'd4=+flag x245 y470 s.6 pop @alianzas+0.2 f=de', 'd5=+flag x310 y470 s.6 pop @alianzas+0.4 f=fr', 'd1 fall @domino', 'd2 fall @domino+0.25', 'd3 fall @domino+0.5', 'd4 fall @domino+0.75', 'd5 fall @domino+1', 'T "EFECTO DOMINÓ" @domino', 'fx boom @guerra x180 y300', 'cam shake @guerra'] },
       { ch: 'Guerra de trincheras', set: 'trench',
-        s: 'En el frente occidental, la guerra se estancó en trincheras: zanjas llenas de barro, con frío y miedo. Para avanzar unos metros morían miles de soldados. En Verdún y el Somme murieron cientos de miles.',
+        s: 'En el frente occidental, la guerra se estancó en trincheras: zanjas llenas de barro, con frío y miedo. Para avanzar unos metros morían miles de soldados. En Verdún y el Somme murieron cientos de miles. Solo el primer día del Somme, murieron casi veinte mil soldados británicos.',
         c: ['s1=militar x70 @trincheras', 's2=militar/fh=mus:#2b1d14 x175 @trincheras+0.3', 'T "GUERRA DE TRINCHERAS" @estanco', 's1 mood worried @barro', 's2 tremble @frio', 's2 mood worried @miedo', 'L "Verdún · Somme" x260 y220 @Verdun'] },
       { set: 'battle',
         s: 'Y aparecieron armas nuevas: gases químicos, tanques, aviones y ametralladoras. La tecnología industrial hizo la guerra muchísimo más mortífera.',
@@ -102,6 +108,9 @@
   RB.toon('h8-3', {
     u: 'h8', l: 2, title: 'Consecuencias y Revolución Rusa', desc: 'El armisticio, el Tratado de Versalles, la caída de cuatro imperios, la Sociedad de las Naciones y la Revolución Rusa hasta la URSS.',
     shots: [
+      { ch: 'Cuatro imperios', set: 'palace',
+        s: 'En 1914, cuatro grandes imperios dominaban Europa y Medio Oriente: el alemán, el austrohúngaro, el otomano y el ruso. Pocos años después… habían desaparecido los cuatro.',
+        c: ['k1=rey/top=robe:#2a2a2a/fh=big:#5a4637 x60 @aleman', 'k2=rey/top=robe:#c8b06a/fh=side:#ccc x140 @austrohungaro', 'k3=rey/top=robe:#b8323a/hat=band:#b8323a x220 @otomano', 'k4=rey/top=robe:#2b4fa8/fh=beard:#5a4637 x300 @ruso', 'k1 exit fade @desaparecido', 'k2 exit fade @desaparecido+0.3', 'k3 exit fade @desaparecido+0.6', 'k4 exit fade @cuatro#2', 'T "¿QUÉ PASÓ?" @cuatro#2 box'] },
       { k: 'title', set: 'stage', t: 'Consecuencias y Revolución Rusa', sub: 'Historia · Unidad 8 · 1917–1922', em: ['dove', 'star'],
         s: 'La guerra terminó, pero dejó un mundo distinto: imperios que desaparecen, un tratado muy duro y una revolución que marcó todo el siglo veinte.' },
       { ch: 'El fin de la guerra', set: 'battle',
@@ -116,7 +125,7 @@
       { k: 'map', view: 'europa', set: 'chile', ch: 'Caen los imperios',
         s: 'Cayeron cuatro imperios: el alemán, el austrohúngaro, el otomano y el ruso. Y aparecieron países nuevos, como Polonia, Checoslovaquia y Yugoslavia.',
         c: ['hl DEU red @aleman', 'hl AUT,HUN red @austrohungaro', 'hl TUR red @otomano', 'hl RUS red @ruso', 'hl POL lime @Polonia "Polonia"', 'hl CZE,SVK lime @Checoslovaquia "Checoslovaquia"', 'hl SRB,HRV,BIH,SVN,MNE,MKD lime @Yugoslavia "Yugoslavia"'] },
-      { ch: 'La Sociedad de las Naciones', set: 'office',
+      { ch: 'La Sociedad de las Naciones', set: 'parliament',
         s: 'El presidente estadounidense Wilson propuso sus 14 puntos, entre ellos la autodeterminación de los pueblos y una organización para mantener la paz. Así nació, en 1920, la Sociedad de las Naciones.',
         c: ['wi=presidente/acc=glasses/fh=none/hr=side:#cfcfcf c @Wilson "Woodrow Wilson"', 'N 14 "puntos" @14 y=140', 'wi pose present @autodeterminacion', 'gl=+globe x290 y250 s.7 pop @organizacion', 'dv=+dove x75 y250 s.6 pop @paz', 'Y 1920 @1920', 'T "SOCIEDAD DE LAS NACIONES" @Sociedad'] },
       { set: 'plain',
@@ -129,7 +138,7 @@
         s: 'Mientras, en Rusia había hambre, derrotas en la guerra y un zar que no escuchaba. En febrero de 1917, una revolución obligó al zar Nicolás Segundo a abdicar, y se formó un gobierno provisional.',
         c: ['ca=campesino/hat=cap:#3a3a3a l @hambre', 'ca mood sad @hambre', 'za=rey/fh=beard:#6b4a32/top=general:#e9e4d8/hold=none rc @zar "Nicolás II"', 'za look r @escuchaba', 'Y "FEB 1917" @febrero', 'za exit fade @abdicar', 'T "CAE EL ZAR" @abdicar', 'L "Gobierno provisional" x230 y260 @provisional'] },
       { set: 'snow',
-        s: 'En octubre, los bolcheviques, dirigidos por Lenin, tomaron el poder. Su lema: ¡paz, pan y tierra!',
+        s: 'En octubre, los bolcheviques, dirigidos por Lenin, tomaron el poder. Su lema: ¡paz, pan y tierra! Lenin había vuelto del exilio meses antes, en un tren sellado… con ayuda de Alemania, que quería sacar a Rusia de la guerra.',
         c: ['Y "OCT 1917" @octubre', 'le=obrero/hat=cap:#2a2a2a/hr=bald:#5a3a22/fh=goatee:#5a3a22/top=suit:#2a2a2a c @Lenin "Lenin"', 'le pose fist @poder', 'dv=+dove x70 y250 s.5 pop @paz', 'br=+bread x180 y200 s.5 pop @pan', 'wh=+wheat x290 y250 s.6 pop @tierra', 'T "¡PAZ, PAN Y TIERRA!" @lema'] },
       { set: 'paper',
         s: 'En 1918, los bolcheviques sacaron a Rusia de la guerra con el Tratado de Brest-Litovsk, firmado con Alemania. Querían concentrarse en su revolución.',

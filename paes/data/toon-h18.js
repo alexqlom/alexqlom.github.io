@@ -5,6 +5,9 @@
   RB.toon('h18-1', {
     u: 'h18', l: 0, title: 'Territorio y regiones', desc: 'Chile tricontinental, su mar territorial y la Zona Económica Exclusiva, la Antártica, las 16 regiones, la descentralización, las zonas naturales y el relieve.',
     shots: [
+      { ch: 'Tres continentes', set: 'library',
+        s: 'Chile tiene territorio en tres continentes: en América, en Oceanía, con Rapa Nui… y en la Antártica. Por eso se dice que es un país tricontinental.',
+        c: ['gl=+globe c y300 big pop @continentes', 'L "América" x80 y200 @America', 'L "Oceanía" x280 y220 @Oceania', 'L "Antártica" x180 y470 @Antartica', 'mo=+moai x290 y420 s.5 pop @Rapa', 'T "TRICONTINENTAL" @tricontinental'] },
       { k: 'title', set: 'stage', t: 'Territorio y regiones', sub: 'Historia · Unidad 18 · Geografía', em: ['map', 'compass'],
         s: 'Un país larguísimo, con islas en medio del Pacífico y un pedazo de la Antártica. ¡Conozcamos el territorio de Chile!' },
       { k: 'map', view: 'mundo', set: 'chile', ch: 'Chile tricontinental',
@@ -46,6 +49,9 @@
   RB.toon('h18-2', {
     u: 'h18', l: 1, title: 'La población', desc: 'Una población urbana y concentrada, el envejecimiento, la pirámide regresiva, las tasas demográficas, la densidad, la migración y la segregación.',
     shots: [
+      { ch: 'Cada vez más años', set: 'street',
+        s: 'En Chile, cada vez nacen menos niños, y cada vez vivimos más años. ¿Qué le pasa a un país así? Veamos cómo es la población chilena.',
+        c: ['be=nino x80 y540 small pop @niños', 'be exit fade @menos', 'ab=abuelo c @vivimos', 'ab2=dama/hr=bun:#e8e2d6 r @años', 'ab pose wave @años', 'T "¿QUÉ PASA?" @asi box'] },
       { k: 'title', set: 'stage', t: 'La población', sub: 'Historia · Unidad 18 · Geografía', em: ['people', 'city'],
         s: '¿Dónde vive la gente en Chile? ¿Por qué estamos envejeciendo? ¿Y quiénes están llegando? ¡Hablemos de población!' },
       { ch: '¿Dónde vivimos?', set: 'city',
@@ -87,6 +93,9 @@
   RB.toon('h18-3', {
     u: 'h18', l: 2, title: 'Riesgos naturales y medio ambiente', desc: 'La subducción y el Cinturón de Fuego, amenazas y vulnerabilidad, desastres en Chile, SENAPRED, zonas de sacrificio, contaminación, el SEIA y la Ley REP.',
     shots: [
+      { ch: 'Noventa volcanes', set: 'south',
+        s: 'Chile tiene cerca de noventa volcanes activos, y vivió el terremoto más grande jamás registrado. ¿Por qué aquí la tierra se mueve tanto?',
+        c: ['vo=+volcano x270 y380 s.9 pop @volcanes', 'N 90 "volcanes activos" @noventa y=150', 'fx smoke @activos x270 y260', 'cam shake @terremoto', 've=vecino l @tierra', 've mood worried @tanto', 'T "¿POR QUÉ?" @tanto box'] },
       { k: 'title', set: 'stage', t: 'Riesgos naturales y medio ambiente', sub: 'Historia · Unidad 18 · Geografía', em: ['volcano', 'tree'],
         s: 'Terremotos, volcanes, tsunamis, incendios… y también desafíos que causamos nosotros. Así se vive en Chile, y así nos preparamos.' },
       { ch: '¿Por qué tiembla tanto?', set: 'plain',

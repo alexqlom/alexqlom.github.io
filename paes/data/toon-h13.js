@@ -43,6 +43,9 @@
   RB.toon('h13-2', {
     u: 'h13', l: 1, title: 'Modelo neoliberal y Constitución de 1980', desc: 'Los Chicago boys, el modelo neoliberal, las AFP, la municipalización, el Plan Laboral, la crisis de 1982, el crecimiento y la Constitución de 1980.',
     shots: [
+      { ch: 'Un giro de ciento ochenta grados', set: 'city',
+        s: 'En 1975, la economía chilena tuvo una de las caídas más grandes de su historia. Lo que vino después fue un giro de ciento ochenta grados: el Estado dejó de dirigir la economía… y el mercado pasó a decidir casi todo.',
+        c: ['Y 1975 @1975', 'cd=+chartdown x110 y260 s.8 pop @caidas', 'cu=+chartup x270 y260 s.8 pop @giro', 'e1=empresario l @mercado', 'e1 pose present @mercado', 'T "GIRO TOTAL" @grados'] },
       { k: 'title', set: 'stage', t: 'Modelo neoliberal y Constitución de 1980', sub: 'Historia · Unidad 13 · 1975–1989', em: ['chartup', 'doc:1980'],
         s: 'Durante la dictadura, la economía chilena cambió de raíz, y se escribió una nueva Constitución. Veamos cómo.' },
       { ch: 'Los Chicago boys', set: 'class',
@@ -84,12 +87,15 @@
   RB.toon('h13-3', {
     u: 'h13', l: 2, title: 'La transición a la democracia', desc: 'Las protestas desde 1983, el plebiscito de 1988, el gobierno de Aylwin y la Concertación, las comisiones Rettig y Valech, la detención de Pinochet y las reformas de 2005.',
     shots: [
+      { ch: 'Lápiz y papel', set: 'class',
+        s: '5 de octubre de 1988. Más de siete millones de personas hacen fila para votar, con un lápiz y un papel. Esa noche se decide si el régimen militar sigue… o no.',
+        c: ['Y "5 OCT 1988" @1988', 'v1=vecino l walkl @fila', 'v2=vecina c @fila', 'v3=abuelo r walkr @fila', 'ur=+ballotbox x180 y300 s.8 pop @votar', 'v2 pose vote @papel', 'N 7 "millones de votantes" @siete y=150', 'T "¿SÍ O NO?" @no box'] },
       { k: 'title', set: 'stage', t: 'La transición a la democracia', sub: 'Historia · Unidad 13 · 1983–2005', em: ['ballotbox', 'dove'],
         s: 'Protestas, un plebiscito con lápiz y papel, y el regreso de la democracia. Así fue la transición chilena.' },
       { ch: 'Las protestas', set: 'street',
         s: 'Desde 1983, en medio de la crisis económica, hubo protestas nacionales contra la dictadura, con cacerolazos: la gente golpeaba ollas desde sus casas. Las convocaron organizaciones sindicales, y luego los partidos de oposición.',
         c: ['Y 1983 @1983', 'T "PROTESTAS NACIONALES" @protestas', 'cr=+crowd c y490 big pop @protestas', 'fx notes @cacerolazos', 'cr bounce @ollas', 'mg=+megaphone x290 y250 s.6 pop @convocaron'] },
-      { ch: 'El plebiscito de 1988', set: 'office',
+      { ch: 'El plebiscito de 1988', set: 'class',
         s: 'El 5 de octubre de 1988 hubo un plebiscito: Sí, para que Pinochet siguiera, o No, para tener elecciones. Ganó el No, con cerca del 56 %. Su campaña prometía: la alegría ya viene.',
         c: ['Y "5 OCT 1988" @octubre', 'bx=+ballotbox c y330 s.8 pop @plebiscito', 'L "SÍ" x80 y260 @Si', 'L "NO" x280 y260 @No', 'N 56 % "ganó el No" @56 y=150', 'fx confetti @Gano', 'T "LA ALEGRÍA YA VIENE" @alegria'] },
       { set: 'class',
@@ -98,7 +104,7 @@
       { ch: 'Vuelve la democracia', set: 'parliament',
         s: 'En 1989 se aprobaron reformas a la Constitución y hubo elecciones. Ganó Patricio Aylwin, de la Concertación de Partidos por la Democracia, que asumió en 1990.',
         c: ['Y 1989 @1989', 'doc=+doc x80 y280 s.6 pop @reformas t=REFORMAS', 'ay=presidente/fh=none/hr=bald:#d0d0d0 c @Aylwin "Patricio Aylwin"', 'T "CONCERTACIÓN" @Concertacion', 'Y 1990 @1990', 'ay pose wave @asumio', 'fx confetti @asumio'] },
-      { set: 'office',
+      { set: 'parliament',
         s: 'La Concertación, de centro e izquierda, gobernó entre 1990 y 2010, con Aylwin, Frei Ruiz-Tagle, Lagos y Bachelet. Pero Pinochet siguió como comandante en jefe del Ejército hasta 1998, y luego fue senador vitalicio.',
         c: ['p1=presidente/fh=none/hr=bald:#d0d0d0 x45 @Aylwin "Aylwin"', 'p2=presidente/fh=none/hr=side:#2b1d14 x130 @Frei "Frei"', 'p3=presidente/fh=beard:#d0d0d0/hr=bald:#d0d0d0 x215 @Lagos "Lagos"', 'p4=dama/hr=bob:#c9a65a/top=dress:#2a2a6a/acc=sash x300 @Bachelet "Bachelet"', 'Y 1998 @1998', 'T "PINOCHET, SENADOR VITALICIO" @vitalicio'] },
       { ch: 'Verdad y reparación', set: 'paper',

@@ -5,6 +5,9 @@
   RB.toon('h16-1', {
     u: 'h16', l: 0, title: 'El problema económico', desc: 'La escasez, el costo de oportunidad, los factores productivos, los sectores, las tres preguntas económicas, los agentes y los tipos de bienes.',
     shots: [
+      { ch: 'Cinco mil pesos', set: 'market',
+        s: 'Tienes cinco mil pesos para el fin de semana: ¿cine, comida, o ahorrar? Elegir una cosa significa renunciar a otra. Ese es… el problema económico.',
+        c: ['ch=chica c @pesos', 'mo=+cash x180 y240 s.8 pop @cinco', 'o1=+tv x70 y330 s.5 pop @cine', 'o2=+pizza x180 y360 s.6 pop @comida', 'o3=+piggybank x290 y330 s.6 pop @ahorrar', 'ch mood think @Elegir', 'ch emote ? @renunciar', 'T "ELEGIR = RENUNCIAR" @problema'] },
       { k: 'title', set: 'stage', t: 'El problema económico', sub: 'Historia · Unidad 16 · Economía', em: ['coins', 'cart'],
         s: 'Quieres de todo, pero tu plata, tu tiempo y tus energías no alcanzan para todo. ¡Bienvenido a la economía!' },
       { ch: 'La escasez', set: 'market',
@@ -46,6 +49,9 @@
   RB.toon('h16-2', {
     u: 'h16', l: 1, title: 'Oferta, demanda y precio', desc: 'Las leyes de la oferta y la demanda, el precio de equilibrio, la escasez y el excedente, y qué desplaza la oferta y la demanda.',
     shots: [
+      { ch: 'Reventa y sandías', set: 'market',
+        s: '¿Por qué una entrada para un concierto puede costar diez veces más en la reventa… y en verano, una sandía es tan barata? La respuesta está en dos palabras: oferta y demanda.',
+        c: ['tk=+cards x90 y260 s.8 pop @entrada', 'pt=+pricetag x90 y360 s.7 pop @diez t=x10', 'sa=+apple x270 y300 s.9 pop c=#3ecf6e @sandia', 'pt2=+pricetag x270 y380 s.6 pop @barata t=$', 'T "OFERTA Y DEMANDA" @oferta'] },
       { k: 'title', set: 'stage', t: 'Oferta, demanda y precio', sub: 'Historia · Unidad 16 · Economía', em: ['pricetag', 'scale'],
         s: '¿Por qué las paltas suben de precio? ¿Por qué en enero las frutillas están baratas? La respuesta está en la oferta y la demanda.' },
       { ch: 'La demanda', set: 'market',
@@ -87,6 +93,9 @@
   RB.toon('h16-3', {
     u: 'h16', l: 2, title: 'Estructuras de mercado y comercio', desc: 'Competencia perfecta, monopolio, oligopolio y monopsonio, la colusión y quién la persigue, la especialización, la productividad y la ventaja comparativa.',
     shots: [
+      { ch: 'El caso del papel', set: 'office',
+        s: 'En 2015 se descubrió en Chile que dos empresas se habían puesto de acuerdo durante años para subir el precio del papel higiénico. Fue el caso de la colusión del papel tissue. ¿Por qué eso es tan grave?',
+        c: ['Y 2015 @2015', 'e1=empresario l @empresas', 'e2=empresario/top=suit:#4a2a2a r @empresas', 'e1 walk x150 @acuerdo', 'e2 walk x210 @acuerdo', 'hs=+handshake c y240 s.8 pop @acuerdo', 'pt=+pricetag c y330 s.7 pop @precio t=↑', 'T "COLUSIÓN" @colusion', 'fx question @grave x180 y200'] },
       { k: 'title', set: 'stage', t: 'Estructuras de mercado y comercio', sub: 'Historia · Unidad 16 · Economía', em: ['cart', 'handshake'],
         s: '¿Qué pasa cuando hay muchas empresas compitiendo, o solo una? ¿Y por qué Chile vende cobre y compra autos? ¡Vamos!' },
       { k: 'chain', set: 'plain', top: 140, ch: 'Estructuras de mercado',

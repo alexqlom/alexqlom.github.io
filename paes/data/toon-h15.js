@@ -5,6 +5,9 @@
   RB.toon('h15-1', {
     u: 'h15', l: 0, title: 'La Constitución', desc: 'Qué es la Constitución y la supremacía constitucional, las constituciones de Chile, el estallido social y los procesos constituyentes de 2020 a 2023.',
     shots: [
+      { ch: 'Dos veces rechazada', set: 'class',
+        s: 'En 2022 y en 2023, los chilenos votaron dos propuestas de nueva Constitución… y las dos fueron rechazadas. Pero, ¿qué es una Constitución, y por qué importa tanto?',
+        c: ['Y 2022 @2022', 'Y 2023 @2023', 'ur=+ballotbox c y300 s.8 pop @votaron', 'd1=+doc x80 y240 s.6 drop @propuestas t=2022', 'd2=+doc x280 y240 s.6 drop @propuestas t=2023', 'd1 exit down @rechazadas', 'd2 exit down @rechazadas+0.3', 'T "¿POR QUÉ IMPORTA?" @tanto box'] },
       { k: 'title', set: 'stage', t: 'La Constitución', sub: 'Historia · Unidad 15 · Ciudadanía', em: ['doc', 'scale'],
         s: 'Es la ley más importante del país: el manual de instrucciones de Chile. ¿Qué dice, quién la cambia y qué pasó con los procesos constituyentes? ¡Vamos!' },
       { ch: '¿Qué es?', set: 'paper',
@@ -19,13 +22,13 @@
       { ch: 'El estallido social', set: 'street',
         s: 'En octubre de 2019 comenzó el estallido social: protestas masivas por la desigualdad y el costo de la vida. Partió con evasiones masivas en el Metro de Santiago, por el alza del pasaje, y terminó en un acuerdo para cambiar la Constitución.',
         c: ['Y "OCT 2019" @octubre', 'T "ESTALLIDO SOCIAL" @estallido', 'cr=+crowd c y490 big pop @protestas', 'tr=+train x180 y280 s.45 pop @Metro', 'pt=+pricetag x290 y230 s.55 pop @pasaje t=+$30', 'hs=+handshake x80 y250 s.6 pop @acuerdo', 'T "ACUERDO POR UNA NUEVA CONSTITUCIÓN" @acuerdo'] },
-      { set: 'office',
+      { set: 'class',
         s: 'En el plebiscito de entrada, en octubre de 2020, ganó el Apruebo, con cerca del 78 %: redactar una nueva Constitución, mediante una convención elegida.',
         c: ['Y 2020 @2020', 'bx=+ballotbox c y330 s.8 pop @plebiscito', 'T "APRUEBO" @Apruebo', 'N 78 % "Apruebo" @78 y=150', 'fx confetti @78'] },
       { ch: 'La Convención', set: 'parliament',
         s: 'La Convención Constitucional, entre 2021 y 2022, fue inédita: tuvo paridad de género, es decir, mitad mujeres y mitad hombres, y escaños reservados para pueblos indígenas. Fue la primera asamblea constituyente paritaria del mundo.',
         c: ['Y "2021–2022" @2021', 'T "PARIDAD DE GÉNERO" @paridad', 'w1=dama/top=dress:#3a5a7a/hr=bob:#2b1d14 x45 @mujeres', 'm1=diputado/hat=none x110 @hombres', 'w2=chica x180 @mujeres+0.3', 'm2=vecino x245 @hombres+0.3', 'ma=mapuchef x315 @indigenas', 'S "PRIMERA PARITARIA DEL MUNDO" @mundo y=420'] },
-      { set: 'office',
+      { set: 'class',
         s: 'Pero en septiembre de 2022, su propuesta fue rechazada, con cerca del 62 %. Hubo un segundo proceso, con un Consejo Constitucional, y en diciembre de 2023 esa propuesta también fue rechazada. Por eso sigue vigente la Constitución de 1980, con sus reformas.',
         c: ['Y "SEP 2022" @septiembre', 'd1=+doc x90 y270 s.7 pop @propuesta t=2022', 'x1=+cross x90 y270 s.7 pop @rechazada', 'N 62 % "Rechazo" @62 y=150', 'Y "DIC 2023" @diciembre', 'd2=+doc x270 y270 s.7 pop @Consejo t=2023', 'x2=+cross x270 y270 s.7 pop @rechazada#2', 'd3=+doc c y440 s.6 pop @vigente t=1980', 'T "SIGUE LA DE 1980" @vigente'] },
       { set: 'parliament',
@@ -46,6 +49,9 @@
   RB.toon('h15-2', {
     u: 'h15', l: 1, title: 'Derechos humanos y garantías', desc: 'Las características de los derechos humanos, sus tres generaciones, la Declaración de 1948, el Pacto de San José, los recursos de protección y amparo y los derechos del niño.',
     shots: [
+      { ch: 'Nadie te los regaló', set: 'class',
+        s: 'No te los regaló nadie, no se compran, y nadie te los puede quitar… ni siquiera el Estado. ¿Qué tienen de especial los derechos humanos?',
+        c: ['a=estudianta l @nadie', 'b=estudiante r @compran', 'sh=+shield c y280 s.9 pop @quitar', 'he=+heart c y280 s.5 pop @quitar+0.4', 'a pose cheer @especial', 'b pose cheer @especial', 'T "DERECHOS HUMANOS" @humanos'] },
       { k: 'title', set: 'stage', t: 'Derechos humanos y garantías', sub: 'Historia · Unidad 15 · Ciudadanía', em: ['heart', 'shield'],
         s: 'Los tienes desde que naces, nadie te los puede quitar y no caducan nunca. Hablemos de los derechos humanos.' },
       { k: 'chain', set: 'plain', top: 120, ch: 'Sus características',
@@ -87,6 +93,9 @@
   RB.toon('h15-3', {
     u: 'h15', l: 2, title: 'Nacionalidad, ciudadanía y participación', desc: 'Cómo se adquiere la nacionalidad, quiénes son ciudadanos, el voto obligatorio y de extranjeros, las formas de participar, los deberes y la transparencia.',
     shots: [
+      { ch: '¿Eres chileno?', set: 'home',
+        s: 'Si naces en Chile, de padres extranjeros, ¿eres chileno? ¿Y si naces en España, de mamá chilena? ¿Y desde cuándo puedes votar? Hoy lo resolvemos.',
+        c: ['be=nino c @naces', 'id=+idcard x280 y260 s.7 pop @chileno', 'fx question @España x100 y240', 'ur=+ballotbox x90 y300 s.6 pop @votar', 'T "¿CHILENO?" @chileno box'] },
       { k: 'title', set: 'stage', t: 'Nacionalidad, ciudadanía y participación', sub: 'Historia · Unidad 15 · Ciudadanía', em: ['idcard', 'ballotbox'],
         s: '¿Quién es chileno? ¿Desde cuándo puedes votar? ¿Y cómo puedes participar más allá del voto? ¡Vamos con ejemplos!' },
       { ch: 'La nacionalidad', set: 'plain',
@@ -98,7 +107,7 @@
       { ch: 'La ciudadanía', set: 'street',
         s: 'Son ciudadanos los chilenos de 18 años o más que no hayan sido condenados a pena aflictiva. La ciudadanía da derecho a votar y a ser elegido.',
         c: ['T "CIUDADANÍA" @ciudadanos', 'N 18 "años o más" @18 y=150', 'p=chica c @chilenos', 'id=+idcard x290 y260 s.6 pop @ciudadanos', 'bx=+ballotbox x75 y330 s.55 pop @votar', 'p pose cheer @elegido'] },
-      { set: 'office',
+      { set: 'class',
         s: 'Desde 2023, el voto es obligatorio, con inscripción automática. Entre 2012 y 2022 fue voluntario. Y los extranjeros con más de cinco años de residencia también pueden votar: Chile es uno de los pocos países que lo permiten.',
         c: ['Y 2023 @2023', 'T "VOTO OBLIGATORIO" @obligatorio', 'bx=+ballotbox c y330 s.7 pop @voto', 'L "2012–2022: voluntario" x180 y560 @voluntario', 'ex=vecino/sk=d x290 @extranjeros', 'N 5 "años de residencia" @cinco y=150', 'ex pose vote @votar'] },
       { k: 'chain', set: 'plain', top: 120, ch: 'Participar',

@@ -5,6 +5,9 @@
   RB.toon('h14-1', {
     u: 'h14', l: 0, title: 'Estado, nación y democracia', desc: 'Los elementos del Estado, la diferencia con la nación, el Estado unitario, el Estado de derecho y los principios de la democracia.',
     shots: [
+      { ch: 'Un Estado, varias naciones', set: 'south',
+        s: 'En Chile, la ley reconoce once pueblos originarios: mapuche, aymara, rapanui, y varios más. Un solo Estado… pero varias naciones. ¿Cuál es la diferencia?',
+        c: ['ma=mapuche l @mapuche', 'ay=campesina/top=poncho:#b8323a c @aymara', 'ra=campesino/sk=c/top=tee:#2ec4b6 r @rapanui', 'N 11 "pueblos originarios" @once y=150', 'ma pose wave @Estado', 'T "¿DIFERENCIA?" @diferencia box'] },
       { k: 'title', set: 'stage', t: 'Estado, nación y democracia', sub: 'Historia · Unidad 14 · Ciudadanía', em: ['flag:cl', 'ballotbox'],
         s: '¿Qué es el Estado? ¿Es lo mismo que la nación? ¿Y qué hace que un país sea democrático? ¡Respondamos las tres con ejemplos!' },
       { ch: 'El Estado', set: 'plain',
@@ -49,6 +52,9 @@
   RB.toon('h14-2', {
     u: 'h14', l: 1, title: 'Los tres poderes del Estado', desc: 'La separación de poderes: el Presidente y el Ejecutivo, el Congreso bicameral, la fiscalización y la acusación constitucional, y el Poder Judicial.',
     shots: [
+      { ch: '¿Qué podría salir mal?', set: 'parliament', flag: 'cl',
+        s: 'Imagina un país donde la misma persona hace las leyes, las aplica… y además te juzga si no las cumples. ¿Qué podría salir mal?',
+        c: ['un=presidente/hat=crown c @persona', 'un pose present @leyes', 'gv=+gavel x290 y300 s.7 pop @juzga', 'ci=vecino l @cumples', 'ci mood shock @cumples', 'un mood smug @mal', 'T "¿QUÉ PODRÍA SALIR MAL?" @mal box'] },
       { k: 'title', set: 'stage', t: 'Los tres poderes del Estado', sub: 'Historia · Unidad 14 · Ciudadanía', em: ['sash', 'gavel'],
         s: 'Uno gobierna, otro hace las leyes y otro juzga. ¿Por qué separar el poder en tres? ¡Para que nadie tenga todo el poder!' },
       { ch: 'Separación de poderes', set: 'parliament',
@@ -57,7 +63,7 @@
       { set: 'field',
         s: 'Imagina un partido de fútbol donde el mismo jugador hace las reglas, juega y además es el árbitro. ¡Siempre ganaría! Por eso se separan los poderes.',
         c: ['ju=jugador c @jugador', 'bk=+book x260 y260 s.55 pop @reglas', 'ba=+ball x250 y490 s.55 pop @juega', 'wh=+whistle x100 y260 s.6 pop @arbitro', 'ju pose cheer @ganaria', 'fx confetti @ganaria', 'T "¡ASÍ NO VALE!" @separan w'] },
-      { ch: 'El Ejecutivo', set: 'palace',
+      { ch: 'El Ejecutivo', set: 'office',
         s: 'El Poder Ejecutivo lo encabeza el Presidente de la República: gobierna y administra el Estado, con sus ministros. Dura cuatro años, sin reelección inmediata. Para postular, hay que ser chileno, tener 35 años cumplidos y derecho a sufragio.',
         c: ['T "PODER EJECUTIVO" @Ejecutivo', 'pr=presidente c @Presidente', 'm1=empresario/top=suit:#2a2a2a x60 @ministros', 'm2=dama/top=dress:#2a2a5a/hr=bob:#2b1d14 x300 @ministros+0.2', 'N 4 "años, sin reelección inmediata" @cuatro y=150', 'L "Chileno · 35 años · derecho a sufragio" x180 y560 @postular'] },
       { ch: 'El Legislativo', set: 'parliament',
@@ -93,6 +99,9 @@
   RB.toon('h14-3', {
     u: 'h14', l: 2, title: 'Leyes y órganos autónomos', desc: 'Cómo nace una ley, el veto presidencial, los órganos autónomos (Contraloría, Tribunal Constitucional, Banco Central, Ministerio Público, Servel, Defensoría e INDH) y el gobierno regional y comunal.',
     shots: [
+      { ch: 'De idea a ley', set: 'parliament', flag: 'cl',
+        s: 'La ley Ricarte Soto, que financia tratamientos de alto costo. La ley Cholito, que protege a las mascotas. Cada una partió como una idea… ¿cómo se convierte una idea en una ley que todos deben cumplir?',
+        c: ['d1=+doc x90 y260 s.7 drop @Ricarte t=LEY', 'd2=+doc x270 y260 s.7 drop @Cholito t=LEY', 'pe=+rabbit x270 y440 s.6 pop @mascotas', 'bu=+bulb c y330 s.7 pop @idea', 'T "¿CÓMO?" @cumplir box'] },
       { k: 'title', set: 'stage', t: 'Leyes y órganos autónomos', sub: 'Historia · Unidad 14 · Ciudadanía', em: ['doc', 'magnifier'],
         s: '¿Cómo nace una ley? ¿Y quién vigila que el Estado haga bien su trabajo? Vamos paso a paso.' },
       { ch: '¿Cómo nace una ley?', set: 'parliament',

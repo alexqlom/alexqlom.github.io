@@ -5,6 +5,9 @@
   RB.toon('h17-1', {
     u: 'h17', l: 0, title: 'El Estado en la economía', desc: 'Fallas de mercado (externalidades y bienes públicos), impuestos, política fiscal y monetaria, gasto social y las funciones del Estado.',
     shots: [
+      { ch: 'El diecinueve por ciento', set: 'market',
+        s: 'Cada vez que compras algo en Chile, el diecinueve por ciento del precio es un impuesto: el IVA. ¿Y en qué usa el Estado todo ese dinero?',
+        c: ['cl=vecina l @compras', 'rc=+receipt c y280 s.8 pop @precio', 'N 19 "% de IVA" @diecinueve y=150', 'cl pose present @Estado', 'es=+school x290 y330 s.5 pop @dinero', 'T "¿EN QUÉ?" @dinero box'] },
       { k: 'title', set: 'stage', t: 'El Estado en la economía', sub: 'Historia · Unidad 17 · Economía', em: ['bank', 'receipt'],
         s: '¿Por qué pagamos impuestos? ¿Quién decide las tasas de interés? ¡El Estado también juega en la economía!' },
       { ch: 'Fallas de mercado', set: 'factory',
@@ -44,6 +47,9 @@
   RB.toon('h17-2', {
     u: 'h17', l: 1, title: 'PIB, inflación y desempleo', desc: 'Qué mide el PIB y el PIB per cápita, la desigualdad y el Gini, la inflación y el IPC, la UF, la tasa de desempleo y el IDH.',
     shots: [
+      { ch: '¿Por qué todo sube?', set: 'market',
+        s: 'Lo que tu abuela compraba con unas pocas monedas, hoy cuesta miles de pesos. ¿Por qué los precios suben y suben? Hoy vemos tres números que miden cómo está la economía.',
+        c: ['ab=abuelo l @abuela', 'mo=+coins x150 y280 s.6 pop @monedas', 'pt=+pricetag x270 y260 s.8 pop @miles t=$$$', 'ab mood shock @miles', 'cu=+chartup c y380 s.7 pop @suben', 'T "3 NÚMEROS" @tres'] },
       { k: 'title', set: 'stage', t: 'PIB, inflación y desempleo', sub: 'Historia · Unidad 17 · Economía', em: ['chartup', 'pricetag'],
         s: 'Tres números que salen en todas las noticias: el PIB, la inflación y el desempleo. Hoy los entenderás para siempre.' },
       { ch: 'El PIB', set: 'city',
@@ -82,6 +88,9 @@
   RB.toon('h17-3', {
     u: 'h17', l: 2, title: 'Dinero, consumidor y comercio', desc: 'Del trueque al dinero, el crédito y la CAE, los derechos del consumidor, el SERNAC, las finanzas personales y el comercio exterior de Chile.',
     shots: [
+      { ch: 'Del trueque al celular', set: 'farm',
+        s: 'Antes de las monedas, la gente intercambiaba cosas: un saco de papas por un par de gallinas. ¿Cómo pasamos de eso… a pagar con el celular?',
+        c: ['c1=campesino l @gente', 'c2=campesina r @gente', 'sa=+sack x110 y440 s.6 pop @papas', 'he=+hen x250 y450 s.7 pop @gallinas', 'sa to x250 d=.6 @intercambiaba', 'he to x110 d=.6 @intercambiaba', 'ph=+phone c y260 s.8 pop @celular', 'T "¿CÓMO?" @celular box'] },
       { k: 'title', set: 'stage', t: 'Dinero, consumidor y comercio', sub: 'Historia · Unidad 17 · Economía', em: ['coins', 'creditcard'],
         s: 'Tu plata, tus compras y tus derechos. Esta lección te sirve para la PAES… ¡y para la vida!' },
       { ch: 'Del trueque al dinero', set: 'farm',

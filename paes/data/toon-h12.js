@@ -5,6 +5,9 @@
   RB.toon('h12-1', {
     u: 'h12', l: 0, title: 'Alessandri y Frei: las reformas', desc: 'Los tres tercios, el gobierno técnico de Jorge Alessandri, el terremoto de Valdivia y la Revolución en Libertad de Frei Montalva.',
     shots: [
+      { ch: 'Diez minutos', set: 'south',
+        s: '22 de mayo de 1960, poco después de las tres de la tarde. En Valdivia, la tierra empieza a temblar… y sigue temblando durante unos diez minutos. Es el terremoto más grande jamás registrado en el mundo.',
+        c: ['Y "22 MAY 1960" @1960', 'v1=vecino l @Valdivia', 'v2=vecina r @Valdivia', 'cam shake @temblar', 'cam shake @temblando', 'v1 mood shock @temblar', 'v2 mood shock @temblando', 'N 9,5 "de magnitud" @terremoto y=150', 'T "RÉCORD MUNDIAL" @mundo'] },
       { k: 'title', set: 'stage', t: 'Alessandri y Frei: las reformas', sub: 'Historia · Unidad 12 · 1958–1970', em: ['tractor', 'copper'],
         s: 'Un país dividido en tres tercios, un terremoto récord y reformas profundas en el campo y en el cobre. ¡Así fueron los sesenta en Chile!' },
       { ch: 'Los tres tercios', set: 'parliament',
@@ -49,12 +52,15 @@
   RB.toon('h12-2', {
     u: 'h12', l: 1, title: 'La Unidad Popular', desc: 'La elección de 1970, el Estatuto de Garantías, la vía chilena al socialismo, la nacionalización del cobre, el Área de Propiedad Social y la crisis económica.',
     shots: [
+      { ch: '4 de septiembre de 1970', set: 'parliament', flag: 'cl',
+        s: '4 de septiembre de 1970. Tres candidatos a presidente, y ninguno saca más de la mitad de los votos. El país queda esperando… la decisión del Congreso.',
+        c: ['Y "4 SEP 1970" @1970', 'c1=presidente x70 @candidatos', 'c2=presidente/hr=bald:#5a4637/top=suit:#2a2a2a c @candidatos', 'c3=presidente/top=suit:#2b3f8f x290 @candidatos', 'ur=+ballotbox x180 y250 s.7 pop @votos', 'N 50 "% necesario" @mitad y=150', 'T "¿QUIÉN?" @Congreso box'] },
       { k: 'title', set: 'stage', t: 'La Unidad Popular', sub: 'Historia · Unidad 12 · 1970–1973', em: ['copper', 'ballotbox'],
         s: 'En 1970, Chile eligió a un presidente que quería llegar al socialismo por la vía democrática. Algo nunca visto en el mundo. Veamos qué pasó.' },
       { ch: 'La elección de 1970', set: 'parliament',
         s: 'En la elección de 1970 compitieron Salvador Allende, Jorge Alessandri y Radomiro Tomic. Allende sacó la primera mayoría, con el 36,6 %, pero no la absoluta. Así que el Congreso Pleno debía elegir entre los dos primeros.',
         c: ['Y 1970 @1970', 'al=presidente/acc=glasses/fh=mus:#5a5a5a/hr=side:#8a8a8a x70 @Allende "Allende"', 'ja=presidente/acc=none/fh=none/hr=bald:#8a8a8a c @Alessandri "Alessandri"', 'to=presidente/acc=none/fh=none/hr=side:#2b1d14 x290 @Tomic "Tomic"', 'N 36,6 % "Allende, primera mayoría" @primera y=150', 'al pose cheer @primera', 'co=+congreso x180 y240 s.35 pop @Congreso'] },
-      { set: 'office',
+      { set: 'parliament',
         s: 'Para votar por él, la Democracia Cristiana le pidió firmar un Estatuto de Garantías Constitucionales: respetar las libertades, el pluralismo y la democracia. Mientras, un grupo asesinó al general René Schneider, para provocar una intervención militar. No lo lograron, y el Congreso ratificó a Allende.',
         c: ['doc=+doc x85 y260 s.8 pop @Estatuto t=GARANTÍAS', 'al=presidente/acc=glasses/fh=mus:#5a5a5a/hr=side:#8a8a8a c @firmar', 'al pose hold @firmar', 'T "ESTATUTO DE GARANTÍAS" @Garantias', 'ca=+candle x290 y440 fade @Schneider', 'L "Gral. René Schneider" x290 y380 @Schneider', 'co=+congreso x290 y230 s.35 pop @ratifico', 'al pose cheer @ratifico'] },
       { ch: 'La vía chilena', set: 'street',
@@ -72,7 +78,7 @@
       { set: 'market',
         s: 'Imagina ir al almacén y encontrar los estantes vacíos, o hacer horas de fila por un kilo de azúcar. En 1973, la inflación superó el 500 % al año.',
         c: ['st=+stall x260 y500 pop @almacen', 'v1=vecina x40 @fila', 'v2=vecino x90 @fila+0.2', 'v3=abuelo x140 @fila+0.4', 'v1 tremble @horas', 'sa=+sack x260 y300 s.6 pop @azucar t=AZÚCAR', 'N 500 % "de inflación" @500 y=150', 'v2 mood worried @inflacion'] },
-      { set: 'office',
+      { set: 'market',
         s: 'Para enfrentarlo, el gobierno creó las JAP, Juntas de Abastecimiento y Precios, que distribuían alimentos y controlaban precios. La oposición las criticó como un mecanismo de control político.',
         c: ['T "JAP" @JAP', 'bx=+box x80 y470 s.6 pop @alimentos', 'br=+bread x80 y380 s.5 pop @alimentos+0.2', 'pt=+pricetag x180 y250 s.6 pop @precios', 'op=burgues r @oposicion', 'op pose point @critico', 'op emote angry @control'] },
       { k: 'quiz', q: '¿Cómo llegó Allende a la presidencia en 1970?', o: ['Con mayoría absoluta en la elección', 'Con la primera mayoría relativa, ratificado por el Congreso Pleno', 'Por un golpe de Estado'], a: 1,
