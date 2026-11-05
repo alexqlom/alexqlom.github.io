@@ -156,7 +156,10 @@ class Voice:
         best = None
         if old:
             best = ((missing(ref, old[1]['t']), old[1]['wer']), old[0], old[1])
-        for attempt in range(4 if repair else 3):
+        # En el perfil "relato" las frases son trozos cortos: uno o dos intentos bastan (el reconocedor se equivoca
+        # mucho con trozos de una o dos palabras, y reintentar solo cuesta tiempo).
+        tries = 4 if repair else (1 if ESTILO == 'relato' and len(ref) <= 2 else 2 if ESTILO == 'relato' else 3)
+        for attempt in range(tries):
             y = self._synth(spoken)
             text, hyp = self._listen(y)
             err, times = align(cmp_ref, [[canon(w), ts] for w, ts in hyp])
