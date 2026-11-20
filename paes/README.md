@@ -35,6 +35,13 @@ Estilo negro con lima.
   - `tools/voz.py`: graba la narración con una voz neuronal local; `tools/habla.py` normaliza el texto
     (números, siglas y pronunciación). Historia usa el perfil «relato» (voz masculina Marco, velocidad natural
     y una pausa por cada coma, dos puntos, punto y signo): `PAES_PERFIL=relato PAES_VOZ=5 venv/bin/python tools/voz.py --solo h1-1`.
+    Con `PAES_PERFIL=eleven` la voz la pone la API de ElevenLabs (`PAES_EL_VOZ`, `PAES_EL_MODELO`; la clave va
+    en la cabecera `xi-api-key`, que inyecta el proxy de la sesión).
+  - `tools/voz-mp3.py`: usa una narración hecha afuera, por ejemplo en la web de ElevenLabs.
+    `--texto h2-1` da el texto para pegar en la web (en partes de hasta 2400 caracteres); después
+    `venv/bin/python tools/voz-mp3.py h2-1 parte1.mp3 parte2.mp3` reconoce cada palabra de la grabación,
+    la ubica en el guion y escribe `audio/h2-1.webm` y `.js` (escenas, subtítulos, boca y la pausa para
+    pensar antes de cada respuesta). Avisa las frases que no se oyeron bien.
 
 ## Probar y compilar
 

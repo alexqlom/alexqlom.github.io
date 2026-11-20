@@ -32,7 +32,13 @@ PERFIL = {
     # natural, cada coma, dos puntos, punto y pregunta con su propia pausa (PAUSA), sin acelerar nada.
     'relato': dict(sr=48000, voice=int(os.environ.get('PAES_VOZ', '8')), steps=16, speed=1.0, tempo=1.0, kbps='24k', brillo=True,
                    gap=dict(start=.3, sentence=.55, cue=.5, quiz=2.6, scene=.45, end=1.2)),
+    # "eleven": la narración la genera ElevenLabs (API) con la voz PAES_EL_VOZ y el modelo PAES_EL_MODELO. Se envían
+    # oraciones completas, que ElevenLabs entona y pausa solo; el reconocedor local da los tiempos de cada palabra.
+    'eleven': dict(sr=48000, voice=0, steps=0, speed=1.0, tempo=1.0, kbps='32k', brillo=False,
+                   gap=dict(start=.25, sentence=.3, cue=.4, quiz=2.6, scene=.45, end=1.0)),
 }
+ELVOZ = os.environ.get('PAES_EL_VOZ', 'nPczCjzI2devNBz1zQrb')
+ELMODELO = os.environ.get('PAES_EL_MODELO', 'eleven_v4')
 # Pausa después de cada trozo hablado en el perfil "relato", según el signo con que termina.
 PAUSA = {',': .3, ';': .4, ':': .45, '—': .35, '.': .58, '?': .7, '!': .62, '…': .85}
 # Perfil de los videos en dibujos (PAES_PERFIL=corto para probar el estilo de videos cortos).
@@ -88,7 +94,23 @@ class Voice:
         os.makedirs(cache, exist_ok=True)
         self.stats = dict(new=0, cached=0, retries=0)
 
+    def _synth_el(self, text):
+        # ElevenLabs por la API; la clave la pone el proxy de la sesión (cabecera xi-api-key).
+        body = json.dumps({'text': text, 'model_id': ELMODELO, 'language_code': 'es'})
+        r = subprocess.run(['curl', '-sS', '-m', '180', '-w', '\n%{http_code}', f'https://api.elevenlabs.io/v1/text-to-speech/{ELVOZ}?output_format=mp3_44100_128',
+                            '-H', 'xi-api-key: proxy-injected', '-H', 'Content-Type: application/json', '--data-binary', '@-', '-o', '/dev/stdout'],
+                           input=body.encode(), capture_output=True)
+        out = r.stdout
+        code = out[out.rfind(b'\n') + 1:].decode(errors='ignore').strip()
+        mp3 = out[:out.rfind(b'\n')]
+        if code != '200':
+            raise RuntimeError(f'ElevenLabs {code}: {mp3[:300]!r}')
+        p = subprocess.run(['ffmpeg', '-v', 'error', '-i', 'pipe:0', '-ac', '1', '-ar', str(SR), '-f', 'f32le', 'pipe:1'], input=mp3, capture_output=True)
+        return trim(np.frombuffer(p.stdout, dtype=np.float32).copy())
+
     def _synth(self, text):
+        if ESTILO == 'eleven':
+            return self._synth_el(text)
         g = self.sherpa.GenerationConfig()
         g.sid, g.num_steps, g.speed, g.extra = VOICE, STEPS, SPEED, {'lang': 'es'}
         a = self.tts.generate(text, g)
@@ -130,10 +152,13 @@ class Voice:
                 out.append([k, ts])
         return r.text, out
 
-    def say(self, spoken, repair=False):
+    def say(self, spoken, repair=False, disp=None):
         """Audio de una frase hablada + palabras reconocidas con su tiempo. Reintenta si no se entiende o si
         parece faltar una palabra importante. Con repair=True vuelve a intentar las guardadas que quedaron dudosas."""
-        key = hashlib.sha1((f'supertonic3|{VOICE}|{STEPS}|{SPEED}|{spoken}' + (f'|{SR}' if SR != 24000 else '')).encode()).hexdigest()
+        el = ESTILO == 'eleven'
+        # ElevenLabs recibe el texto tal como se escribe (lee bien números y nombres); el resto, el texto hablado.
+        texto = (disp or spoken) if el else spoken
+        key = hashlib.sha1((f'eleven|{ELVOZ}|{ELMODELO}|{texto}|{SR}' if el else f'supertonic3|{VOICE}|{STEPS}|{SPEED}|{spoken}' + (f'|{SR}' if SR != 24000 else '')).encode()).hexdigest()
         f = os.path.join(self.cache, key[:2], key + '.npz')
         ref = [habla.word_key(w) for w in spoken.split()]
         ref = [w for w in ref if w]
@@ -158,9 +183,9 @@ class Voice:
             best = ((missing(ref, old[1]['t']), old[1]['wer']), old[0], old[1])
         # En el perfil "relato" las frases son trozos cortos: uno o dos intentos bastan (el reconocedor se equivoca
         # mucho con trozos de una o dos palabras, y reintentar solo cuesta tiempo).
-        tries = 4 if repair else (1 if ESTILO == 'relato' and len(ref) <= 2 else 2 if ESTILO == 'relato' else 3)
+        tries = 4 if repair else (1 if el or (ESTILO == 'relato' and len(ref) <= 2) else 2 if ESTILO == 'relato' else 3)
         for attempt in range(tries):
-            y = self._synth(spoken)
+            y = self._synth(texto)
             text, hyp = self._listen(y)
             err, times = align(cmp_ref, [[canon(w), ts] for w, ts in hyp])
             # Se tolera algún error: el reconocedor también se equivoca, sobre todo con nombres propios.
@@ -376,7 +401,7 @@ def build_video(v, voice, outdir):
                 probs = habla.problems(sp)
                 if probs:
                     log('  ojo, signos en la voz', v['id'], probs, sp)
-                y, meta = voice.say(sp, REPAIR)
+                y, meta = voice.say(sp, REPAIR, disp)
                 dur = len(y) / SR
                 s0 = t
                 push(y)
@@ -406,14 +431,14 @@ def build_video(v, voice, outdir):
                 ln[0], ln[1] = round(ln[0] * k, 2), round(ln[1] * k, 2)
                 if ln[3]:
                     ln[3] = [int(round(x * k)) for x in ln[3]]
-    y = brillo(y) if BRILLO else loudness(y)
+    y = norma(y) if ESTILO == 'eleven' else brillo(y) if BRILLO else loudness(y)
     env = envelope(y)
     base = os.path.join(outdir, v['id'])
     encode(y, base + '.webm')
     data = dict(d=round(len(y) / SR, 2), h=huella(v), sc=scs, c=cues, e=env)
-    if ESTILO in ('corto', 'relato'):
-        data['st'] = ESTILO  # el reproductor usa la edición de videos de redes
-        data['v'] = VOICE  # qué voz grabó (para saber qué videos regrabar si se cambia)
+    if ESTILO in ('corto', 'relato', 'eleven'):
+        data['st'] = 'relato' if ESTILO == 'eleven' else ESTILO  # el reproductor usa la edición de videos de redes
+        data['v'] = ('el:' + ELVOZ) if ESTILO == 'eleven' else VOICE  # qué voz grabó (para saber qué regrabar)
     with open(base + '.js', 'w', encoding='utf-8') as fh:
         fh.write('RB.vaudio(%s,%s);\n' % (json.dumps(v['id']), json.dumps(data, ensure_ascii=False, separators=(',', ':'))))
     worst.sort(key=lambda x: -x[0])
@@ -485,6 +510,14 @@ def ff(y, filtros, extra=None):
     if p.returncode:
         raise RuntimeError(p.stderr.decode())
     return np.frombuffer(p.stdout, dtype=np.float32).copy(), p.stderr.decode()
+
+
+def norma(y):
+    # Solo volumen (−16 LUFS en dos pasadas, ganancia lineal): la voz de ElevenLabs ya viene ecualizada.
+    _, log = ff(y, 'loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json', extra=True)
+    m = json.loads(log[log.rindex('{'):log.rindex('}') + 1])
+    y, _ = ff(y, 'loudnorm=I=-16:TP=-1.5:LRA=11:linear=true:measured_I={input_i}:measured_TP={input_tp}:measured_LRA={input_lra}:measured_thresh={input_thresh}:offset={target_offset}'.format(**m))
+    return y
 
 
 def brillo(y):
