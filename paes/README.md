@@ -42,6 +42,9 @@ Estilo negro con lima.
     `venv/bin/python tools/voz-mp3.py h2-1 parte1.mp3 parte2.mp3` reconoce cada palabra de la grabación,
     la ubica en el guion y escribe `audio/h2-1.webm` y `.js` (escenas, subtítulos, boca y la pausa para
     pensar antes de cada respuesta). Avisa las frases que no se oyeron bien.
+  - `python3 tools/prompts-historia.py`: escribe en `prompts-historia/` un prompt por video de Historia para
+    rehacerlo con Remotion y la voz de Fernando Martínez (ElevenLabs), más la guía común (`GUIA.md`) y el
+    índice. Se arma desde los guiones de `data/toon-h*.js`.
 
 ## Probar y compilar
 
