@@ -1,0 +1,12 @@
+{
+  "_nota": "Letras que el PDF de una prueba trae sin su código de texto (se ven bien, pero se leen como espacio). Revisadas a mano mirando el folleto. La clave es la palabra con _ en cada letra dañada.",
+  "his-reg-2023": {
+    "Rep_blica": "República", "_AE": "CAE", "_I_": "XIX", "_Qu_": "¿Qué", "__": "XX", "_arga": "Carga",
+    "_erechos": "Derechos", "_esde": "Desde", "_esi_n": "Cesión", "_hile": "Chile", "_rdenes": "órdenes",
+    "_urante": "Durante", "a_n": "aún", "aceleraci_n": "aceleración", "asign_": "asignó", "cit_": "cité",
+    "cit_s": "cités", "condici_n": "condición", "d_cada": "década", "debi_": "debió", "enfrent_": "enfrentó",
+    "escribi_": "escribió", "habitaci_n": "habitación", "implic_": "implicó", "inauguraci_n": "inauguración",
+    "naci_n": "nación", "ocasi_n": "ocasión", "proliferaci_n": "proliferación", "relaci_n": "relación",
+    "remiti_": "remitió", "remoci_n": "remoción", "sali_": "salió"
+  }
+}

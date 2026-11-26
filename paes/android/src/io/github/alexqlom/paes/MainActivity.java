@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
                 pick.addCategory(Intent.CATEGORY_OPENABLE);
                 pick.setType("*/*");
                 try {
-                    startActivityForResult(Intent.createChooser(pick, "Importar progreso"), PICK_FILE);
+                    startActivityForResult(Intent.createChooser(pick, "Elegir archivo"), PICK_FILE);
                     return true;
                 } catch (ActivityNotFoundException e) {
                     pendingFile = null;

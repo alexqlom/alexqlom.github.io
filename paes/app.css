@@ -1097,3 +1097,43 @@ b.hl { font-weight: 800; }
 @keyframes cw-pop { from { transform: scale(1.25); } to { transform: scale(1); } }
 /* Estilo "relato": la palabra dicha en amarillo con contorno negro, sin recuadro. */
 .relato .vp-cap .cw.now { padding: 0; margin: 0; background: none; color: #ffd23f; text-shadow: 0 2px 0 #000, 0 0 3px #000, 0 0 12px rgba(0, 0, 0, .75); -webkit-text-stroke: .6px rgba(0, 0, 0, .55); animation: none; }
+
+/* Pruebas oficiales del DEMRE */
+.pcard.ofcard { margin-top: 12px; border-color: var(--line2); background: var(--s1); color: var(--ink); }
+.pcard.ofcard > .ic { color: var(--acc); }
+.pcard.ofcard span, .pcard.ofcard em { color: var(--mute); }
+.pcard.ofcard em { color: var(--acc); }
+.ofl { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.ofi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--s1); color: var(--ink); text-align: left; }
+.ofi > span { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+.ofi b { font-size: 16px; }
+.ofi small { color: var(--mute); font-size: 13px; font-weight: 600; }
+.ofi em { color: var(--acc); font-size: 12.5px; font-weight: 800; font-style: normal; }
+.ofi em.on { color: var(--ink); }
+.ofi > .ic { flex: none; width: 18px; height: 18px; color: var(--mute); }
+.ofimp { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 8px; cursor: pointer; }
+.ofdel { width: 100%; margin-top: 14px; }
+.ofq { margin: 6px 0 14px; color: var(--ink); font-size: 16px; line-height: 1.55; }
+.ofq p { margin: 0 0 10px; }
+.ofc { margin: 6px 0 8px; padding: 12px 14px; border: 1px solid var(--line2); border-left: 4px solid var(--acc); border-radius: 10px; background: var(--s1); color: var(--ink2); font-size: 15px; line-height: 1.55; }
+.ofq p.ofr { margin: -2px 0 12px; color: var(--mute); font-size: 12.5px; text-align: right; }
+.ofimg { display: block; width: 100%; margin: 8px 0 12px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; cursor: zoom-in; }
+.ofimg img { display: block; width: 100%; height: auto; }
+.opts.letras { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 10px; }
+.opts.letras .opt { justify-content: center; padding: 14px 0; }
+.opts.letras .opt .k { margin: 0; }
+.ofres { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--s2); font-weight: 800; }
+.ofres.ok { background: var(--accbg); }
+.ofres.bad { color: var(--red2); }
+.ofres .ic { width: 20px; height: 20px; }
+.ofres small { color: var(--mute); font-weight: 600; }
+.rev .ofq { margin: 10px 0 4px; font-size: 14.5px; }
+.zoomv { background: #0b0b0b; }
+.zoomb { flex: 1; overflow: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+.zoomb img { display: block; width: 100%; height: auto; border-radius: 8px; background: #fff; cursor: zoom-in; }
+.zoomb.z2 img { width: 220%; max-width: none; cursor: zoom-out; }
+.goals.ofm .goalc { flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; }
+.goals.ofm .goalc b { font-size: 16px; }
+.ofimg { position: relative; }
+.ofz { position: absolute; right: 8px; bottom: 8px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(0, 0, 0, .62); color: #fff; }
+.ofz .ic { width: 16px; height: 16px; }

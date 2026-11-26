@@ -870,6 +870,247 @@
     draw();
   }
 
+  // ---------- Pruebas oficiales del DEMRE ----------
+  // Las PAES de años anteriores con sus preguntas reales, en su orden y con sus alternativas. Son del DEMRE
+  // (Universidad de Chile, derechos reservados): no vienen dentro de la app. Se importan desde el archivo que arma
+  // tools/pruebas-oficiales.py y quedan guardadas solo en este teléfono (IndexedDB). Formato del archivo:
+  //   { formato: 'paes-oficiales', v: 1, pruebas: [{ id, test, nombre, detalle, anio, proceso, min, tabla, seleccion,
+  //     preguntas: [{ n, q, img, q2, o: ['…'], k, a, nc, eje }] }] }
+  // q y q2: el enunciado antes y después de la imagen; en el texto, '> ' marca una cita y '^ ' su referencia.
+  // a: índice de la correcta (null si no hay clave); nc: no cuenta para el puntaje (las 5 de prueba de cada PAES).
+  // Sin o, las alternativas vienen en la imagen y se responde con la letra (k alternativas). tabla: la conversión
+  // oficial de respuestas correctas (Puntaje P) a puntaje PAES; seleccion: el DEMRE publicó solo parte de la prueba.
+  const OFDB = (() => {
+    let dbp = null;
+    const mem = {};
+    const open = () => dbp || (dbp = new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open('paes-oficiales', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('pruebas', { keyPath: 'id' });
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      } catch (e) { rej(e); }
+    }));
+    const run = (mode, fn) => open().then(db => new Promise((res, rej) => {
+      const t = db.transaction('pruebas', mode), rq = fn(t.objectStore('pruebas'));
+      t.oncomplete = () => res(rq.result);
+      t.onerror = t.onabort = () => rej(t.error);
+    }));
+    return {
+      put: p => run('readwrite', st => st.put(p)).then(() => true, () => { mem[p.id] = p; return false; }),
+      get: id => run('readonly', st => st.get(id)).then(r => r || mem[id] || null, () => mem[id] || null),
+      del: id => { delete mem[id]; return run('readwrite', st => st.delete(id)).catch(() => {}); },
+    };
+  })();
+  const ofState = () => (S.ofi = Object.assign({ idx: {}, hist: {}, run: {} }, S.ofi || {}));
+  const ofOf = t => Object.values(ofState().idx).filter(m => m.test === t).sort((a, b) => (b.anio - a.anio) || (a.proceso === 'Invierno' ? 1 : -1) - (b.proceso === 'Invierno' ? 1 : -1));
+  const ofCuenta = q => q.a != null && !q.nc;
+  const ofN = q => q.o ? q.o.length : (q.k || 4);
+  function ofValid(p) {
+    if (!p || typeof p.id !== 'string' || !RB.tests.some(t => t.id === p.test) || !Array.isArray(p.preguntas) || !p.preguntas.length) return false;
+    return p.preguntas.every(q => q && (q.q || q.img) && (!q.o || (Array.isArray(q.o) && q.o.length >= 2 && q.o.length <= 5)) &&
+      (q.a == null || (Number.isInteger(q.a) && q.a >= 0 && q.a < ofN(q))));
+  }
+  const ofMeta = p => ({ id: p.id, test: p.test, nombre: String(p.nombre || p.id), detalle: String(p.detalle || ''), anio: +p.anio || 0, proceso: String(p.proceso || ''),
+    total: p.preguntas.length, n: p.preguntas.filter(ofCuenta).length, sel: !!p.seleccion });
+  // Minutos de la prueba: los del folleto o los de la app (en una selección, en proporción a sus preguntas).
+  const ofMin = (p, m) => p.min || Math.round(testInfo(m.test).ex.min * Math.min(1, m.total / testInfo(m.test).ex.n));
+  // Puntaje: la tabla oficial de esa prueba si se rindió completa; si no, una estimación.
+  function ofPts(p, good, n, full) {
+    const T = p.tabla;
+    if (T && full && !p.seleccion && n === T.length - 1) return { pts: T[good], oficial: true };
+    if (T && n) return { pts: T[Math.round(good / n * (T.length - 1))], oficial: false };
+    return { pts: paesPts(good, n), oficial: false };
+  }
+  function ofImport(file, done) {
+    const rd = new FileReader();
+    rd.onerror = () => toast(`${I('x')}<span>No se pudo leer el archivo.</span>`, 3000);
+    rd.onload = async () => {
+      let o = null;
+      try { o = JSON.parse(rd.result); } catch (e) { /* no es JSON */ }
+      const ps = o && o.formato === 'paes-oficiales' && Array.isArray(o.pruebas) ? o.pruebas.filter(ofValid) : [];
+      if (!ps.length) { toast(`${I('x')}<span>Ese archivo no trae pruebas oficiales que la app pueda leer.</span>`, 3400); return; }
+      let lost = false;
+      for (const p of ps) { if (!(await OFDB.put(p))) lost = true; ofState().idx[p.id] = ofMeta(p); }
+      save();
+      toast(`${I('check')}<span>${plural(ps.length, 'prueba oficial lista', 'pruebas oficiales listas')}${lost ? '. Ojo: el teléfono no dejó guardarlas, duran hasta cerrar la app' : ''}</span>`, lost ? 4600 : 2600);
+      if (done) done();
+    };
+    rd.readAsText(file);
+  }
+  const ofCard = () => {
+    const list = ofOf(S.test), st = ofState(), last = S.exams.find(e => e.of && st.idx[e.of] && st.idx[e.of].test === S.test);
+    return `<button class="pcard big ofcard" type="button" data-act="oficial">${I('landmark')}<div><b>Pruebas oficiales DEMRE</b><span>${list.length ? `${plural(list.length, 'PAES', 'PAES')} de años anteriores, con sus preguntas reales` : 'Rinde las PAES de años anteriores con sus preguntas reales'}</span>${last ? `<em>Última: ${last.pts} pts · ${last.good}/${last.n}</em>` : ''}</div></button>`;
+  };
+  function ofSheet() {
+    const T = testInfo(), list = ofOf(S.test), st = ofState();
+    sheet(`<small class="kick">Pruebas oficiales · ${esc(T.n)}</small><h3>PAES de años anteriores</h3>` +
+      (list.length ? `<p class="muted">Las preguntas reales, en su orden y con sus alternativas. Elige una prueba.</p><div class="ofl">${list.map(m => {
+        const h = (st.hist[m.id] || []).find(x => x.full), run = st.run[m.id];
+        return `<button class="ofi" type="button" data-of="${esc(m.id)}"><span><b>${esc(m.nombre)}</b><small>${esc(m.detalle)}${m.detalle ? ' · ' : ''}${m.sel ? `selección de ${m.total} preguntas` : `${m.total} preguntas`}</small>` +
+          `${run ? `<em class="on">En curso: ${Object.keys(run.ans).length} de ${run.idx.length} respondidas</em>` : h ? `<em>${h.oficial ? 'Puntaje' : 'Estimado'}: ${h.pts} · ${h.good}/${h.n} correctas</em>` : ''}</span>${I('right')}</button>`;
+      }).join('')}</div>`
+        : `<p class="muted">Todavía no hay pruebas oficiales en este teléfono. Impórtalas desde el archivo de pruebas oficiales (termina en <b>.json</b>).</p>`) +
+      `<label class="btn ghost ofimp">${I('up')}<span>${list.length ? 'Importar o actualizar pruebas' : 'Importar pruebas oficiales'}</span><input type="file" accept="application/json,.json,text/plain" data-ofimp hidden></label>` +
+      `<p class="foot">Pruebas del DEMRE (Universidad de Chile, derechos reservados). Se guardan solo en este teléfono, para tu estudio personal.</p>`, el => {
+      const l = $('.ofl', el);
+      if (l) l.onclick = e => { const b = e.target.closest('[data-of]'); if (b) closeLayer(() => ofModeSheet(st.idx[b.dataset.of])); };
+      $('[data-ofimp]', el).addEventListener('change', e => { const f = e.target.files[0]; if (f) ofImport(f, () => closeLayer(() => { refresh(); ofSheet(); })); });
+    });
+  }
+  function ofModeSheet(m) {
+    if (!m) return;
+    const st = ofState(), run = st.run[m.id], h = (st.hist[m.id] || [])[0], wrong = h && h.wrong ? h.wrong.length : 0;
+    const mins = ofMin({}, m);
+    sheet(`<small class="kick">${esc(m.nombre)}</small><h3>¿Cómo quieres rendirla?</h3>` +
+      (m.sel ? `<p class="muted">El DEMRE publicó ${m.total} de las 65 preguntas de esta prueba. El puntaje será una estimación.</p>` : '') +
+      `<div class="goals ofm">` +
+      (run ? `<button class="goalc" type="button" data-m="cont"><b>Continuar</b><span>Pregunta ${run.i + 1} · ${Object.keys(run.ans).length} de ${run.idx.length} respondidas${run.mode === 'exam' ? ` · quedan ${fmtTime(Math.max(0, run.dur - run.used))}` : ''}</span></button>` : '') +
+      `<button class="goalc" type="button" data-m="exam"><b>${run ? 'Empezar de nuevo, como la prueba real' : 'Como la prueba real'}</b><span>${m.total} preguntas · ${fmtTime(mins * 60)} h · resultado al final</span></button>` +
+      `<button class="goalc" type="button" data-m="prac"><b>${run ? 'Empezar de nuevo, en práctica' : 'Práctica'}</b><span>Sin tiempo · ves si acertaste en cada pregunta</span></button>` +
+      (wrong ? `<button class="goalc" type="button" data-m="err"><b>Solo mis errores</b><span>${plural(wrong, 'pregunta', 'preguntas')} que fallaste la última vez</span></button>` : '') +
+      `</div><button class="btn ghost danger ofdel" type="button" data-del>${I('trash')}Quitar esta prueba del teléfono</button>`, el => {
+      $('.goals', el).onclick = e => {
+        const b = e.target.closest('[data-m]');
+        if (!b) return;
+        const k = b.dataset.m;
+        closeLayer(() => ofStart(m, k === 'cont' ? run.mode : k === 'err' ? 'prac' : k, k === 'cont' ? run : null, k === 'err' ? h.wrong : null));
+      };
+      $('[data-del]', el).onclick = () => ask({ title: '¿Quitar esta prueba?', text: 'Se borra del teléfono junto con tu avance en ella. Puedes volver a importarla.', ok: 'Quitar' }).then(ok => {
+        if (!ok) return;
+        OFDB.del(m.id); delete st.idx[m.id]; delete st.run[m.id]; delete st.hist[m.id]; save();
+        closeLayer(() => { refresh(); ofSheet(); });
+      });
+    });
+  }
+  // Texto de un enunciado: párrafos; '> ' es una cita (recuadro) y '^ ' la referencia de su fuente.
+  const ofText = s => String(s || '').split(/\n\n+/).map(p => p.startsWith('> ') ? `<blockquote class="ofc">${esc(p.slice(2)).replace(/\n/g, '<br>')}</blockquote>`
+    : p.startsWith('^ ') ? `<p class="ofr">${esc(p.slice(2))}</p>` : `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
+  const ofFig = (src, alt) => src ? `<button class="ofimg" type="button" data-zoom aria-label="Ampliar la imagen"><img src="${esc(src)}" alt="${esc(alt)}" loading="lazy"><span class="ofz">${I('search')}</span></button>` : '';
+  function ofZoom(src) {
+    const ent = openLayer('zoomv', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Cerrar">${I('x')}</button><div class="ex-n">Toca la imagen para acercar o alejar</div></header><div class="zoomb"><img src="${esc(src)}" alt=""></div>`);
+    $('[data-x]', ent.el).onclick = () => history.back();
+    const b = $('.zoomb', ent.el);
+    b.onclick = () => b.classList.toggle('z2');
+  }
+  async function ofStart(m, mode, saved, only) {
+    const p = await OFDB.get(m.id);
+    if (!p) { toast(`${I('x')}<span>Esta prueba ya no está en el teléfono. Vuelve a importarla.</span>`, 3400); return; }
+    const st = ofState();
+    if (!saved) delete st.run[m.id];
+    const idx = saved ? saved.idx.filter(k => p.preguntas[k]) : only ? only.filter(k => p.preguntas[k]) : p.preguntas.map((_, k) => k);
+    if (!idx.length) return;
+    const exam = mode === 'exam', full = idx.length === p.preguntas.length;
+    const ex = {
+      Q: idx.map(k => ({ k, q: p.preguntas[k], ans: saved && saved.ans[k] != null ? saved.ans[k] : null, flag: !!(saved && saved.flag && saved.flag.includes(k)) })),
+      i: saved ? Math.min(saved.i, idx.length - 1) : 0, t0: Date.now(), used: saved ? saved.used : 0, dur: exam ? (saved ? saved.dur : ofMin(p, m) * 60) : 0, done: false,
+    };
+    const spent = () => ex.used + Math.floor((Date.now() - ex.t0) / 1000);
+    const keep = () => {
+      if (ex.done) return;
+      st.run[m.id] = { mode, idx, i: ex.i, used: spent(), dur: ex.dur, ans: Object.fromEntries(ex.Q.filter(x => x.ans != null).map(x => [x.k, x.ans])), flag: ex.Q.filter(x => x.flag).map(x => x.k) };
+      save();
+    };
+    const ent = openLayer('ses exam ofx', `<header class="ses-h"><button class="ib" type="button" data-x aria-label="Salir">${I('x')}</button><div class="ex-n"></div>${exam ? `<span class="ex-t" aria-label="Tiempo restante">${I('clock')}<b></b></span>` : ''}<button class="ib" type="button" data-grid aria-label="Ver todas las preguntas">${I('grid')}</button></header>` +
+      `<main class="ses-b"></main><footer class="ses-f ex-f"><button class="btn ghost" type="button" data-prev>Anterior</button><button class="btn" type="button" data-next>Siguiente</button></footer>`, () => { clearInterval(ex.timer); keep(); });
+    ent.guard = () => ex.done;
+    ent.ask = { title: '¿Pausar la prueba?', text: 'Tus respuestas quedan guardadas: sigue cuando quieras desde Pruebas oficiales.', ok: 'Pausar y salir', cancel: 'Seguir', danger: false };
+    const el = ent.el;
+    const draw = () => {
+      const x = ex.Q[ex.i], q = x.q, show = !exam && x.ans != null;
+      $('.ex-n', el).textContent = `Pregunta ${ex.i + 1} de ${ex.Q.length}`;
+      const cls = j => (x.ans === j ? ' sel' : '') + (show && j === q.a ? ' ok' : '') + (show && x.ans === j && j !== q.a && q.a != null ? ' bad' : '');
+      const opts = q.o ? `<div class="opts">${q.o.map((o, j) => `<button class="opt${cls(j)}" type="button" data-v="${j}"><span class="k">${L(j)}</span><span class="ot">${esc(o)}</span></button>`).join('')}</div>`
+        : `<p class="muted small">Las alternativas están en la imagen: responde con la letra.</p><div class="opts letras">${Array.from({ length: ofN(q) }, (_, j) => `<button class="opt${cls(j)}" type="button" data-v="${j}" aria-label="Alternativa ${L(j)}"><span class="k">${L(j)}</span></button>`).join('')}</div>`;
+      const fb = !show ? '' : q.a == null ? `<p class="ofres">${I('info')}Esta pregunta no tiene clave publicada.</p>`
+        : `<p class="ofres ${x.ans === q.a ? 'ok' : 'bad'}">${I(x.ans === q.a ? 'check' : 'x')}${x.ans === q.a ? '¡Correcta!' : `La correcta es la ${L(q.a)}.`}${q.nc ? ' <small>(Esta no contaba para el puntaje: era de prueba.)</small>' : ''}</p>`;
+      $('.ses-b', el).innerHTML = `<div class="qk">N.º ${q.n || x.k + 1}${q.eje ? ` · ${esc(q.eje)}` : ''}<button class="flagb${x.flag ? ' on' : ''}" type="button" data-flag>${I('flag')}${x.flag ? 'Marcada' : 'Marcar'}</button></div>` +
+        `<div class="ofq">${ofText(q.q)}${ofFig(q.img, `Imagen de la pregunta ${q.n || ''}`)}${ofText(q.q2)}</div>` + opts + fb;
+      $('[data-prev]', el).disabled = ex.i === 0;
+      $('[data-next]', el).textContent = ex.i === ex.Q.length - 1 ? 'Terminar' : 'Siguiente';
+      $('.ses-b', el).scrollTop = 0;
+    };
+    $('.ses-b', el).addEventListener('click', e => {
+      if (e.target.closest('[data-flag]')) { const x = ex.Q[ex.i]; x.flag = !x.flag; draw(); return; }
+      const z = e.target.closest('[data-zoom]');
+      if (z) { ofZoom($('img', z).src); return; }
+      const b = e.target.closest('.opt');
+      if (!b || ex.done) return;
+      const x = ex.Q[ex.i], v = +b.dataset.v;
+      if (!exam && x.ans != null) return;
+      x.ans = exam && x.ans === v ? null : v;
+      if (exam) SFX.tap();
+      else if (x.q.a == null || v === x.q.a) SFX.ok();
+      else { SFX.bad(); buzz(60); }
+      keep();
+      draw();
+    });
+    $('[data-x]', el).onclick = () => history.back();
+    $('[data-prev]', el).onclick = () => { if (ex.i > 0) { ex.i--; draw(); } };
+    $('[data-next]', el).onclick = () => {
+      if (ex.i < ex.Q.length - 1) { ex.i++; draw(); return; }
+      const left = ex.Q.filter(x => x.ans == null).length;
+      if (left) {
+        ask(exam ? { title: `Tienes ${plural(left, 'pregunta', 'preguntas')} sin responder`, text: 'Las preguntas sin responder cuentan como incorrectas (en la PAES no se descuenta por error, así que conviene responder todo).', ok: 'Terminar igual', cancel: 'Seguir respondiendo' }
+          : { title: `Te ${left === 1 ? 'queda' : 'quedan'} ${plural(left, 'pregunta', 'preguntas')} sin responder`, text: 'Puedes terminar igual y ver tu resultado.', ok: 'Terminar', cancel: 'Seguir', danger: false })
+          .then(ok => { if (ok) finish(); });
+        return;
+      }
+      finish();
+    };
+    $('[data-grid]', el).onclick = () => sheet(`<small class="kick">${esc(m.nombre)}</small><h3>Ir a una pregunta</h3><p class="muted">Rellenas, las respondidas; con borde lima, las marcadas para revisar.</p><div class="grid35">${ex.Q.map((x, k) => `<button type="button" class="${x.ans != null ? 'a' : ''}${x.flag ? ' f' : ''}${k === ex.i ? ' cur' : ''}" data-k="${k}">${x.q.n || x.k + 1}</button>`).join('')}</div>`, s => {
+      $('.grid35', s).onclick = e => { const b = e.target.closest('[data-k]'); if (b) closeLayer(() => { ex.i = +b.dataset.k; draw(); }); };
+    });
+    if (exam) {
+      const tick = () => {
+        const left = ex.dur - spent(), t = $('.ex-t', el);
+        $('b', t).textContent = fmtTime(Math.max(0, left));
+        t.classList.toggle('low', left <= 300);
+        if (left <= 0 && !ex.done) finish(true);
+      };
+      tick();
+      ex.timer = setInterval(tick, 1000);
+    }
+    function finish(auto) {
+      ex.done = true;
+      clearInterval(ex.timer);
+      delete st.run[m.id];
+      const scored = ex.Q.filter(x => ofCuenta(x.q)), n = scored.length, good = scored.filter(x => x.ans === x.q.a).length;
+      const wrong = ex.Q.filter(x => x.q.a != null && x.ans !== x.q.a).map(x => x.k);
+      const { pts, oficial } = ofPts(p, good, n, full);
+      const secs = exam ? Math.min(ex.dur, spent()) : spent();
+      st.hist[m.id] = [{ d: today(), mode, good, n, pts, oficial, secs, full, wrong }].concat(st.hist[m.id] || []).slice(0, 10);
+      if (exam && full) { S.exams.unshift({ d: today(), t: m.test, good, n, pts, secs, of: m.id }); S.exams = S.exams.slice(0, 50); }
+      const xp = Math.min(60, 5 + Math.round(good / 2)), streakUp = bumpStreak(), goalHit = addXP(xp);
+      S.tests[m.test] = 1;
+      save();
+      SFX.done();
+      $('.ex-n', el).textContent = 'Resultado';
+      $('[data-grid]', el).hidden = true;
+      if (exam) $('.ex-t', el).hidden = true;
+      const ejes = {};
+      scored.forEach(x => { if (!x.q.eje) return; const e = ejes[x.q.eje] || (ejes[x.q.eje] = [0, 0]); e[1]++; if (x.ans === x.q.a) e[0]++; });
+      const ansOf = (q, a) => a == null ? '<i>Sin responder</i>' : `<b>${L(a)}</b>${q.o ? ' · ' + esc(q.o[a]) : ''}`;
+      const resumen = q => { const t = (q.q || q.q2 || '').replace(/^[>^] /gm, '').replace(/\s+/g, ' ').trim(); return t ? esc(t.length > 150 ? t.slice(0, 150) + '…' : t) : 'Pregunta con imagen'; };
+      $('.ses-b', el).innerHTML = `<div class="res">${auto ? '<p class="muted">Se acabó el tiempo.</p>' : ''}` +
+        (full ? `<small class="kick">${oficial ? 'Puntaje PAES (tabla oficial de esta prueba)' : 'Puntaje estimado'}</small><div class="score pass"><b>${pts}</b><span>/ 1.000</span></div>`
+          : `<small class="kick">Tus errores</small><div class="score pass"><b>${good}</b><span>/ ${n}</span></div>`) +
+        `<p class="muted">${good} de ${n} correctas · ${fmtTime(secs)}${ex.Q.length > n ? ` · ${plural(ex.Q.length - n, 'pregunta no cuenta', 'preguntas no cuentan')} (eran de prueba)` : ''}</p>` +
+        `<p class="note">${I('bolt')}+${xp} XP${streakUp ? ` · ${I('flame', 'on')}¡Racha extendida!` : ''}${goalHit ? ` · ${I('target')}¡Meta cumplida!` : ''}</p></div>` +
+        (Object.keys(ejes).length > 1 ? `<h3 class="st">Por eje</h3><div class="card accl">${Object.entries(ejes).map(([k, [a, t]]) => `<div class="accr"><b>${esc(k)}</b><span>${a}/${t}</span><i class="meter" aria-hidden="true"><i style="width:${Math.round(100 * a / t)}%"></i></i></div>`).join('')}</div>` : '') +
+        `<h3 class="st">Revisión</h3><ol class="rev">${ex.Q.map(x => { const q = x.q, ok = q.a == null || x.ans === q.a; return `<li class="${ok ? 'ok' : 'bad'}"><details><summary>${I(ok ? 'check' : 'x')}<span>${q.n || x.k + 1}. ${resumen(q)}</span>${q.nc ? '<em>no cuenta</em>' : ''}</summary>` +
+          `<div class="ofq">${ofText(q.q)}${ofFig(q.img, `Imagen de la pregunta ${q.n || ''}`)}${ofText(q.q2)}</div>` +
+          `<p><small>Tu respuesta:</small> ${ansOf(q, x.ans)}</p><p><small>Correcta:</small> ${q.a == null ? '<i>Sin clave publicada</i>' : ansOf(q, q.a)}</p></details></li>`; }).join('')}</ol>`;
+      $('.ses-b', el).scrollTop = 0;
+      const f = $('.ex-f', el);
+      f.innerHTML = (wrong.length ? `<button class="btn ghost" type="button" data-err>${I('replay')}Practicar mis errores</button>` : '') + `<button class="btn" type="button" data-close>Volver</button>`;
+      $('[data-close]', f).onclick = () => closeLayer(refresh);
+      if (wrong.length) $('[data-err]', f).onclick = () => closeLayer(() => ofStart(m, 'prac', null, wrong));
+      checkAch();
+    }
+    draw();
+  }
+
   // ---------- Videos ----------
   // o.lid: el video se abrió al entrar a esa lección; al terminar, se sigue con sus ejercicios.
   function openVideo(id, o = {}) {
@@ -914,6 +1155,7 @@
     const best = S.exams.filter(e => e.t === S.test && e.n >= 30).reduce((m, e) => Math.max(m, e.pts), 0);
     v.innerHTML = `<h1 class="vt">Practicar</h1><p class="muted">${esc(T.n)}</p>
       <button class="pcard big" type="button" data-act="exam">${I('exam')}<div><b>Ensayo PAES</b><span>Mini, medio o completo (${T.ex.n} preguntas) con tiempo y puntaje estimado</span>${last ? `<em>Último: ${last.pts} pts · ${last.good}/${last.n}${best ? ` · mejor ${best}` : ''}</em>` : ''}</div></button>
+      ${S.test === 'his' || ofOf(S.test).length ? ofCard() : ''}
       <div class="pgrid">
         <button class="pcard" type="button" data-act="review">${I('replay')}<b>Repaso inteligente</b><span>${due ? plural(due, 'pregunta pendiente', 'preguntas pendientes') : 'Estás al día'}</span></button>
         <button class="pcard" type="button" data-act="mistakes">${I('x')}<b>Mis errores</b><span>${wr ? plural(wr, 'pregunta por reforzar', 'preguntas por reforzar') : 'Sin errores pendientes'}</span></button>
@@ -928,7 +1170,7 @@
       const b = e.target.closest('[data-act],[data-u]');
       if (!b) return;
       if (b.dataset.u) return startTopic(b.dataset.u);
-      ({ exam: examSheet, review: startReview, mistakes: startMistakes, mix: startMix, blitz: startBlitz, guide: openGuide })[b.dataset.act]();
+      ({ exam: examSheet, oficial: ofSheet, review: startReview, mistakes: startMistakes, mix: startMix, blitz: startBlitz, guide: openGuide })[b.dataset.act]();
     };
   };
 
@@ -1109,7 +1351,7 @@
       </div>
       <h2 class="st">Últimos 7 días</h2><div class="card">${weekChart()}</div>
       <h2 class="st">Avance por prueba</h2><div class="card accl">${RB.tests.map(t => { const it = cItems(t), m = mastery(it); return `<div class="accr"><b>${I(t.ic)}${esc(t.n)}</b><span>${m}%</span><i class="meter" aria-hidden="true"><i style="width:${m}%"></i></i></div>`; }).join('')}</div>
-      <h2 class="st">Ensayos</h2><div class="card">${exams.length ? `<ul class="exl">${exams.map(e => `<li><span class="pill pass">${e.pts}</span><b>${esc(testInfo(e.t).s)} · ${e.good}/${e.n}</b><small>${esc(new Date(e.d + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }))} · ${fmtTime(e.secs)}</small></li>`).join('')}</ul>` : `<p class="muted">Aún no haces ensayos. Encuéntralos en Practicar.</p>`}</div>
+      <h2 class="st">Ensayos</h2><div class="card">${exams.length ? `<ul class="exl">${exams.map(e => `<li><span class="pill pass">${e.pts}</span><b>${esc(e.of && ofState().idx[e.of] ? ofState().idx[e.of].nombre : testInfo(e.t).s)} · ${e.good}/${e.n}</b><small>${esc(new Date(e.d + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }))} · ${fmtTime(e.secs)}</small></li>`).join('')}</ul>` : `<p class="muted">Aún no haces ensayos. Encuéntralos en Practicar.</p>`}</div>
       <h2 class="st">Logros · ${achN} de ${ACH.length}</h2><div class="agrid">${ACH.map(a => `<button class="ach${S.ach[a.id] ? ' on' : ''}" type="button" data-ach="${a.id}"><i>${I(a.ic)}</i><span>${esc(a.n)}</span></button>`).join('')}</div>
       <h2 class="st">Ajustes</h2><div class="set">
         <div class="row"><span>Meta diaria</span><div class="seg" data-goal>${[...new Set([20, 30, 50, 80, S.goal])].sort((x, y) => x - y).map(g => `<button type="button" data-v="${g}" aria-pressed="${S.goal === g}">${g}</button>`).join('')}</div></div>

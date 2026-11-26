@@ -42,6 +42,14 @@ Estilo negro con lima.
     `venv/bin/python tools/voz-mp3.py h2-1 parte1.mp3 parte2.mp3` reconoce cada palabra de la grabación,
     la ubica en el guion y escribe `audio/h2-1.webm` y `.js` (escenas, subtítulos, boca y la pausa para
     pensar antes de cada respuesta). Avisa las frases que no se oyeron bien.
+  - `tools/pruebas-oficiales.py`: convierte una PAES oficial del DEMRE (el PDF de la prueba y su clavijero) en
+    el archivo que importa la app en **Practicar → Pruebas oficiales DEMRE** (aparece en Historia): las preguntas
+    reales en su orden, con sus alternativas, la clave, las que no cuentan, el eje y la tabla oficial de puntaje;
+    tablas, gráficos e imágenes van recortados del folleto. Las pruebas son del DEMRE (derechos reservados): el
+    archivo no se sube a este repositorio ni va dentro del APK; se importa en el teléfono y queda guardado ahí.
+    Se rinden como la prueba real (con tiempo y puntaje según la tabla oficial) o en práctica (corrección al tiro),
+    se pueden pausar y repetir solo los errores. `tools/pruebas-oficiales-correcciones.json` guarda las letras que
+    algún PDF trae dañadas, revisadas a mano.
   - `python3 tools/prompts-historia.py`: escribe en `prompts-historia/` un prompt por video de Historia para
     rehacerlo con Remotion y la voz de Fernando Martínez (ElevenLabs), más la guía común (`GUIA.md`) y el
     índice. Se arma desde los guiones de `data/toon-h*.js`.
@@ -51,5 +59,5 @@ Estilo negro con lima.
 ```sh
 python3 -m http.server 8765        # y abrir http://localhost:8765
 node tools/check.js                # revisar el contenido
-cd android && VERSION_CODE=7 VERSION_NAME=1.4 ./build.sh   # crea build/PAES.apk
+cd android && VERSION_CODE=8 VERSION_NAME=1.5 ./build.sh   # crea build/PAES.apk
 ```
