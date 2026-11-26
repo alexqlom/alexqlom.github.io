@@ -59,5 +59,7 @@ Estilo negro con lima.
 ```sh
 python3 -m http.server 8765        # y abrir http://localhost:8765
 node tools/check.js                # revisar el contenido
-cd android && VERSION_CODE=8 VERSION_NAME=1.5 ./build.sh   # crea build/PAES.apk
+cd android && VERSION_CODE=10 VERSION_NAME=1.6 ./build.sh   # crea build/PAES.apk (el número debe subir siempre)
+# Versión personal, con las pruebas oficiales del DEMRE adentro (no se sube: tienen derechos reservados):
+OFICIALES=/ruta/pruebas-oficiales-historia.json VERSION_CODE=10 VERSION_NAME=1.6 ./build.sh   # crea build/PAES-personal.apk
 ```

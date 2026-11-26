@@ -37,6 +37,14 @@ cp -R "$WEB/data" "$WEB/icons" "$OUT/assets/www/"
 # Narración de los videos (Opus) y sus tiempos; el audio va sin comprimir en el APK para leerlo y saltar rápido.
 mkdir -p "$OUT/assets/www/audio"
 cp "$WEB"/audio/*.webm "$WEB"/audio/*.js "$OUT/assets/www/audio/"
+# Versión personal: con OFICIALES=archivo.json (el que arma tools/pruebas-oficiales.py), las pruebas oficiales del
+# DEMRE van dentro del APK y la app las muestra sin importar nada. Ese APK es solo para uso personal: se llama
+# PAES-personal.apk y no se sube al repositorio (las pruebas tienen derechos reservados).
+NOMBRE=PAES
+if [ -n "${OFICIALES:-}" ]; then
+  { printf 'window.PAES_OFICIALES = '; cat "$OFICIALES"; printf ';\n'; } > "$OUT/assets/www/oficiales-incluidas.js"
+  NOMBRE=PAES-personal
+fi
 
 "$SDK/aapt2" compile --dir "$OUT/res" -o "$OUT/res.zip"
 "$SDK/aapt2" link -o "$OUT/base.apk" -I "$SDK/android-framework.jar" --manifest "$HERE/AndroidManifest.xml" -A "$OUT/assets" \
@@ -60,5 +68,5 @@ fi
 javac -nowarn -cp "$SDK/apksig.jar" -d "$OUT/signer" "$HERE/tools/Sign.java"
 # apksig 2.3.0 usa clases internas de Java al preparar la firma.
 OPENS="--add-exports=java.base/sun.security.x509=ALL-UNNAMED --add-exports=java.base/sun.security.pkcs=ALL-UNNAMED --add-exports=java.base/sun.security.util=ALL-UNNAMED"
-java $OPENS -cp "$SDK/apksig.jar:$OUT/signer" Sign "$OUT/unsigned.apk" "$OUT/PAES.apk" "$KS" "$KS_PASS" paes
-echo "Listo: $OUT/PAES.apk ($(du -h "$OUT/PAES.apk" | cut -f1))"
+java $OPENS -cp "$SDK/apksig.jar:$OUT/signer" Sign "$OUT/unsigned.apk" "$OUT/$NOMBRE.apk" "$KS" "$KS_PASS" paes
+echo "Listo: $OUT/$NOMBRE.apk ($(du -h "$OUT/$NOMBRE.apk" | cut -f1))"

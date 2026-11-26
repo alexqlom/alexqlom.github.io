@@ -898,11 +898,28 @@
     }));
     return {
       put: p => run('readwrite', st => st.put(p)).then(() => true, () => { mem[p.id] = p; return false; }),
-      get: id => run('readonly', st => st.get(id)).then(r => r || mem[id] || null, () => mem[id] || null),
+      get: id => { const b = ofIncluida(id); return b ? Promise.resolve(b) : run('readonly', st => st.get(id)).then(r => r || mem[id] || null, () => mem[id] || null); },
       del: id => { delete mem[id]; return run('readwrite', st => st.delete(id)).catch(() => {}); },
     };
   })();
+  // Una versión personal del APK puede traer las pruebas adentro (android/build.sh con OFICIALES=archivo.json):
+  // el archivo oficiales-incluidas.js define window.PAES_OFICIALES y la app las muestra sin importar nada.
+  const ofIncluida = id => { const o = window.PAES_OFICIALES; return (o && Array.isArray(o.pruebas) && o.pruebas.find(p => p.id === id)) || null; };
   const ofState = () => (S.ofi = Object.assign({ idx: {}, hist: {}, run: {} }, S.ofi || {}));
+  (function ofCargarIncluidas() {
+    const sc = D.createElement('script');
+    sc.src = 'oficiales-incluidas.js';
+    sc.onload = () => {
+      const o = window.PAES_OFICIALES;
+      if (!o || o.formato !== 'paes-oficiales' || !Array.isArray(o.pruebas)) return;
+      const st = ofState();
+      o.pruebas.filter(ofValid).forEach(p => { st.idx[p.id] = Object.assign(ofMeta(p), { incluida: 1 }); });
+      save();
+      if (tab === 'practicar') refresh();
+    };
+    sc.onerror = () => sc.remove();
+    D.head.appendChild(sc);
+  })();
   const ofOf = t => Object.values(ofState().idx).filter(m => m.test === t).sort((a, b) => (b.anio - a.anio) || (a.proceso === 'Invierno' ? 1 : -1) - (b.proceso === 'Invierno' ? 1 : -1));
   const ofCuenta = q => q.a != null && !q.nc;
   const ofN = q => q.o ? q.o.length : (q.k || 4);
@@ -969,14 +986,14 @@
       `<button class="goalc" type="button" data-m="exam"><b>${run ? 'Empezar de nuevo, como la prueba real' : 'Como la prueba real'}</b><span>${m.total} preguntas · ${fmtTime(mins * 60)} h · resultado al final</span></button>` +
       `<button class="goalc" type="button" data-m="prac"><b>${run ? 'Empezar de nuevo, en práctica' : 'Práctica'}</b><span>Sin tiempo · ves si acertaste en cada pregunta</span></button>` +
       (wrong ? `<button class="goalc" type="button" data-m="err"><b>Solo mis errores</b><span>${plural(wrong, 'pregunta', 'preguntas')} que fallaste la última vez</span></button>` : '') +
-      `</div><button class="btn ghost danger ofdel" type="button" data-del>${I('trash')}Quitar esta prueba del teléfono</button>`, el => {
+      `</div>${m.incluida ? '' : `<button class="btn ghost danger ofdel" type="button" data-del>${I('trash')}Quitar esta prueba del teléfono</button>`}`, el => {
       $('.goals', el).onclick = e => {
         const b = e.target.closest('[data-m]');
         if (!b) return;
         const k = b.dataset.m;
         closeLayer(() => ofStart(m, k === 'cont' ? run.mode : k === 'err' ? 'prac' : k, k === 'cont' ? run : null, k === 'err' ? h.wrong : null));
       };
-      $('[data-del]', el).onclick = () => ask({ title: '¿Quitar esta prueba?', text: 'Se borra del teléfono junto con tu avance en ella. Puedes volver a importarla.', ok: 'Quitar' }).then(ok => {
+      if ($('[data-del]', el)) $('[data-del]', el).onclick = () => ask({ title: '¿Quitar esta prueba?', text: 'Se borra del teléfono junto con tu avance en ella. Puedes volver a importarla.', ok: 'Quitar' }).then(ok => {
         if (!ok) return;
         OFDB.del(m.id); delete st.idx[m.id]; delete st.run[m.id]; delete st.hist[m.id]; save();
         closeLayer(() => { refresh(); ofSheet(); });
